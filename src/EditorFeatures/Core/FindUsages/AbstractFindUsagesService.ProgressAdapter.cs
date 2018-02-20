@@ -49,6 +49,8 @@ namespace Microsoft.CodeAnalysis.Editor.FindUsages
         {
             private readonly Solution _solution;
             private readonly IFindUsagesContext _context;
+            private readonly bool excludeReads;
+            private readonly bool excludeWrites;
 
             /// <summary>
             /// We will hear about definition symbols many times while performing FAR.  We'll
@@ -65,10 +67,16 @@ namespace Microsoft.CodeAnalysis.Editor.FindUsages
 
             private readonly SemaphoreSlim _gate = new SemaphoreSlim(initialCount: 1);
 
-            public FindReferencesProgressAdapter(Solution solution, IFindUsagesContext context)
+            public FindReferencesProgressAdapter(Solution solution, IFindUsagesContext context, ISymbol requestedSymbol)
             {
                 _solution = solution;
                 _context = context;
+
+                if (requestedSymbol is IMethodSymbol method && method.AssociatedSymbol is IPropertySymbol property)
+                {
+                    excludeReads = requestedSymbol != property.GetMethod;
+                    excludeWrites = !excludeReads;
+                }
             }
 
             // Do nothing functions.  The streaming far service doesn't care about
@@ -112,6 +120,11 @@ namespace Microsoft.CodeAnalysis.Editor.FindUsages
             {
                 // Ignore duplicate locations.  We don't want to clutter the UI with them.
                 if (location.IsDuplicateReferenceLocation)
+                {
+                    return;
+                }
+
+                if (location.IsWrittenTo ? excludeWrites : excludeReads)
                 {
                     return;
                 }
