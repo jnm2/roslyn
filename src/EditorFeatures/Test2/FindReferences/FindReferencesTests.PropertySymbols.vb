@@ -898,7 +898,7 @@ End Class
         Public Async Function TestCSharp_GetterReferences() As Task
             Await TestAPIAndFeature(
 <Workspace>
-    <Project Language="C#">
+    <Project Language="C#" CommonReferences="true">
         <Document>
 class A
 {
@@ -921,7 +921,7 @@ class A
         Public Async Function TestCSharp_SetterReferences() As Task
             Await TestAPIAndFeature(
 <Workspace>
-    <Project Language="C#">
+    <Project Language="C#" CommonReferences="true">
         <Document>
 class A
 {
