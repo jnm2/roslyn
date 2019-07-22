@@ -512,6 +512,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.VBFeaturesResources
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to Convert conditional expression to &apos;If&apos; statement.
+        '''</summary>
+        Friend ReadOnly Property Convert_conditional_expression_to_if_statement() As String
+            Get
+                Return ResourceManager.GetString("Convert_conditional_expression_to_if_statement", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to Convert  to &apos;For&apos;.
         '''</summary>
         Friend ReadOnly Property Convert_to_For() As String

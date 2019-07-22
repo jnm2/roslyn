@@ -431,6 +431,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Convert conditional expression to &apos;if&apos; statement.
+        /// </summary>
+        internal static string Convert_conditional_expression_to_if_statement {
+            get {
+                return ResourceManager.GetString("Convert_conditional_expression_to_if_statement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Convert switch statement to expression.
         /// </summary>
         internal static string Convert_switch_statement_to_expression {

@@ -1281,4 +1281,7 @@ Sub(&lt;parameterList&gt;) &lt;statement&gt;</value>
   <data name="Sort_Imports" xml:space="preserve">
     <value>&amp;Sort Imports</value>
   </data>
+  <data name="Convert_conditional_expression_to_if_statement" xml:space="preserve">
+    <value>Convert conditional expression to 'If' statement</value>
+  </data>
 </root>

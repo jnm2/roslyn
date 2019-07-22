@@ -658,4 +658,7 @@
     <value>switch statement case clause</value>
     <comment>{Locked="switch"}{Locked="case"} "switch" and "case" are a C# keyword and should not be localized.</comment>
   </data>
+  <data name="Convert_conditional_expression_to_if_statement" xml:space="preserve">
+    <value>Convert conditional expression to 'if' statement</value>
+  </data>
 </root>

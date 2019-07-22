@@ -55,6 +55,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             public const string CodeActionsConfiguration = "CodeActions.Configuration";
             public const string CodeActionsConvertAnonymousTypeToClass = "CodeActions.ConvertAnonymousTypeToClass";
             public const string CodeActionsConvertAnonymousTypeToTuple = "CodeActions.ConvertAnonymousTypeToTuple";
+            public const string CodeActionsConvertConditionalToIf = "CodeActions.ConvertConditionalToIf";
             public const string CodeActionsConvertForEachToFor = "CodeActions.ConvertForEachToFor";
             public const string CodeActionsConvertForEachToQuery = "CodeActions.ConvertForEachToQuery";
             public const string CodeActionsConvertForToForEach = "CodeActions.ConvertForToForEach";
