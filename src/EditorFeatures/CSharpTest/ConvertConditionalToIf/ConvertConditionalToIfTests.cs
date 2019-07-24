@@ -30,6 +30,46 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.ConvertConditionalToIf
             new CodeStyleOption<PreferBracesPreference>(PreferBracesPreference.None, NotificationOption.None)));
 
         [Fact]
+        public async Task ForeachLoopIsDuplicated()
+        {
+            var text = @"
+class Test
+{
+    int Method(bool cond)
+    {
+        foreach (var _ in cond [||]? new[] { 1 } : new[] { 2, 3 })
+        {
+            // ...
+        }
+    }
+}
+";
+            var expected = @"
+class Test
+{
+    int Method(bool cond)
+    {
+        if (cond)
+        {
+            foreach (var _ in new[] { 1 })
+            {
+                // ...
+            }
+        }
+        else
+        {
+            foreach (var _ in new[] { 2, 3 })
+            {
+                // ...
+            }
+        }
+    }
+}
+";
+            await TestInRegularAndScriptAsync(text, expected);
+        }
+
+        [Fact]
         public async Task BracesAreGeneratedForSingleLineOperandsWithPreferBracesAlways()
         {
             var text = @"
