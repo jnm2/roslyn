@@ -127,7 +127,7 @@ class Test
             await TestInRegularAndScriptAsync(text, expected, options: PreferBracesWhenMultiline);
         }
 
-        [Fact]
+        [Fact(Skip = "Possible formatter bug")]
         public async Task BracesAreGeneratedForMultiLineOperandsWithPreferBracesWhenMultiline()
         {
             var text = @"
@@ -164,7 +164,7 @@ class Test
             await TestInRegularAndScriptAsync(text, expected, options: PreferBracesWhenMultiline);
         }
 
-        [Fact]
+        [Fact(Skip = "Possible formatter bug")]
         public async Task BracesAreNotGeneratedForMultilineOperandsWithPreferBracesNone()
         {
             var text = @"
