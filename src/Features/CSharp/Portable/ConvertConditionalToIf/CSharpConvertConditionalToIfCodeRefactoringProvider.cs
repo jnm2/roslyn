@@ -17,16 +17,34 @@ namespace Microsoft.CodeAnalysis.CSharp.ConvertConditionalToIf
             return node is LocalDeclarationStatementSyntax || node is ParameterSyntax;
         }
 
-        protected override bool CanBeReplacedWithStatement(SyntaxNode node)
+        protected override ReplaceNodeWithStatementResult CanReplaceWithStatement(SemanticModel semanticModel, SyntaxNode node)
         {
-            return node is StatementSyntax || node is ArrowExpressionClauseSyntax;
+            switch (node)
+            {
+                case StatementSyntax statement:
+                    {
+                        return ReplaceNodeWithStatementResult.Success(statement);
+                    }
+                case ArrowExpressionClauseSyntax _:
+                case { Parent: LambdaExpressionSyntax lambda } when lambda.Body == node:
+                    {
+                        return ConvertParentAndGetSingleStatement(semanticModel, node);
+                    }
+                default:
+                    {
+                        return ReplaceNodeWithStatementResult.NotPossibleInTheory;
+                    }
+            }
         }
 
-        protected override SyntaxNode ReplaceWithStatement(SyntaxNode parentNode, SyntaxNode nodeToReplace, StatementSyntax newStatement)
+        private static ReplaceNodeWithStatementResult ConvertParentAndGetSingleStatement(SemanticModel semanticModel, SyntaxNode node)
         {
-            if (!(parentNode is BlockSyntax)) throw new System.NotImplementedException();
+            var originalAncestor = node.Parent;
+            var convertedAncestor = CSharpDeclarationBodyHelpers.TryConvertToStatementBody(semanticModel, originalAncestor, out var statement);
 
-            return parentNode.ReplaceNode(nodeToReplace, newStatement);
+            return convertedAncestor is null
+                ? ReplaceNodeWithStatementResult.PossibleButConversionFailed
+                : ReplaceNodeWithStatementResult.Success(statement, originalAncestor, convertedAncestor);
         }
 
         protected override (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(ConditionalExpressionSyntax conditionalExpression)

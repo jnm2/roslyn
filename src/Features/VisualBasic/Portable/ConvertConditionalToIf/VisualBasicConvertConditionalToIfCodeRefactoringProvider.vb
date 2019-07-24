@@ -16,11 +16,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ConvertConditionalToIf
             Throw New NotImplementedException()
         End Function
 
-        Protected Overrides Function CanBeReplacedWithStatement(node As SyntaxNode) As Boolean
-            Throw New NotImplementedException()
-        End Function
-
-        Protected Overrides Function ReplaceWithStatement(parentNode As SyntaxNode, nodeToReplace As SyntaxNode, newStatement As StatementSyntax) As SyntaxNode
+        Protected Overrides Function CanReplaceWithStatement(semanticModel As SemanticModel, node As SyntaxNode) As ReplaceNodeWithStatementResult
             Throw New NotImplementedException()
         End Function
 
