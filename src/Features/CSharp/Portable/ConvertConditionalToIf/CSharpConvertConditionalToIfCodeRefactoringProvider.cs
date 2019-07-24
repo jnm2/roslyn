@@ -12,16 +12,26 @@ namespace Microsoft.CodeAnalysis.CSharp.ConvertConditionalToIf
     {
         protected override string CodeActionTitle => CSharpFeaturesResources.Convert_conditional_expression_to_if_statement;
 
-        protected override (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(ConditionalExpressionSyntax conditionalExpression)
+        protected override bool IsInvalidAncestorForRefactoring(SyntaxNode node)
         {
-            return (conditionalExpression.Condition, conditionalExpression.WhenTrue, conditionalExpression.WhenFalse);
+            return node is LocalDeclarationStatementSyntax || node is ParameterSyntax;
         }
 
-        protected override SyntaxNode ReplaceStatement(SyntaxNode parentNode, StatementSyntax statement, StatementSyntax newStatement)
+        protected override bool CanBeReplacedWithStatement(SyntaxNode node)
+        {
+            return node is StatementSyntax || node is ArrowExpressionClauseSyntax;
+        }
+
+        protected override SyntaxNode ReplaceWithStatement(SyntaxNode parentNode, SyntaxNode nodeToReplace, StatementSyntax newStatement)
         {
             if (!(parentNode is BlockSyntax)) throw new System.NotImplementedException();
 
-            return parentNode.ReplaceNode(statement, newStatement);
+            return parentNode.ReplaceNode(nodeToReplace, newStatement);
+        }
+
+        protected override (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(ConditionalExpressionSyntax conditionalExpression)
+        {
+            return (conditionalExpression.Condition, conditionalExpression.WhenTrue, conditionalExpression.WhenFalse);
         }
     }
 }

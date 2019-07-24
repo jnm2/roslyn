@@ -12,12 +12,20 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ConvertConditionalToIf
 
         Protected Overrides ReadOnly Property CodeActionTitle As String = VBFeaturesResources.Convert_conditional_expression_to_if_statement
 
-        Protected Overrides Function Deconstruct(conditionalExpression As TernaryConditionalExpressionSyntax) As (condition As SyntaxNode, whenTrue As SyntaxNode, whenFalse As SyntaxNode)
-            Return (conditionalExpression.Condition, conditionalExpression.WhenTrue, conditionalExpression.WhenFalse)
+        Protected Overrides Function IsInvalidAncestorForRefactoring(node As SyntaxNode) As Boolean
+            Throw New NotImplementedException()
         End Function
 
-        Protected Overrides Function ReplaceStatement(parentNode As SyntaxNode, statement As StatementSyntax, newStatement As StatementSyntax) As SyntaxNode
+        Protected Overrides Function CanBeReplacedWithStatement(node As SyntaxNode) As Boolean
             Throw New NotImplementedException()
+        End Function
+
+        Protected Overrides Function ReplaceWithStatement(parentNode As SyntaxNode, nodeToReplace As SyntaxNode, newStatement As StatementSyntax) As SyntaxNode
+            Throw New NotImplementedException()
+        End Function
+
+        Protected Overrides Function Deconstruct(conditionalExpression As TernaryConditionalExpressionSyntax) As (condition As SyntaxNode, whenTrue As SyntaxNode, whenFalse As SyntaxNode)
+            Return (conditionalExpression.Condition, conditionalExpression.WhenTrue, conditionalExpression.WhenFalse)
         End Function
     End Class
 End Namespace

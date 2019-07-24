@@ -19,23 +19,28 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
         public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context)
         {
             var conditionalExpression = await context.TryGetRelevantNodeAsync<TConditionalExpressionSyntax>().ConfigureAwait(false);
-
-            if (conditionalExpression is { })
+            if (conditionalExpression is null)
             {
-                var document = context.Document;
-
-                context.RegisterRefactoring(new ConvertConditionalToIfCodeAction(
-                    CodeActionTitle,
-                    cancellationToken => ConvertAsync(document, conditionalExpression, cancellationToken)));
+                return;
             }
+
+            var nodeToReplaceWithIfStatement = GetNodeToReplaceWithIfStatement(conditionalExpression);
+            if (nodeToReplaceWithIfStatement is null)
+            {
+                return;
+            }
+
+            var document = context.Document;
+
+            context.RegisterRefactoring(new ConvertConditionalToIfCodeAction(
+                CodeActionTitle,
+                cancellationToken => ConvertAsync(document, conditionalExpression, nodeToReplaceWithIfStatement, cancellationToken)));
         }
 
-        private async Task<Document> ConvertAsync(Document document, TConditionalExpressionSyntax conditionalExpression, CancellationToken cancellationToken)
+        private async Task<Document> ConvertAsync(Document document, TConditionalExpressionSyntax conditionalExpression, SyntaxNode nodeToReplaceWithIfStatement, CancellationToken cancellationToken)
         {
             var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
-
-            var statement = conditionalExpression.FirstAncestorOrSelf<TStatementSyntax>();
 
             var conditionalExpressionParts = Deconstruct(conditionalExpression);
 
@@ -50,20 +55,42 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
             {
                 return new[]
                 {
-                    statement.ReplaceNode(conditionalExpression, conditionalExpressionBranch.WithoutTrivia())
+                    nodeToReplaceWithIfStatement.ReplaceNode(conditionalExpression, conditionalExpressionBranch.WithoutTrivia())
                 };
             }
 
             var newRoot = syntaxRoot.ReplaceNode(
-                statement.Parent,
-                ReplaceStatement(statement.Parent, statement, ifStatement));
+                nodeToReplaceWithIfStatement.Parent,
+                ReplaceWithStatement(nodeToReplaceWithIfStatement.Parent, nodeToReplaceWithIfStatement, ifStatement));
 
             return document.WithSyntaxRoot(newRoot);
         }
 
-        protected abstract (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(TConditionalExpressionSyntax conditionalExpression);
+        private SyntaxNode GetNodeToReplaceWithIfStatement(SyntaxNode node)
+        {
+            foreach (var ancestor in node.Ancestors())
+            {
+                if (IsInvalidAncestorForRefactoring(ancestor))
+                {
+                    break;
+                }
 
-        protected abstract SyntaxNode ReplaceStatement(SyntaxNode parentNode, TStatementSyntax statement, TStatementSyntax newStatement);
+                if (CanBeReplacedWithStatement(ancestor))
+                {
+                    return ancestor;
+                }
+            }
+
+            return null;
+        }
+
+        protected abstract bool IsInvalidAncestorForRefactoring(SyntaxNode node);
+
+        protected abstract bool CanBeReplacedWithStatement(SyntaxNode node);
+
+        protected abstract SyntaxNode ReplaceWithStatement(SyntaxNode parentNode, SyntaxNode nodeToReplace, TStatementSyntax newStatement);
+
+        protected abstract (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(TConditionalExpressionSyntax conditionalExpression);
 
         private sealed class ConvertConditionalToIfCodeAction : CodeAction.DocumentChangeAction
         {
