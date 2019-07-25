@@ -2632,34 +2632,14 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
             var somebody = statements != null ? body : null;
             var semicolon = statements == null ? SyntaxFactory.Token(SyntaxKind.SemicolonToken) : default;
 
-            switch (declaration.Kind())
+            return declaration switch
             {
-                case SyntaxKind.MethodDeclaration:
-                    return ((MethodDeclarationSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                case SyntaxKind.OperatorDeclaration:
-                    return ((OperatorDeclarationSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                case SyntaxKind.ConversionOperatorDeclaration:
-                    return ((ConversionOperatorDeclarationSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                case SyntaxKind.ConstructorDeclaration:
-                    return ((ConstructorDeclarationSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                case SyntaxKind.DestructorDeclaration:
-                    return ((DestructorDeclarationSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                case SyntaxKind.LocalFunctionStatement:
-                    return ((LocalFunctionStatementSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                case SyntaxKind.AnonymousMethodExpression:
-                    return ((AnonymousMethodExpressionSyntax)declaration).WithBody(body);
-                case SyntaxKind.ParenthesizedLambdaExpression:
-                    return ((ParenthesizedLambdaExpressionSyntax)declaration).WithBody(body);
-                case SyntaxKind.SimpleLambdaExpression:
-                    return ((SimpleLambdaExpressionSyntax)declaration).WithBody(body);
-                case SyntaxKind.GetAccessorDeclaration:
-                case SyntaxKind.SetAccessorDeclaration:
-                case SyntaxKind.AddAccessorDeclaration:
-                case SyntaxKind.RemoveAccessorDeclaration:
-                    return ((AccessorDeclarationSyntax)declaration).WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null);
-                default:
-                    return declaration;
-            }
+                BaseMethodDeclarationSyntax methodDecl => methodDecl.WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null),
+                LocalFunctionStatementSyntax localFunc => localFunc.WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null),
+                AnonymousFunctionExpressionSyntax anonFunc => anonFunc.WithBody(body),
+                AccessorDeclarationSyntax accessor => accessor.WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null),
+                _ => declaration,
+            };
         }
 
         public override IReadOnlyList<SyntaxNode> GetAccessors(SyntaxNode declaration)
