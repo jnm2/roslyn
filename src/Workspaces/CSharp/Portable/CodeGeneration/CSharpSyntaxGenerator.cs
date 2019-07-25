@@ -2628,6 +2628,14 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
 
         public override SyntaxNode WithStatements(SyntaxNode declaration, IEnumerable<SyntaxNode> statements)
         {
+            switch (declaration)
+            {
+                case BlockSyntax block:
+                    return block.WithStatements(AsStatementList(statements));
+                case SwitchSectionSyntax switchSection:
+                    return switchSection.WithStatements(AsStatementList(statements));
+            }
+
             var body = CreateBlock(statements);
             var somebody = statements != null ? body : null;
             var semicolon = statements == null ? SyntaxFactory.Token(SyntaxKind.SemicolonToken) : default;
@@ -2638,7 +2646,8 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                 LocalFunctionStatementSyntax localFunc => localFunc.WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null),
                 AnonymousFunctionExpressionSyntax anonFunc => anonFunc.WithBody(body),
                 AccessorDeclarationSyntax accessor => accessor.WithBody(somebody).WithSemicolonToken(semicolon).WithExpressionBody(null),
-                _ => declaration,
+                _ when declaration.IsEmbeddedStatementOwner() => declaration.ReplaceNode(declaration.GetEmbeddedStatement(), body),
+                _ => declaration
             };
         }
 
