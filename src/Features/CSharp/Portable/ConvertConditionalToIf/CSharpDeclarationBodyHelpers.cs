@@ -10,35 +10,46 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
 {
     internal static class CSharpDeclarationBodyHelpers
     {
-        public static TSyntaxNode TryConvertToStatementBody<TSyntaxNode>(SemanticModel semanticModel, TSyntaxNode container, out StatementSyntax statement)
-            where TSyntaxNode : SyntaxNode
+        public static SyntaxNode TryConvertToStatementBody(
+            SyntaxNode container,
+            SemanticModel semanticModel,
+            SyntaxNode containerForSemanticModel)
         {
             switch (container)
             {
-                case LambdaExpressionSyntax { Body: ExpressionSyntax expressionBody } lambda:
-                    if (expressionBody.TryConvertToStatement(
-                        semicolonTokenOpt: default,
-                        CreateReturnStatementForExpression(semanticModel, lambda),
-                        out statement))
-                    {
-                        // If the user is converting to a block, it's likely they intend to add multiple
-                        // statements to it.  So make a multi-line block so that things are formatted properly
-                        // for them to do so.
-                        return (TSyntaxNode)(SyntaxNode)lambda.WithBody(SyntaxFactory.Block(
-                            SyntaxFactory.Token(SyntaxKind.OpenBraceToken).WithAppendedTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed),
-                            SyntaxFactory.SingletonList(statement),
-                            SyntaxFactory.Token(SyntaxKind.CloseBraceToken)));
-                    }
-                    break;
+                case LambdaExpressionSyntax lambda:
+                    return TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel);
             }
 
-            statement = null;
             return null;
         }
 
-        private static bool CreateReturnStatementForExpression(SemanticModel semanticModel, LambdaExpressionSyntax declaration)
+        public static LambdaExpressionSyntax TryConvertToStatementBody(
+            LambdaExpressionSyntax container,
+            SemanticModel semanticModel,
+            LambdaExpressionSyntax containerForSemanticModel)
         {
-            var lambdaType = (INamedTypeSymbol)semanticModel.GetTypeInfo(declaration).ConvertedType;
+            if (container is { Body: ExpressionSyntax expressionBody }
+                && expressionBody.TryConvertToStatement(
+                    semicolonTokenOpt: default,
+                    CreateReturnStatementForExpression(semanticModel, containerForSemanticModel),
+                    out var statement))
+            {
+                // If the user is converting to a block, it's likely they intend to add multiple
+                // statements to it.  So make a multi-line block so that things are formatted properly
+                // for them to do so.
+                return container.WithBody(SyntaxFactory.Block(
+                    SyntaxFactory.Token(SyntaxKind.OpenBraceToken).WithAppendedTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed),
+                    SyntaxFactory.SingletonList(statement),
+                    SyntaxFactory.Token(SyntaxKind.CloseBraceToken)));
+            }
+
+            return null;
+        }
+
+        private static bool CreateReturnStatementForExpression(SemanticModel semanticModel, LambdaExpressionSyntax lambdaExpression)
+        {
+            var lambdaType = (INamedTypeSymbol)semanticModel.GetTypeInfo(lambdaExpression).ConvertedType;
             if (lambdaType.DelegateInvokeMethod.ReturnsVoid)
             {
                 return false;
@@ -46,7 +57,7 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
 
             // 'async Task' is effectively a void-returning lambda.  we do not want to create
             // 'return statements' when converting.
-            if (declaration.AsyncKeyword != default)
+            if (lambdaExpression.AsyncKeyword != default)
             {
                 var returnType = lambdaType.DelegateInvokeMethod.ReturnType;
                 if (returnType.IsErrorType())

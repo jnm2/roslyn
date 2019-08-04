@@ -17,34 +17,30 @@ namespace Microsoft.CodeAnalysis.CSharp.ConvertConditionalToIf
             return node is LocalDeclarationStatementSyntax || node is ParameterSyntax;
         }
 
-        protected override ReplaceNodeWithStatementResult CanReplaceWithStatement(SemanticModel semanticModel, SyntaxNode node)
+        protected override bool CanReplaceWithStatement(SyntaxNode node, out SyntaxNode ancestorNeedingConversion)
         {
             switch (node)
             {
                 case StatementSyntax statement:
                     {
-                        return ReplaceNodeWithStatementResult.Success(statement);
+                        ancestorNeedingConversion = null;
+                        return true;
                     }
                 case ArrowExpressionClauseSyntax _:
                 case { Parent: LambdaExpressionSyntax lambda } when lambda.Body == node:
                     {
-                        return ConvertParentAndGetSingleStatement(semanticModel, node);
-                    }
-                default:
-                    {
-                        return ReplaceNodeWithStatementResult.NotPossibleInTheory;
+                        ancestorNeedingConversion = node.Parent;
+                        return true;
                     }
             }
+
+            ancestorNeedingConversion = null;
+            return false;
         }
 
-        private static ReplaceNodeWithStatementResult ConvertParentAndGetSingleStatement(SemanticModel semanticModel, SyntaxNode node)
+        protected override SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel)
         {
-            var originalAncestor = node.Parent;
-            var convertedAncestor = CSharpDeclarationBodyHelpers.TryConvertToStatementBody(semanticModel, originalAncestor, out var statement);
-
-            return convertedAncestor is null
-                ? ReplaceNodeWithStatementResult.PossibleButConversionFailed
-                : ReplaceNodeWithStatementResult.Success(statement, originalAncestor, convertedAncestor);
+            return CSharpDeclarationBodyHelpers.TryConvertToStatementBody(container, semanticModel, containerForSemanticModel);
         }
 
         protected override (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(ConditionalExpressionSyntax conditionalExpression)

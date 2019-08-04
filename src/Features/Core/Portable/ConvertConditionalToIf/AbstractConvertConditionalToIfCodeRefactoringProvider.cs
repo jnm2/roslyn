@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Formatting;
 
 namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
 {
-    internal abstract partial class AbstractConvertConditionalToIfCodeRefactoringProvider<TConditionalExpressionSyntax, TStatementSyntax> : CodeRefactoringProvider
+    internal abstract class AbstractConvertConditionalToIfCodeRefactoringProvider<TConditionalExpressionSyntax, TStatementSyntax> : CodeRefactoringProvider
         where TConditionalExpressionSyntax : SyntaxNode
         where TStatementSyntax : SyntaxNode
     {
@@ -27,14 +27,35 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
                 return;
             }
 
-            var semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
-
-            var result = GetNodeToReplaceWithIfStatement(semanticModel, conditionalExpression.WithAdditionalAnnotations(s_followAnnotation));
-            if (result.StatementFormOfNode is null)
+            var nodeToReplaceWithIfStatement = GetNodeToReplaceWithIfStatement(conditionalExpression, out var ancestorNeedingConversion);
+            if (nodeToReplaceWithIfStatement is null)
             {
-                // Either not possible in theory or we bailed for some reason when trying to convert something to
-                // statement form.
                 return;
+            }
+
+            var convertedAncestor = ((SyntaxNode original, SyntaxNode @new)?)null;
+
+            if (!(nodeToReplaceWithIfStatement is TStatementSyntax statementFormOfNodeToReplace))
+            {
+                var ancestorWithTrackedConditionalExpression = ancestorNeedingConversion.ReplaceNode(
+                    conditionalExpression,
+                    conditionalExpression.WithAdditionalAnnotations(s_followAnnotation));
+
+                var newAncestor = TryConvertToStatementBody(
+                    ancestorWithTrackedConditionalExpression,
+                    await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false),
+                    containerForSemanticModel: ancestorNeedingConversion);
+
+                if (newAncestor is null)
+                {
+                    return;
+                }
+
+                var syntaxGenerator = SyntaxGenerator.GetGenerator(context.Document);
+
+                statementFormOfNodeToReplace = (TStatementSyntax)syntaxGenerator.GetStatements(newAncestor).Single();
+                conditionalExpression = (TConditionalExpressionSyntax)statementFormOfNodeToReplace.GetAnnotatedNodes(s_followAnnotation).Single();
+                convertedAncestor = (ancestorNeedingConversion, newAncestor);
             }
 
             var document = context.Document;
@@ -43,46 +64,43 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
                 CodeActionTitle,
                 cancellationToken => ConvertAsync(
                     document,
-                    result,
+                    conditionalExpression,
+                    statementFormOfNodeToReplace,
+                    convertedAncestor,
                     cancellationToken)));
         }
 
         private async Task<Document> ConvertAsync(
             Document document,
-            ReplaceNodeWithStatementResult result,
+            TConditionalExpressionSyntax conditionalExpression,
+            TStatementSyntax statementFormOfNodeToReplace,
+            (SyntaxNode original, SyntaxNode @new)? convertedAncestor,
             CancellationToken cancellationToken)
         {
             var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
 
-            var conditionalExpressionAfterConversion = (TConditionalExpressionSyntax)result.StatementFormOfNode.GetAnnotatedNodes(s_followAnnotation).Single();
-
-            var conditionalExpressionParts = Deconstruct(conditionalExpressionAfterConversion);
+            var conditionalExpressionParts = Deconstruct(conditionalExpression);
 
             var ifStatement = (TStatementSyntax)syntaxGenerator
                 .IfStatement(
                     conditionalExpressionParts.condition.WithoutTrivia(),
                     trueStatements: new[]
                     {
-                        result.StatementFormOfNode.ReplaceNode(conditionalExpressionAfterConversion, conditionalExpressionParts.whenTrue.WithoutTrivia())
+                        statementFormOfNodeToReplace.ReplaceNode(conditionalExpression, conditionalExpressionParts.whenTrue.WithoutTrivia())
                     },
                     falseStatements: new[]
                     {
-                        result.StatementFormOfNode.ReplaceNode(conditionalExpressionAfterConversion, conditionalExpressionParts.whenFalse.WithoutTrivia())
+                        statementFormOfNodeToReplace.ReplaceNode(conditionalExpression, conditionalExpressionParts.whenFalse.WithoutTrivia())
                     })
                 .WithAdditionalAnnotations(Formatter.Annotation);
 
-            if (result.ConvertedAncestor is { })
-            {
-                syntaxRoot = syntaxRoot.ReplaceNode(result.OriginalAncestor, result.ConvertedAncestor);
-            }
-
-            syntaxRoot = syntaxRoot.ReplaceNode(result.StatementFormOfNode, ifStatement);
-
-            return document.WithSyntaxRoot(syntaxRoot);
+            return document.WithSyntaxRoot(convertedAncestor is var (original, @new)
+                ? syntaxRoot.ReplaceNode(original, @new.ReplaceNode(statementFormOfNodeToReplace, ifStatement))
+                : syntaxRoot.ReplaceNode(statementFormOfNodeToReplace, ifStatement));
         }
 
-        private ReplaceNodeWithStatementResult GetNodeToReplaceWithIfStatement(SemanticModel semanticModel, SyntaxNode node)
+        private SyntaxNode GetNodeToReplaceWithIfStatement(SyntaxNode node, out SyntaxNode ancestorNeedingConversion)
         {
             foreach (var ancestor in node.Ancestors())
             {
@@ -91,23 +109,21 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
                     break;
                 }
 
-                var result = CanReplaceWithStatement(semanticModel, ancestor);
-                if (result.IsPossibleInTheory)
+                if (CanReplaceWithStatement(ancestor, out ancestorNeedingConversion))
                 {
-                    // If possible in theory, stop searching even if we bailed for some reason when trying to convert
-                    // something to statement form.
-                    return result;
+                    return ancestor;
                 }
-
-                // If not possible in theory, continue searching higher up.
             }
 
-            return ReplaceNodeWithStatementResult.NotPossibleInTheory;
+            ancestorNeedingConversion = null;
+            return null;
         }
 
         protected abstract bool IsInvalidAncestorForRefactoring(SyntaxNode node);
 
-        protected abstract ReplaceNodeWithStatementResult CanReplaceWithStatement(SemanticModel semanticModel, SyntaxNode node);
+        protected abstract bool CanReplaceWithStatement(SyntaxNode node, out SyntaxNode ancestorNeedingConversion);
+
+        protected abstract SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel);
 
         protected abstract (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(TConditionalExpressionSyntax conditionalExpression);
 
