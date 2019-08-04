@@ -16,9 +16,114 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
         {
             return container switch
             {
-                LambdaExpressionSyntax lambda => TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel),
-                _ => null
+                LambdaExpressionSyntax lambda
+                    => TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel),
+
+                AccessorDeclarationSyntax { ExpressionBody: { } expressionBody } accessor
+                    => expressionBody.TryConvertToBlock(
+                        accessor.SemicolonToken,
+                        createReturnStatementForExpression: container.IsKind(SyntaxKind.GetAccessorDeclaration),
+                        out var block)
+                    ? accessor
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithBody(block)
+                    : null,
+
+                ConstructorDeclarationSyntax { ExpressionBody: { } expressionBody } constructor
+                    => expressionBody.TryConvertToBlock(
+                        constructor.SemicolonToken,
+                        createReturnStatementForExpression: false,
+                        out var block)
+                    ? constructor
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithBody(block)
+                    : null,
+
+                ConversionOperatorDeclarationSyntax { ExpressionBody: { } expressionBody } conversionOperator
+                    => expressionBody.TryConvertToBlock(
+                        conversionOperator.SemicolonToken,
+                        createReturnStatementForExpression: true,
+                        out var block)
+                    ? conversionOperator
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithBody(block)
+                    : null,
+
+                IndexerDeclarationSyntax { ExpressionBody: { } expressionBody } indexer
+                    => expressionBody.TryConvertToBlock(
+                        indexer.SemicolonToken,
+                        createReturnStatementForExpression: true,
+                        out var block)
+                    ? indexer
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithAccessorList(CreateStatementBodiedGetAccessorList(block))
+                    : null,
+
+                LocalFunctionStatementSyntax { ExpressionBody: { } expressionBody } localFunction
+                    => expressionBody.TryConvertToBlock(
+                        localFunction.SemicolonToken,
+                        CreateReturnStatementForExpression(semanticModel, localFunction),
+                        out var block)
+                    ? localFunction
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithBody(block)
+                    : null,
+
+                MethodDeclarationSyntax { ExpressionBody: { } expressionBody } method
+                    => expressionBody.TryConvertToBlock(
+                        method.SemicolonToken,
+                        CreateReturnStatementForExpression(semanticModel, method),
+                        out var block)
+                    ? method
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithBody(block)
+                    : null,
+
+                OperatorDeclarationSyntax { ExpressionBody: { } expressionBody } @operator
+                    => expressionBody.TryConvertToBlock(
+                        @operator.SemicolonToken,
+                        createReturnStatementForExpression: true,
+                        out var block)
+                    ? @operator
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithBody(block)
+                    : null,
+
+                PropertyDeclarationSyntax { ExpressionBody: { } expressionBody } property
+                    => expressionBody.TryConvertToBlock(
+                        property.SemicolonToken,
+                        createReturnStatementForExpression: true,
+                        out var block)
+                    ? property
+                        .WithExpressionBody(null)
+                        .WithSemicolonToken(default)
+                        .WithAccessorList(CreateStatementBodiedGetAccessorList(block))
+                    : null,
+
+                _ => (SyntaxNode)null
             };
+        }
+
+        private static AccessorListSyntax CreateStatementBodiedGetAccessorList(BlockSyntax block)
+        {
+            // When converting an expression-bodied property to a block body, always attempt to
+            // create an accessor with a block body (even if the user likes expression bodied
+            // accessors.  While this technically doesn't match their preferences, it fits with
+            // the far more likely scenario that the user wants to convert this property into
+            // a full property so that they can flesh out the body contents.  If we keep around
+            // an expression bodied accessor they'll just have to convert that to a block as well
+            // and that means two steps to take instead of one.
+
+            var getAccessor = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration).WithBody(block);
+
+            return SyntaxFactory.AccessorList(SyntaxFactory.SingletonList(getAccessor));
         }
 
         public static LambdaExpressionSyntax TryConvertToStatementBody(
@@ -75,6 +180,34 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
             }
 
             return true;
+        }
+
+        private static bool CreateReturnStatementForExpression(SemanticModel semanticModel, LocalFunctionStatementSyntax statement)
+        {
+            if (statement.Modifiers.Any(SyntaxKind.AsyncKeyword))
+            {
+                // if it's 'async TaskLike' (where TaskLike is non-generic) we do *not* want to
+                // create a return statement.  This is just the 'async' version of a 'void' local function.
+                var symbol = semanticModel.GetDeclaredSymbol(statement);
+                return symbol is IMethodSymbol methodSymbol &&
+                    methodSymbol.ReturnType is INamedTypeSymbol namedType &&
+                    namedType.Arity != 0;
+            }
+
+            return !statement.ReturnType.IsVoid();
+        }
+
+        private static bool CreateReturnStatementForExpression(SemanticModel semanticModel, MethodDeclarationSyntax declaration)
+        {
+            if (declaration.Modifiers.Any(SyntaxKind.AsyncKeyword))
+            {
+                // if it's 'async TaskLike' (where TaskLike is non-generic) we do *not* want to
+                // create a return statement.  This is just the 'async' version of a 'void' method.
+                var method = semanticModel.GetDeclaredSymbol(declaration);
+                return method.ReturnType is INamedTypeSymbol namedType && namedType.Arity != 0;
+            }
+
+            return !declaration.ReturnType.IsVoid();
         }
     }
 }

@@ -29,17 +29,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
         protected override ArrowExpressionClauseSyntax GetExpressionBody(IndexerDeclarationSyntax declaration)
             => declaration.ExpressionBody;
 
-        protected override SyntaxToken GetSemicolonToken(IndexerDeclarationSyntax declaration)
-            => declaration.SemicolonToken;
-
         protected override IndexerDeclarationSyntax WithSemicolonToken(IndexerDeclarationSyntax declaration, SyntaxToken token)
             => declaration.WithSemicolonToken(token);
 
         protected override IndexerDeclarationSyntax WithExpressionBody(IndexerDeclarationSyntax declaration, ArrowExpressionClauseSyntax expressionBody)
             => declaration.WithExpressionBody(expressionBody);
-
-        protected override IndexerDeclarationSyntax WithAccessorList(IndexerDeclarationSyntax declaration, AccessorListSyntax accessorList)
-            => declaration.WithAccessorList(accessorList);
 
         protected override IndexerDeclarationSyntax WithBody(IndexerDeclarationSyntax declaration, BlockSyntax body)
         {
@@ -50,13 +44,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
 
             throw new InvalidOperationException();
         }
-
-        protected override IndexerDeclarationSyntax WithGenerateBody(SemanticModel semanticModel, IndexerDeclarationSyntax declaration)
-        {
-            return WithAccessorList(semanticModel, declaration);
-        }
-
-        protected override bool CreateReturnStatementForExpression(SemanticModel semanticModel, IndexerDeclarationSyntax declaration) => true;
 
         protected override bool TryConvertToExpressionBody(
             IndexerDeclarationSyntax declaration, ParseOptions options,

@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Utilities;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Options;
 
@@ -227,11 +227,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             }
             else
             {
-                return WithSemicolonToken(
-                           WithExpressionBody(
-                               WithGenerateBody(semanticModel, declaration),
-                               expressionBody: null),
-                           default);
+                var converted = CSharpDeclarationBodyHelpers.TryConvertToStatementBody(
+                    declaration,
+                    semanticModel,
+                    containerForSemanticModel: declaration);
+
+                return (TDeclaration)converted ?? declaration;
             }
         }
 
@@ -239,60 +240,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
 
         protected abstract ArrowExpressionClauseSyntax GetExpressionBody(TDeclaration declaration);
 
-        protected abstract bool CreateReturnStatementForExpression(SemanticModel semanticModel, TDeclaration declaration);
-
-        protected abstract SyntaxToken GetSemicolonToken(TDeclaration declaration);
-
         protected abstract TDeclaration WithSemicolonToken(TDeclaration declaration, SyntaxToken token);
         protected abstract TDeclaration WithExpressionBody(TDeclaration declaration, ArrowExpressionClauseSyntax expressionBody);
         protected abstract TDeclaration WithBody(TDeclaration declaration, BlockSyntax body);
-
-        protected virtual TDeclaration WithGenerateBody(SemanticModel semanticModel, TDeclaration declaration)
-        {
-            var expressionBody = GetExpressionBody(declaration);
-
-            if (expressionBody.TryConvertToBlock(
-                    GetSemicolonToken(declaration),
-                    CreateReturnStatementForExpression(semanticModel, declaration),
-                    out var block))
-            {
-                return WithBody(declaration, block);
-            }
-
-            return declaration;
-        }
-
-        protected TDeclaration WithAccessorList(SemanticModel semanticModel, TDeclaration declaration)
-        {
-            var expressionBody = GetExpressionBody(declaration);
-            var semicolonToken = GetSemicolonToken(declaration);
-
-            // When converting an expression-bodied property to a block body, always attempt to
-            // create an accessor with a block body (even if the user likes expression bodied
-            // accessors.  While this technically doesn't match their preferences, it fits with
-            // the far more likely scenario that the user wants to convert this property into
-            // a full property so that they can flesh out the body contents.  If we keep around
-            // an expression bodied accessor they'll just have to convert that to a block as well
-            // and that means two steps to take instead of one.
-
-            expressionBody.TryConvertToBlock(
-                GetSemicolonToken(declaration),
-                CreateReturnStatementForExpression(semanticModel, declaration),
-                out var block);
-
-            var accessor = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration);
-            accessor = block != null
-                ? accessor.WithBody(block)
-                : accessor.WithExpressionBody(expressionBody)
-                          .WithSemicolonToken(semicolonToken);
-
-            return WithAccessorList(declaration, SyntaxFactory.AccessorList(
-                SyntaxFactory.SingletonList(accessor)));
-        }
-
-        protected virtual TDeclaration WithAccessorList(TDeclaration declaration, AccessorListSyntax accessorListSyntax)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

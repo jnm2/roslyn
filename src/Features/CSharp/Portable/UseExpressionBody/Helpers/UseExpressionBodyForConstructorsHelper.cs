@@ -27,9 +27,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
         protected override ArrowExpressionClauseSyntax GetExpressionBody(ConstructorDeclarationSyntax declaration)
             => declaration.ExpressionBody;
 
-        protected override SyntaxToken GetSemicolonToken(ConstructorDeclarationSyntax declaration)
-            => declaration.SemicolonToken;
-
         protected override ConstructorDeclarationSyntax WithSemicolonToken(ConstructorDeclarationSyntax declaration, SyntaxToken token)
             => declaration.WithSemicolonToken(token);
 
@@ -38,7 +35,5 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
 
         protected override ConstructorDeclarationSyntax WithBody(ConstructorDeclarationSyntax declaration, BlockSyntax body)
             => declaration.WithBody(body);
-
-        protected override bool CreateReturnStatementForExpression(SemanticModel semanticModel, ConstructorDeclarationSyntax declaration) => false;
     }
 }

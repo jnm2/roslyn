@@ -29,17 +29,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
         protected override ArrowExpressionClauseSyntax GetExpressionBody(PropertyDeclarationSyntax declaration)
             => declaration.ExpressionBody;
 
-        protected override SyntaxToken GetSemicolonToken(PropertyDeclarationSyntax declaration)
-            => declaration.SemicolonToken;
-
         protected override PropertyDeclarationSyntax WithSemicolonToken(PropertyDeclarationSyntax declaration, SyntaxToken token)
             => declaration.WithSemicolonToken(token);
 
         protected override PropertyDeclarationSyntax WithExpressionBody(PropertyDeclarationSyntax declaration, ArrowExpressionClauseSyntax expressionBody)
             => declaration.WithExpressionBody(expressionBody);
-
-        protected override PropertyDeclarationSyntax WithAccessorList(PropertyDeclarationSyntax declaration, AccessorListSyntax accessorListSyntax)
-            => declaration.WithAccessorList(accessorListSyntax);
 
         protected override PropertyDeclarationSyntax WithBody(PropertyDeclarationSyntax declaration, BlockSyntax body)
         {
@@ -50,13 +44,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
 
             throw new InvalidOperationException();
         }
-
-        protected override PropertyDeclarationSyntax WithGenerateBody(SemanticModel semanticModel, PropertyDeclarationSyntax declaration)
-        {
-            return WithAccessorList(semanticModel, declaration);
-        }
-
-        protected override bool CreateReturnStatementForExpression(SemanticModel semanticModel, PropertyDeclarationSyntax declaration) => true;
 
         protected override bool TryConvertToExpressionBody(
             PropertyDeclarationSyntax declaration, ParseOptions options,

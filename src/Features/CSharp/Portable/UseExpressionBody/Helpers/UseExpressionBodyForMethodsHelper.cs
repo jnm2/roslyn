@@ -28,9 +28,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
         protected override ArrowExpressionClauseSyntax GetExpressionBody(MethodDeclarationSyntax declaration)
             => declaration.ExpressionBody;
 
-        protected override SyntaxToken GetSemicolonToken(MethodDeclarationSyntax declaration)
-            => declaration.SemicolonToken;
-
         protected override MethodDeclarationSyntax WithSemicolonToken(MethodDeclarationSyntax declaration, SyntaxToken token)
             => declaration.WithSemicolonToken(token);
 
@@ -39,19 +36,5 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
 
         protected override MethodDeclarationSyntax WithBody(MethodDeclarationSyntax declaration, BlockSyntax body)
             => declaration.WithBody(body);
-
-        protected override bool CreateReturnStatementForExpression(
-            SemanticModel semanticModel, MethodDeclarationSyntax declaration)
-        {
-            if (declaration.Modifiers.Any(SyntaxKind.AsyncKeyword))
-            {
-                // if it's 'async TaskLike' (where TaskLike is non-generic) we do *not* want to
-                // create a return statement.  This is just the 'async' version of a 'void' method.
-                var method = semanticModel.GetDeclaredSymbol(declaration);
-                return method.ReturnType is INamedTypeSymbol namedType && namedType.Arity != 0;
-            }
-
-            return !declaration.ReturnType.IsVoid();
-        }
     }
 }
