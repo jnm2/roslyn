@@ -12,10 +12,9 @@ using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Utilities;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Options;
-using Microsoft.CodeAnalysis.Shared.Extensions;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
@@ -57,7 +56,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
                 return false;
             }
 
-            // They don't have an expression body.  See if we could convert the block they 
+            // They don't have an expression body.  See if we could convert the block they
             // have into one.
             var options = declaration.SyntaxTree.Options;
             return TryConvertToExpressionBody(declaration, options, preference, out _, out _);
@@ -159,59 +158,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
         private static LambdaExpressionSyntax WithBlockBody(
             SemanticModel semanticModel, LambdaExpressionSyntax originalDeclaration, LambdaExpressionSyntax currentDeclaration)
         {
-            var expressionBody = GetBodyAsExpression(currentDeclaration);
-            var createReturnStatementForExpression = CreateReturnStatementForExpression(
-                semanticModel, originalDeclaration);
-
-            if (!expressionBody.TryConvertToStatement(
-                    semicolonTokenOpt: default,
-                    createReturnStatementForExpression,
-                    out var statement))
-            {
-                return currentDeclaration;
-            }
-
-            // If the user is converting to a block, it's likely they intend to add multiple
-            // statements to it.  So make a multi-line block so that things are formatted properly
-            // for them to do so.
-            return currentDeclaration.WithBody(SyntaxFactory.Block(
-                SyntaxFactory.Token(SyntaxKind.OpenBraceToken).WithAppendedTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed),
-                SyntaxFactory.SingletonList(statement),
-                SyntaxFactory.Token(SyntaxKind.CloseBraceToken)));
-        }
-
-        private static bool CreateReturnStatementForExpression(
-            SemanticModel semanticModel, LambdaExpressionSyntax declaration)
-        {
-            var lambdaType = (INamedTypeSymbol)semanticModel.GetTypeInfo(declaration).ConvertedType;
-            if (lambdaType.DelegateInvokeMethod.ReturnsVoid)
-            {
-                return false;
-            }
-
-            // 'async Task' is effectively a void-returning lambda.  we do not want to create 
-            // 'return statements' when converting.
-            if (declaration.AsyncKeyword != default)
-            {
-                var returnType = lambdaType.DelegateInvokeMethod.ReturnType;
-                if (returnType.IsErrorType())
-                {
-                    // "async Goo" where 'Goo' failed to bind.  If 'Goo' is 'Task' then it's
-                    // reasonable to assume this is just a missing 'using' and that this is a true
-                    // "async Task" lambda.  If the name isn't 'Task', then this looks like a
-                    // real return type, and we should use return statements.
-                    return returnType.Name != nameof(Task);
-                }
-
-                var taskType = semanticModel.Compilation.GetTypeByMetadataName(typeof(Task).FullName);
-                if (returnType.Equals(taskType))
-                {
-                    // 'async Task'.  definitely do not create a 'return' statement;
-                    return false;
-                }
-            }
-
-            return true;
+            return CSharpDeclarationBodyHelpers.TryConvertToStatementBody(currentDeclaration, semanticModel, originalDeclaration)
+                ?? currentDeclaration;
         }
 
         private class MyCodeAction : CodeAction.DocumentChangeAction

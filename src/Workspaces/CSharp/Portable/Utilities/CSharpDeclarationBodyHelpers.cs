@@ -1,12 +1,11 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 
-namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
+namespace Microsoft.CodeAnalysis.CSharp.Utilities
 {
     internal static class CSharpDeclarationBodyHelpers
     {
@@ -15,13 +14,11 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
             SemanticModel semanticModel,
             SyntaxNode containerForSemanticModel)
         {
-            switch (container)
+            return container switch
             {
-                case LambdaExpressionSyntax lambda:
-                    return TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel);
-            }
-
-            return null;
+                LambdaExpressionSyntax lambda => TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel),
+                _ => null
+            };
         }
 
         public static LambdaExpressionSyntax TryConvertToStatementBody(
