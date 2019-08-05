@@ -39,9 +39,9 @@ namespace Microsoft.CodeAnalysis.CSharp.ConvertConditionalToIf
             return false;
         }
 
-        protected override SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel)
+        protected override SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel, out StatementSyntax statement)
         {
-            return CSharpDeclarationBodyHelpers.TryConvertToStatementBody(container, semanticModel, containerForSemanticModel);
+            return CSharpDeclarationBodyHelpers.TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out statement);
         }
 
         protected override (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(ConditionalExpressionSyntax conditionalExpression)

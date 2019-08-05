@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -10,105 +12,154 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
     internal static class CSharpDeclarationBodyHelpers
     {
         public static SyntaxNode TryConvertToStatementBody(
+              SyntaxNode container,
+              SemanticModel semanticModel,
+              SyntaxNode containerForSemanticModel)
+        {
+            return TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out _);
+        }
+
+        public static SyntaxNode TryConvertToStatementBody(
             SyntaxNode container,
             SemanticModel semanticModel,
-            SyntaxNode containerForSemanticModel)
+            SyntaxNode containerForSemanticModel,
+            out StatementSyntax statement)
         {
-            return container switch
+            switch (container)
             {
-                LambdaExpressionSyntax lambda
-                    => TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel),
+                case LambdaExpressionSyntax lambda:
+                    return TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel, out statement);
 
-                AccessorDeclarationSyntax { ExpressionBody: { } expressionBody } accessor
-                    => expressionBody.TryConvertToBlock(
+                case AccessorDeclarationSyntax accessor:
+                    return TryConvertToBlock(
+                        accessor,
+                        accessor.ExpressionBody,
                         accessor.SemicolonToken,
                         createReturnStatementForExpression: container.IsKind(SyntaxKind.GetAccessorDeclaration),
-                        out var block)
-                    ? accessor
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithBody(block)
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithBody(block),
+                        syntax => syntax.Body,
+                        out statement);
 
-                ConstructorDeclarationSyntax { ExpressionBody: { } expressionBody } constructor
-                    => expressionBody.TryConvertToBlock(
+                case ConstructorDeclarationSyntax constructor:
+                    return TryConvertToBlock(
+                        constructor,
+                        constructor.ExpressionBody,
                         constructor.SemicolonToken,
                         createReturnStatementForExpression: false,
-                        out var block)
-                    ? constructor
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithBody(block)
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithBody(block),
+                        syntax => syntax.Body,
+                        out statement);
 
-                ConversionOperatorDeclarationSyntax { ExpressionBody: { } expressionBody } conversionOperator
-                    => expressionBody.TryConvertToBlock(
+                case ConversionOperatorDeclarationSyntax conversionOperator:
+                    return TryConvertToBlock(
+                        conversionOperator,
+                        conversionOperator.ExpressionBody,
                         conversionOperator.SemicolonToken,
                         createReturnStatementForExpression: true,
-                        out var block)
-                    ? conversionOperator
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithBody(block)
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithBody(block),
+                        syntax => syntax.Body,
+                        out statement);
 
-                IndexerDeclarationSyntax { ExpressionBody: { } expressionBody } indexer
-                    => expressionBody.TryConvertToBlock(
+                case IndexerDeclarationSyntax indexer:
+                    return TryConvertToBlock(
+                        indexer,
+                        indexer.ExpressionBody,
                         indexer.SemicolonToken,
                         createReturnStatementForExpression: true,
-                        out var block)
-                    ? indexer
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithAccessorList(CreateStatementBodiedGetAccessorList(block))
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithAccessorList(CreateStatementBodiedGetAccessorList(block)),
+                        syntax => syntax.AccessorList.Accessors.Single().Body,
+                        out statement);
 
-                LocalFunctionStatementSyntax { ExpressionBody: { } expressionBody } localFunction
-                    => expressionBody.TryConvertToBlock(
+                case LocalFunctionStatementSyntax localFunction:
+                    return TryConvertToBlock(
+                        localFunction,
+                        localFunction.ExpressionBody,
                         localFunction.SemicolonToken,
                         CreateReturnStatementForExpression(semanticModel, localFunction),
-                        out var block)
-                    ? localFunction
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithBody(block)
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithBody(block),
+                        syntax => syntax.Body,
+                        out statement);
 
-                MethodDeclarationSyntax { ExpressionBody: { } expressionBody } method
-                    => expressionBody.TryConvertToBlock(
+                case MethodDeclarationSyntax method:
+                    return TryConvertToBlock(
+                        method,
+                        method.ExpressionBody,
                         method.SemicolonToken,
                         CreateReturnStatementForExpression(semanticModel, method),
-                        out var block)
-                    ? method
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithBody(block)
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithBody(block),
+                        syntax => syntax.Body,
+                        out statement);
 
-                OperatorDeclarationSyntax { ExpressionBody: { } expressionBody } @operator
-                    => expressionBody.TryConvertToBlock(
+                case OperatorDeclarationSyntax @operator:
+                    return TryConvertToBlock(
+                        @operator,
+                        @operator.ExpressionBody,
                         @operator.SemicolonToken,
                         createReturnStatementForExpression: true,
-                        out var block)
-                    ? @operator
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithBody(block)
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithBody(block),
+                        syntax => syntax.Body,
+                        out statement);
 
-                PropertyDeclarationSyntax { ExpressionBody: { } expressionBody } property
-                    => expressionBody.TryConvertToBlock(
+                case PropertyDeclarationSyntax property:
+                    return TryConvertToBlock(
+                        property,
+                        property.ExpressionBody,
                         property.SemicolonToken,
                         createReturnStatementForExpression: true,
-                        out var block)
-                    ? property
-                        .WithExpressionBody(null)
-                        .WithSemicolonToken(default)
-                        .WithAccessorList(CreateStatementBodiedGetAccessorList(block))
-                    : null,
+                        (syntax, block) => syntax
+                            .WithExpressionBody(null)
+                            .WithSemicolonToken(default)
+                            .WithAccessorList(CreateStatementBodiedGetAccessorList(block)),
+                        syntax => syntax.AccessorList.Accessors.Single().Body,
+                        out statement);
 
-                _ => (SyntaxNode)null
-            };
+                default:
+                    statement = null;
+                    return null;
+            }
+        }
+
+        private static TSyntaxNode TryConvertToBlock<TSyntaxNode>(
+            TSyntaxNode container,
+            ArrowExpressionClauseSyntax arrowExpression,
+            SyntaxToken semicolonToken,
+            bool createReturnStatementForExpression,
+            Func<TSyntaxNode, BlockSyntax, TSyntaxNode> withOnlyBody,
+            Func<TSyntaxNode, BlockSyntax> getBody,
+            out StatementSyntax statement)
+            where TSyntaxNode : SyntaxNode
+        {
+            if (arrowExpression != null
+                && arrowExpression.TryConvertToBlock(semicolonToken, createReturnStatementForExpression, out var block))
+            {
+                var result = withOnlyBody.Invoke(container, block);
+                statement = getBody.Invoke(result).Statements.Single();
+                return result;
+            }
+
+            statement = null;
+            return null;
         }
 
         private static AccessorListSyntax CreateStatementBodiedGetAccessorList(BlockSyntax block)
@@ -131,21 +182,34 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
             SemanticModel semanticModel,
             LambdaExpressionSyntax containerForSemanticModel)
         {
+            return TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out _);
+        }
+
+        public static LambdaExpressionSyntax TryConvertToStatementBody(
+            LambdaExpressionSyntax container,
+            SemanticModel semanticModel,
+            LambdaExpressionSyntax containerForSemanticModel,
+            out StatementSyntax statement)
+        {
             if (container is { Body: ExpressionSyntax expressionBody }
                 && expressionBody.TryConvertToStatement(
                     semicolonTokenOpt: default,
                     CreateReturnStatementForExpression(semanticModel, containerForSemanticModel),
-                    out var statement))
+                    out var convertedStatement))
             {
                 // If the user is converting to a block, it's likely they intend to add multiple
                 // statements to it.  So make a multi-line block so that things are formatted properly
                 // for them to do so.
-                return container.WithBody(SyntaxFactory.Block(
+                var result = container.WithBody(SyntaxFactory.Block(
                     SyntaxFactory.Token(SyntaxKind.OpenBraceToken).WithAppendedTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed),
-                    SyntaxFactory.SingletonList(statement),
+                    SyntaxFactory.SingletonList(convertedStatement),
                     SyntaxFactory.Token(SyntaxKind.CloseBraceToken)));
+
+                statement = ((BlockSyntax)result.Body).Statements.Single();
+                return result;
             }
 
+            statement = null;
             return null;
         }
 

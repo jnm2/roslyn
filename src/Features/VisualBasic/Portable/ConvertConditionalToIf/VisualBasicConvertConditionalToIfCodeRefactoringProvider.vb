@@ -20,7 +20,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ConvertConditionalToIf
             Throw New NotImplementedException()
         End Function
 
-        Protected Overrides Function TryConvertToStatementBody(container As SyntaxNode, semanticModel As SemanticModel, containerForSemanticModel As SyntaxNode) As SyntaxNode
+        Protected Overrides Function TryConvertToStatementBody(container As SyntaxNode, semanticModel As SemanticModel, containerForSemanticModel As SyntaxNode, ByRef statement As StatementSyntax) As SyntaxNode
             Throw New NotImplementedException()
         End Function
 
