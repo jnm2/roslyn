@@ -227,7 +227,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             }
             else
             {
-                var converted = CSharpDeclarationBodyHelpers.TryConvertToStatementBody(
+                var converted = CSharpBodyHelpers.TryConvertToStatementBody(
                     declaration,
                     semanticModel,
                     containerForSemanticModel: declaration);

@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Shared.Extensions;
 
 namespace Microsoft.CodeAnalysis.CSharp.Utilities
 {
-    internal static class CSharpDeclarationBodyHelpers
+    internal static class CSharpBodyHelpers
     {
         public static SyntaxNode TryConvertToStatementBody(
               SyntaxNode container,

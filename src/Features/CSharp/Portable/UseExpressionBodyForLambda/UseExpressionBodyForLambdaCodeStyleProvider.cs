@@ -158,7 +158,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
         private static LambdaExpressionSyntax WithBlockBody(
             SemanticModel semanticModel, LambdaExpressionSyntax originalDeclaration, LambdaExpressionSyntax currentDeclaration)
         {
-            return CSharpDeclarationBodyHelpers.TryConvertToStatementBody(currentDeclaration, semanticModel, originalDeclaration)
+            return CSharpBodyHelpers.TryConvertToStatementBody(currentDeclaration, semanticModel, originalDeclaration)
                 ?? currentDeclaration;
         }
 
