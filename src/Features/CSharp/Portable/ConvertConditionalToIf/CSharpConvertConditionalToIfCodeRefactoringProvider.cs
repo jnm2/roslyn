@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System.Composition;
+using System.Linq;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.ConvertConditionalToIf;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -41,7 +42,9 @@ namespace Microsoft.CodeAnalysis.CSharp.ConvertConditionalToIf
 
         protected override SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel, out StatementSyntax statement)
         {
-            return CSharpBodyHelpers.TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out statement);
+            var converted = CSharpBodyHelpers.TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out var block);
+            statement = block?.Statements.Single();
+            return converted;
         }
 
         protected override (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(ConditionalExpressionSyntax conditionalExpression)

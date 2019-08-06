@@ -23,12 +23,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
             SyntaxNode container,
             SemanticModel semanticModel,
             SyntaxNode containerForSemanticModel,
-            out StatementSyntax statement)
+            out BlockSyntax block)
         {
             switch (container)
             {
                 case LambdaExpressionSyntax lambda:
-                    return TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel, out statement);
+                    return TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel, out block);
 
                 case AccessorDeclarationSyntax accessor:
                     return TryConvertToBlock(
@@ -41,7 +41,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithBody(block),
                         syntax => syntax.Body,
-                        out statement);
+                        out block);
 
                 case ConstructorDeclarationSyntax constructor:
                     return TryConvertToBlock(
@@ -54,7 +54,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithBody(block),
                         syntax => syntax.Body,
-                        out statement);
+                        out block);
 
                 case ConversionOperatorDeclarationSyntax conversionOperator:
                     return TryConvertToBlock(
@@ -67,7 +67,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithBody(block),
                         syntax => syntax.Body,
-                        out statement);
+                        out block);
 
                 case IndexerDeclarationSyntax indexer:
                     return TryConvertToBlock(
@@ -80,7 +80,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithAccessorList(CreateStatementBodiedGetAccessorList(block)),
                         syntax => syntax.AccessorList.Accessors.Single().Body,
-                        out statement);
+                        out block);
 
                 case LocalFunctionStatementSyntax localFunction:
                     return TryConvertToBlock(
@@ -93,7 +93,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithBody(block),
                         syntax => syntax.Body,
-                        out statement);
+                        out block);
 
                 case MethodDeclarationSyntax method:
                     return TryConvertToBlock(
@@ -106,7 +106,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithBody(block),
                         syntax => syntax.Body,
-                        out statement);
+                        out block);
 
                 case OperatorDeclarationSyntax @operator:
                     return TryConvertToBlock(
@@ -119,7 +119,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithBody(block),
                         syntax => syntax.Body,
-                        out statement);
+                        out block);
 
                 case PropertyDeclarationSyntax property:
                     return TryConvertToBlock(
@@ -132,10 +132,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                             .WithSemicolonToken(default)
                             .WithAccessorList(CreateStatementBodiedGetAccessorList(block)),
                         syntax => syntax.AccessorList.Accessors.Single().Body,
-                        out statement);
+                        out block);
 
                 default:
-                    statement = null;
+                    block = null;
                     return null;
             }
         }
@@ -147,18 +147,18 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
             bool createReturnStatementForExpression,
             Func<TSyntaxNode, BlockSyntax, TSyntaxNode> withOnlyBody,
             Func<TSyntaxNode, BlockSyntax> getBody,
-            out StatementSyntax statement)
+            out BlockSyntax block)
             where TSyntaxNode : SyntaxNode
         {
             if (arrowExpression != null
-                && arrowExpression.TryConvertToBlock(semicolonToken, createReturnStatementForExpression, out var block))
+                && arrowExpression.TryConvertToBlock(semicolonToken, createReturnStatementForExpression, out var convertedBlock))
             {
-                var result = withOnlyBody.Invoke(container, block);
-                statement = getBody.Invoke(result).Statements.Single();
+                var result = withOnlyBody.Invoke(container, convertedBlock);
+                block = getBody.Invoke(result);
                 return result;
             }
 
-            statement = null;
+            block = null;
             return null;
         }
 
@@ -189,7 +189,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
             LambdaExpressionSyntax container,
             SemanticModel semanticModel,
             LambdaExpressionSyntax containerForSemanticModel,
-            out StatementSyntax statement)
+            out BlockSyntax block)
         {
             if (container is { Body: ExpressionSyntax expressionBody }
                 && expressionBody.TryConvertToStatement(
@@ -205,11 +205,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                     SyntaxFactory.SingletonList(convertedStatement),
                     SyntaxFactory.Token(SyntaxKind.CloseBraceToken)));
 
-                statement = ((BlockSyntax)result.Body).Statements.Single();
+                block = (BlockSyntax)result.Body;
                 return result;
             }
 
-            statement = null;
+            block = null;
             return null;
         }
 
