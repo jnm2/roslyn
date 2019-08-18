@@ -28,32 +28,11 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
             }
 
             var nodeToReplaceWithIfStatement = GetNodeToReplaceWithIfStatement(conditionalExpression, out var ancestorNeedingConversion);
-            if (nodeToReplaceWithIfStatement is null)
+
+            if (nodeToReplaceWithIfStatement is null
+                || (ancestorNeedingConversion is { } && !CanConvertToStatementBody(ancestorNeedingConversion)))
             {
                 return;
-            }
-
-            var convertedAncestor = ((SyntaxNode original, SyntaxNode @new)?)null;
-
-            if (!(nodeToReplaceWithIfStatement is TStatementSyntax statementFormOfNodeToReplace))
-            {
-                var ancestorWithTrackedConditionalExpression = ancestorNeedingConversion.ReplaceNode(
-                    conditionalExpression,
-                    conditionalExpression.WithAdditionalAnnotations(s_followAnnotation));
-
-                var newAncestor = TryConvertToStatementBody(
-                    ancestorWithTrackedConditionalExpression,
-                    await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false),
-                    containerForSemanticModel: ancestorNeedingConversion,
-                    out statementFormOfNodeToReplace);
-
-                if (newAncestor is null)
-                {
-                    return;
-                }
-
-                conditionalExpression = (TConditionalExpressionSyntax)statementFormOfNodeToReplace.GetAnnotatedNodes(s_followAnnotation).Single();
-                convertedAncestor = (ancestorNeedingConversion, newAncestor);
             }
 
             var document = context.Document;
@@ -63,20 +42,39 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
                 cancellationToken => ConvertAsync(
                     document,
                     conditionalExpression,
-                    statementFormOfNodeToReplace,
-                    convertedAncestor,
+                    nodeToReplaceWithIfStatement,
+                    ancestorNeedingConversion,
                     cancellationToken)));
         }
 
         private async Task<Document> ConvertAsync(
             Document document,
             TConditionalExpressionSyntax conditionalExpression,
-            TStatementSyntax statementFormOfNodeToReplace,
-            (SyntaxNode original, SyntaxNode @new)? convertedAncestor,
+            SyntaxNode nodeToReplaceWithIfStatement,
+            SyntaxNode ancestorNeedingConversion,
             CancellationToken cancellationToken)
         {
             var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
+
+            var convertedAncestor = ((SyntaxNode original, SyntaxNode @new)?)null;
+
+            if (!(nodeToReplaceWithIfStatement is TStatementSyntax statementFormOfNodeToReplace))
+            {
+                var ancestorWithTrackedConditionalExpression = ancestorNeedingConversion.ReplaceNode(
+                    conditionalExpression,
+                    conditionalExpression.WithAdditionalAnnotations(s_followAnnotation));
+
+                //var syntaxRootWithTrackedConditionalExpression = syntaxRoot.ReplaceNode(ancestorNeedingConversion, ancestorWithTrackedConditionalExpression);
+
+                var newAncestor = ConvertToStatementBody(
+                    await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false),
+                    ancestorWithTrackedConditionalExpression,
+                    out statementFormOfNodeToReplace);
+
+                conditionalExpression = (TConditionalExpressionSyntax)statementFormOfNodeToReplace.GetAnnotatedNodes(s_followAnnotation).Single();
+                convertedAncestor = (ancestorNeedingConversion, newAncestor);
+            }
 
             var conditionalExpressionParts = Deconstruct(conditionalExpression);
 
@@ -121,7 +119,9 @@ namespace Microsoft.CodeAnalysis.ConvertConditionalToIf
 
         protected abstract bool CanReplaceWithStatement(SyntaxNode node, out SyntaxNode ancestorNeedingConversion);
 
-        protected abstract SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel, out TStatementSyntax statement);
+        protected abstract bool CanConvertToStatementBody(SyntaxNode container);
+
+        protected abstract SyntaxNode ConvertToStatementBody(SemanticModel semanticModel, SyntaxNode container, out TStatementSyntax statement);
 
         protected abstract (SyntaxNode condition, SyntaxNode whenTrue, SyntaxNode whenFalse) Deconstruct(TConditionalExpressionSyntax conditionalExpression);
 

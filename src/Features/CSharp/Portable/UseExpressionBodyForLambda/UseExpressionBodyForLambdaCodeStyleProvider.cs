@@ -121,16 +121,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
             return true;
         }
 
-        private static LambdaExpressionSyntax Update(SemanticModel semanticModel, LambdaExpressionSyntax originalDeclaration, LambdaExpressionSyntax currentDeclaration)
-            => UpdateWorker(semanticModel, originalDeclaration, currentDeclaration).WithAdditionalAnnotations(Formatter.Annotation);
+        private static LambdaExpressionSyntax Update(SemanticModel semanticModel, LambdaExpressionSyntax currentDeclaration)
+            => UpdateWorker(semanticModel, currentDeclaration).WithAdditionalAnnotations(Formatter.Annotation);
 
-        private static LambdaExpressionSyntax UpdateWorker(
-            SemanticModel semanticModel, LambdaExpressionSyntax originalDeclaration, LambdaExpressionSyntax currentDeclaration)
+        private static LambdaExpressionSyntax UpdateWorker(SemanticModel semanticModel, LambdaExpressionSyntax currentDeclaration)
         {
             var expressionBody = GetBodyAsExpression(currentDeclaration);
             return expressionBody == null
                 ? WithExpressionBody(currentDeclaration)
-                : WithBlockBody(semanticModel, originalDeclaration, currentDeclaration);
+                : WithBlockBody(semanticModel, currentDeclaration);
         }
 
         private static LambdaExpressionSyntax WithExpressionBody(LambdaExpressionSyntax declaration)
@@ -155,11 +154,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
             return updatedDecl;
         }
 
-        private static LambdaExpressionSyntax WithBlockBody(
-            SemanticModel semanticModel, LambdaExpressionSyntax originalDeclaration, LambdaExpressionSyntax currentDeclaration)
+        private static LambdaExpressionSyntax WithBlockBody(SemanticModel semanticModel, LambdaExpressionSyntax currentDeclaration)
         {
-            return CSharpBodyHelpers.TryConvertToStatementBody(currentDeclaration, semanticModel, originalDeclaration)
-                ?? currentDeclaration;
+            return CSharpBodyHelpers.ConvertToStatementBody(semanticModel, currentDeclaration, block: out _);
         }
 
         private class MyCodeAction : CodeAction.DocumentChangeAction

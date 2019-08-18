@@ -36,15 +36,17 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
         }
 
         private void AddEdits(
-            SyntaxEditor editor, SemanticModel semanticModel,
+            SyntaxEditor editor, Document document, SemanticModel semanticModel,
             Diagnostic diagnostic, CancellationToken cancellationToken)
         {
             var declarationLocation = diagnostic.AdditionalLocations[0];
             var originalDeclaration = (LambdaExpressionSyntax)declarationLocation.FindNode(getInnermostNodeForTie: true, cancellationToken);
 
-            editor.ReplaceNode(
-                originalDeclaration,
-                (current, _) => Update(semanticModel, originalDeclaration, (LambdaExpressionSyntax)current));
+            editor.ApplyExpressionLevelSemanticEditsAsync(
+                document,
+                ImmutableArray.Create(originalDeclaration),
+                (semanticModel, lambda) => CanUpdate(lambda),
+                (current, _) => Update(semanticModel, (LambdaExpressionSyntax)current));
         }
     }
 }

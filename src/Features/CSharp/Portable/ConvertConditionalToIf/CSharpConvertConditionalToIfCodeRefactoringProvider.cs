@@ -40,9 +40,14 @@ namespace Microsoft.CodeAnalysis.CSharp.ConvertConditionalToIf
             return false;
         }
 
-        protected override SyntaxNode TryConvertToStatementBody(SyntaxNode container, SemanticModel semanticModel, SyntaxNode containerForSemanticModel, out StatementSyntax statement)
+        protected override bool CanConvertToStatementBody(SyntaxNode container)
         {
-            var converted = CSharpBodyHelpers.TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out var block);
+            return CSharpBodyHelpers.CanConvertToStatementBody(container);
+        }
+
+        protected override SyntaxNode ConvertToStatementBody(SemanticModel semanticModel, SyntaxNode container, out StatementSyntax statement)
+        {
+            var converted = CSharpBodyHelpers.ConvertToStatementBody(semanticModel, container, out var block);
             statement = block?.Statements.Single();
             return converted;
         }

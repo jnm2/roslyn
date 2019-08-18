@@ -133,9 +133,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBodyForLambda
         {
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 
-            // We're only replacing a single declaration in the refactoring.  So pass 'declaration'
-            // as both the 'original' and 'current' declaration.
-            var updatedDeclaration = Update(semanticModel, declaration, declaration);
+            var updatedDeclaration = Update(semanticModel, declaration);
 
             var newRoot = root.ReplaceNode(declaration, updatedDeclaration);
             return document.WithSyntaxRoot(newRoot);

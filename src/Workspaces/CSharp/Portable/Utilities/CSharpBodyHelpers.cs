@@ -11,24 +11,32 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
 {
     internal static class CSharpBodyHelpers
     {
-        public static SyntaxNode TryConvertToStatementBody(
-              SyntaxNode container,
-              SemanticModel semanticModel,
-              SyntaxNode containerForSemanticModel)
+        /// <summary>
+        /// Indicates whether a call to <see cref="ConvertToStatementBody(SemanticModel, SyntaxNode, out BlockSyntax)"/> would succeed.
+        /// </summary>
+        public static bool CanConvertToStatementBody(SyntaxNode container)
         {
-            return TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out _);
+            return TryConvertToStatementBody(semanticModel: null, container, block: out _) is { };
         }
 
-        public static SyntaxNode TryConvertToStatementBody(
-            SyntaxNode container,
-            SemanticModel semanticModel,
-            SyntaxNode containerForSemanticModel,
-            out BlockSyntax block)
+        /// <exception cref="InvalidOperationException">Thrown when conversion fails (see <see cref="CanConvertToStatementBody(SyntaxNode)"/>).</exception>
+        public static SyntaxNode ConvertToStatementBody(SemanticModel semanticModel, SyntaxNode container, out BlockSyntax block)
+        {
+            return TryConvertToStatementBody(semanticModel, container, out block)
+                ?? throw CreateException();
+        }
+
+        private static Exception CreateException()
+        {
+            return new InvalidOperationException($"Conversion to statement body failed. Use {nameof(CanConvertToStatementBody)} before calling.");
+        }
+
+        private static SyntaxNode TryConvertToStatementBody(SemanticModel semanticModel, SyntaxNode container, out BlockSyntax block)
         {
             switch (container)
             {
                 case LambdaExpressionSyntax lambda:
-                    return TryConvertToStatementBody(lambda, semanticModel, (LambdaExpressionSyntax)containerForSemanticModel, out block);
+                    return TryConvertToStatementBody(semanticModel, lambda, out block);
 
                 case AccessorDeclarationSyntax accessor:
                     return TryConvertToBlock(
@@ -177,24 +185,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
             return SyntaxFactory.AccessorList(SyntaxFactory.SingletonList(getAccessor));
         }
 
-        public static LambdaExpressionSyntax TryConvertToStatementBody(
-            LambdaExpressionSyntax container,
-            SemanticModel semanticModel,
-            LambdaExpressionSyntax containerForSemanticModel)
+        /// <summary>
+        /// Indicates whether a call to <see cref="ConvertToStatementBody(SemanticModel, LambdaExpressionSyntax, out BlockSyntax)"/> would succeed.
+        /// </summary>
+        public static bool CanConvertToStatementBody(LambdaExpressionSyntax container)
         {
-            return TryConvertToStatementBody(container, semanticModel, containerForSemanticModel, out _);
+            return TryConvertToStatementBody(semanticModel: null, container, block: out _) is { };
         }
 
-        public static LambdaExpressionSyntax TryConvertToStatementBody(
-            LambdaExpressionSyntax container,
-            SemanticModel semanticModel,
-            LambdaExpressionSyntax containerForSemanticModel,
-            out BlockSyntax block)
+        public static LambdaExpressionSyntax ConvertToStatementBody(SemanticModel semanticModel, LambdaExpressionSyntax container, out BlockSyntax block)
+        {
+            return TryConvertToStatementBody(semanticModel, container, out block)
+                ?? throw CreateException();
+        }
+
+        private static LambdaExpressionSyntax TryConvertToStatementBody(SemanticModel semanticModel, LambdaExpressionSyntax container, out BlockSyntax block)
         {
             if (container is { Body: ExpressionSyntax expressionBody }
                 && expressionBody.TryConvertToStatement(
                     semicolonTokenOpt: default,
-                    CreateReturnStatementForExpression(semanticModel, containerForSemanticModel),
+                    CreateReturnStatementForExpression(semanticModel, container),
                     out var convertedStatement))
             {
                 // If the user is converting to a block, it's likely they intend to add multiple
