@@ -29,10 +29,10 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.Rename
                            <Document>
                                using [|sys|] = System;
                                class Program
-                               { 
-                                   static void Main(string[] args)    
+                               {
+                                   static void Main(string[] args)
                                    {
-                                       [|$$sys|].Console.Write("test");  
+                                       [|$$sys|].Console.Write("test");
                                    }
                                }
                             </Document>
@@ -55,7 +55,7 @@ class C
         D.[|field|] = 8;
     }
 }
- 
+
 class D
 {
     private static int [|$$field|];
@@ -79,7 +79,7 @@ class C
         D.[|$$field|] = 8;
     }
 }
- 
+
 class D
 {
     private static int [|field|];
@@ -100,7 +100,7 @@ class D
 class C
 {
 }
- 
+
 class [|$$NotAnAttribute|]
 {
 }                             </Document>
@@ -120,7 +120,7 @@ class [|$$NotAnAttribute|]
 class C
 {
 }
- 
+
 class [|NotAnAttribute|]
 {
 }                             </Document>
@@ -139,7 +139,7 @@ class [|NotAnAttribute|]
 class [|$$List|]&lt;T&gt;
 {
 }
- 
+
 class C
 {
     [|List|]&lt;int,string&gt; list;
@@ -159,7 +159,7 @@ class C
 class [|List|]&lt;T&gt;
 {
 }
- 
+
 class C
 {
     [|$$List|]&lt;int,string&gt; list;
@@ -179,7 +179,7 @@ class C
 abstract class [|A|]
 {
 }
- 
+
 class C
 {
     void M()
@@ -202,7 +202,7 @@ class C
 abstract class [|$$A|]
 {
 }
- 
+
 class C
 {
     void M()
@@ -361,7 +361,7 @@ class C
     public delegate void Goo(int x);
     public void GooMeth(int x)
     {
- 
+
     }
     public void Sub()
     {
@@ -395,7 +395,7 @@ class {|DeclConflict:C|}
 }
 class {|unresolve3:$$D|} // Rename to C
 {
- 
+
 }
                             </Document>
                         </Project>
@@ -455,7 +455,7 @@ class {|unresolve3:$$D|} // Rename to C
 
                             public partial class [|ClassA|]
                             {
-                                
+
                             }
                         </Document>
                     </Project>
@@ -530,7 +530,7 @@ class {|unresolve3:$$D|} // Rename to C
                                         using System.Collections.Generic;
                                         using System.Linq;
                                         using System.Threading.Tasks;
- 
+
                                         class Program
                                         {
                                             static void Main(string[] {|conflict1:a|})
@@ -557,7 +557,7 @@ class {|unresolve3:$$D|} // Rename to C
                                     <Document>
                                         Class C
                                             Dim [|$$x|] As String() ' rename x to y
-                                            Dim {|conflict1:y|} = From x In {|conflict2:x|} Select x 
+                                            Dim {|conflict1:y|} = From x In {|conflict2:x|} Select x
                                         End Class
                                     </Document>
                                 </Project>
@@ -811,7 +811,7 @@ class {|unresolve3:$$D|} // Rename to C
                                 [|$$Goo|]()
                                 {
                                 }
-                            
+
                                 void Blah()
                                 {
                                     {|stmt1:Goo|} f = new {|stmt1:Goo|}();
@@ -836,7 +836,7 @@ class {|unresolve3:$$D|} // Rename to C
                                 [|Goo|]()
                                 {
                                 }
-                            
+
                                 void Blah()
                                 {
                                     {|stmt1:Goo|} f = new {|stmt1:$$Goo|}();
@@ -1188,7 +1188,7 @@ class Program
     {
         string {|stmt1:$$s|} = Goo&lt;string, string&gt;();
     }
- 
+
     string Goo&lt;T, S&gt;()
     {
         Return Goo &lt;T, S&gt;();
@@ -1244,7 +1244,7 @@ End Class
                             {
                                 public static void [|$$Goo|](this string s) { }
                             }
-                            
+
                             class Program
                             {
                                 static void Main()
@@ -1271,7 +1271,7 @@ End Class
                             class C
                             {
                                 int this[int x = 5, int [|y|] = 7] { get { return 0; } set { } }
- 
+
                                 void Goo()
                                 {
                                     var y = this[{|stmt1:$$y|}: 1];
@@ -1597,7 +1597,7 @@ Module Program
     Sub Main(args As String())
     End Sub
 End Module
- 
+
 Class C
     Public Overridable ReadOnly Property [|$$Total|]() As Double
         Get
@@ -1605,10 +1605,10 @@ Class C
         End Get
     End Property
 End Class
- 
+
 Class M
     Inherits C
- 
+
     Public Overrides ReadOnly Property [|Total|]() As Double
         Get
             Return MyBase.{|stmt1:Total|} * rate
@@ -1788,10 +1788,10 @@ End Module
                 <Workspace>
                     <Project Language="Visual Basic" CommonReferences="true">
                         <Document>
-                                Namespace NS    
-                                Module M    
+                                Namespace NS
+                                Module M
                                 End Module
-                                End Namespace 
+                                End Namespace
 
                                 Namespace NS.[|$$M|]
                                 End Namespace
@@ -1931,7 +1931,7 @@ End Module
                         <Document>
                             using System;
                             using MyInt = System.[|Int32|];
- 
+
                             namespace System
                             {
                                 public struct [|$$Int32|]
@@ -1942,7 +1942,7 @@ End Module
                                     }
                                 }
                             }
- 
+
                             class A
                             {
                                 static void Goo(int x) { Console.WriteLine("int"); }
@@ -2023,7 +2023,7 @@ End Module
                         <Document>
                             Class C
                             Event E([|x|] As Integer)
- 
+
                             Sub Goo()
                                 RaiseEvent E({|stmt1:$$x|}:=1)
                             End Sub
@@ -2344,11 +2344,11 @@ class s
                     <Project Language="Visual Basic" AssemblyName="Project1" CommonReferences="true">
                         <Document>
                             Imports System
-                            
+
                             Public Class [|XAttribute|]
                                 Inherits Attribute
                             End Class
- 
+
                             Partial Public Class [|$$XATTRIBUTE|]
                                 Inherits Attribute
                             End Class
@@ -2527,7 +2527,7 @@ End Class
                                     Get
                                         Return 0
                                     End Get
-                                    
+
                                     Set
                                     End Set
                                 End Property
@@ -2983,15 +2983,15 @@ class A
 {
     class B
     {
-        public void [|Boo|](int d) { } 
+        public void [|Boo|](int d) { }
     }
     void Bar()
     {
         B b = new B();
         dynamic d = 1.5f;
-        b.{|Stmt1:$$Boo|}(d); 
+        b.{|Stmt1:$$Boo|}(d);
     }
-}                 
+}
                             </Document>
                     </Project>
                 </Workspace>, renameTo:="Bar")
@@ -3014,7 +3014,7 @@ public class A
     {
         A.{|stmt1:Main|}();
     }
-}                 
+}
                             </Document>
                     </Project>
                 </Workspace>, renameTo:="M\u0061in")
@@ -3054,7 +3054,7 @@ class C
                 <Workspace>
                     <Project Language="C#" AssemblyName="Project1" CommonReferences="true">
                         <Document>
-using System; 
+using System;
 class Program
 {
     void M(int [|$$p|])
@@ -3063,9 +3063,9 @@ class Program
         Tuple&lt;int&gt; v2 = Tuple.Create({|stmt2:p|});
     }
 }
-class C 
-{     
-    public Tuple&lt;int&gt; tuple;   
+class C
+{
+    public Tuple&lt;int&gt; tuple;
 }
                         </Document>
                     </Project>
@@ -3096,7 +3096,7 @@ namespace N
                         <Document>
 Namespace N
     Module M
-        Public Class [|$$C|] 'Rename C to D      
+        Public Class [|$$C|] 'Rename C to D
 
         End Class
     End Module
@@ -3284,10 +3284,10 @@ End Class]]>
                     <Project Language="Visual Basic" AssemblyName="Project1" CommonReferences="true">
                         <Document>
                             Option Strict On
- 
+
                             Module M
                                 Dim field As Object = If(True, Function({|fieldinit:$$y|} As String) {|fieldinit:y|}.ToUpper(), Function({|fieldinit:y|} As String) {|fieldinit:y|}.ToLower())
- 
+
                                 Sub Main()
                                     Dim local As Object = If(True, Function(x As String) x.ToUpper(), Function(x As String) x.ToLower())
                                 End Sub
@@ -4213,7 +4213,7 @@ class Tester
     {
         get
         {
-            return {|Resolve:x|}; 
+            return {|Resolve:x|};
         }
 
         set
@@ -4245,7 +4245,7 @@ Class Tester
     ''' </summary>
     Public Property X As Integer
         Get
-            Return {|Resolve1:_x|}; 
+            Return {|Resolve1:_x|};
         End Get
 
         Set
@@ -4279,7 +4279,7 @@ class Tester
     {
         get
         {
-            return {|Stmt1:x|}; 
+            return {|Stmt1:x|};
         }
 
         set
@@ -4547,7 +4547,7 @@ namespace Test
             {
 
             }
-        }      
+        }
     }
     /// <summary>
     /// <see cref="C.P.[|K|]"/>
@@ -4587,7 +4587,7 @@ Namespace Test
             ''' </summary>
             Class [|K|]
             End Class
-        End Class   
+        End Class
     End Class
     ''' <summary>
     ''' <see cref="C.P.[|K|]"/>
@@ -4865,7 +4865,7 @@ class Program
     /// </summary>
     /// <param name="args"></param>
     static void Main(string[] args)
-    {   
+    {
     }
 
     static void [|$$Goo|]()
@@ -4931,7 +4931,7 @@ class Program
     /// </summary>
     /// <param name="args"></param>
     static void Main(string[] args)
-    {   
+    {
     }
 
     public class [|$$Baz|]
@@ -5152,7 +5152,7 @@ Class P
     ''' <summary>
     ''' <see cref="[|_b|]"/>
     ''' </summary>
-    Private [|$$_b|] As Action(Of Integer) = Sub(x As Integer) 
+    Private [|$$_b|] As Action(Of Integer) = Sub(x As Integer)
                                              End Sub ' Rename _b to a
     Class B
         ''' <summary>
@@ -5285,7 +5285,7 @@ namespace N1
     {
         public class C2 { }
     }
-    
+
 }
 namespace N2
 {
@@ -5625,11 +5625,11 @@ class Q : P
 {
     int [|$$x|];
     /// <summary>
-    /// <see cref="y"/> 
+    /// <see cref="y"/>
     /// </summary>
     void Sub()
     {
-            
+
     }
 }]]>
                             </Document>
@@ -5651,7 +5651,7 @@ End Class
 Class Q : Inherits P
     Private [|$$x|] As Integer
     ''' <summary>
-    ''' <see cref="{|Resolve:y|}"/> 
+    ''' <see cref="{|Resolve:y|}"/>
     ''' </summary>
     Sub Subroutine()
     End Sub
@@ -5729,7 +5729,7 @@ Namespace N
                 Class D(Of T)
                 End Class
             End Class
-            Class C(Of T)            
+            Class C(Of T)
             End Class
         End Class
     End Class
@@ -5782,7 +5782,7 @@ namespace N
         }
     }
     namespace [|$$K|]
-    {   
+    {
         class C { }
     }
 }]]>
@@ -5852,7 +5852,7 @@ End Module
                     <Workspace>
                         <Project Language="C#" CommonReferences="true">
                             <Document><![CDATA[
-class [|A|] 
+class [|A|]
 {}
 class B : [|A|]
 {
@@ -5971,7 +5971,7 @@ Imports System.Linq
 
 Module Program
     Sub [|$$Main|](args As String())
-        
+
     End Sub
 End Module
 ]]>
@@ -5998,7 +5998,7 @@ class Program
 {
     static void [|$$Main|](string[] args)
     {
-        
+
     }
 }
                         </Document>
@@ -7106,6 +7106,206 @@ class C
 
             End Using
         End Sub
+#End Region
+
+#Region "Rename In Tuples"
+
+        <WorkItem(10898, "https://github.com/dotnet/roslyn/issues/10898")>
+        <WorkItem(10567, "https://github.com/dotnet/roslyn/issues/10567")>
+        <WpfFact>
+        <Trait(Traits.Feature, Traits.Features.Rename)>
+        <CompilerTrait(CompilerFeature.Tuples)>
+        Public Sub RenameTupleFieldInDeclaration()
+            Using result = RenameEngineResult.Create(_outputHelper,
+                <Workspace>
+                    <Project Language="C#" CommonReferences="true">
+                        <Document>
+                            using System;
+
+                            class C
+                            {
+                                static void Main()
+                                {
+                                    (int [|$$Alice|], int Bob) t = (1, 2);
+                                    t.{|stmt1:Alice|} = 3;
+                                }
+                            }
+
+                            namespace System
+                            {
+                                // struct with two values
+                                public struct ValueTuple&lt;T1, T2&gt;
+                                {
+                                    public T1 Item1;
+                                    public T2 Item2;
+
+                                    public ValueTuple(T1 item1, T2 item2)
+                                    {
+                                        this.Item1 = item1;
+                                        this.Item2 = item2;
+                                    }
+
+                                    public override string ToString()
+                                    {
+                                        return '{' + Item1?.ToString() + ", " + Item2?.ToString() + '}';
+                                    }
+                                }
+                            }
+                        </Document>
+                    </Project>
+                </Workspace>, renameTo:="Bar")
+
+                result.AssertLabeledSpansAre("stmt1", replacement:="Bar", type:=RelatedLocationType.NoConflict)
+            End Using
+        End Sub
+
+        <WorkItem(10898, "https://github.com/dotnet/roslyn/issues/10898")>
+        <WorkItem(10567, "https://github.com/dotnet/roslyn/issues/10567")>
+        <WpfFact>
+        <Trait(Traits.Feature, Traits.Features.Rename)>
+        <CompilerTrait(CompilerFeature.Tuples)>
+        Public Sub RenameTupleFieldInLiteral()
+            Using result = RenameEngineResult.Create(_outputHelper,
+                <Workspace>
+                    <Project Language="C#" CommonReferences="true">
+                        <Document>
+                            using System;
+
+                            class C
+                            {
+                                static void Main()
+                                {
+                                    var t = ([|$$Alice|]: 1, Bob: 2);
+                                    t.{|stmt1:Alice|} = 3;
+                                }
+                            }
+
+                            namespace System
+                            {
+                                // struct with two values
+                                public struct ValueTuple&lt;T1, T2&gt;
+                                {
+                                    public T1 Item1;
+                                    public T2 Item2;
+
+                                    public ValueTuple(T1 item1, T2 item2)
+                                    {
+                                        this.Item1 = item1;
+                                        this.Item2 = item2;
+                                    }
+
+                                    public override string ToString()
+                                    {
+                                        return '{' + Item1?.ToString() + ", " + Item2?.ToString() + '}';
+                                    }
+                                }
+                            }
+                        </Document>
+                    </Project>
+                </Workspace>, renameTo:="Bar")
+
+                result.AssertLabeledSpansAre("stmt1", replacement:="Bar", type:=RelatedLocationType.NoConflict)
+            End Using
+        End Sub
+
+        <WorkItem(10898, "https://github.com/dotnet/roslyn/issues/10898")>
+        <WorkItem(10567, "https://github.com/dotnet/roslyn/issues/10567")>
+        <WpfFact>
+        <Trait(Traits.Feature, Traits.Features.Rename)>
+        <CompilerTrait(CompilerFeature.Tuples)>
+        Public Sub RenameTupleFieldInFieldAccess()
+            Using result = RenameEngineResult.Create(_outputHelper,
+                <Workspace>
+                    <Project Language="C#" CommonReferences="true">
+                        <Document>
+                            using System;
+
+                            class C
+                            {
+                                static void Main()
+                                {
+                                    var t = ({|stmt1:Alice|}: 1, Bob: 2);
+                                    t.[|$$Alice|] = 3;
+                                }
+                            }
+
+                            namespace System
+                            {
+                                // struct with two values
+                                public struct ValueTuple&lt;T1, T2&gt;
+                                {
+                                    public T1 Item1;
+                                    public T2 Item2;
+
+                                    public ValueTuple(T1 item1, T2 item2)
+                                    {
+                                        this.Item1 = item1;
+                                        this.Item2 = item2;
+                                    }
+
+                                    public override string ToString()
+                                    {
+                                        return '{' + Item1?.ToString() + ", " + Item2?.ToString() + '}';
+                                    }
+                                }
+                            }
+                        </Document>
+                    </Project>
+                </Workspace>, renameTo:="Bar")
+
+                result.AssertLabeledSpansAre("stmt1", replacement:="Bar", type:=RelatedLocationType.NoConflict)
+            End Using
+        End Sub
+
+        <WorkItem(10567, "https://github.com/dotnet/roslyn/issues/14600")>
+        <WpfFact>
+        <Trait(Traits.Feature, Traits.Features.Rename)>
+        <CompilerTrait(CompilerFeature.Tuples)>
+        Public Sub RenameTupleFieldInLiteralRegress14600()
+            Using result = RenameEngineResult.Create(_outputHelper,
+                <Workspace>
+                    <Project Language="C#" CommonReferences="true">
+                        <Document>
+                            using System;
+
+                            class Program
+                            {
+                                static void Main(string[] args)
+                                {
+                                    var x = ({|stmt1:Program|}: 1, Bob: 2);
+
+                                    var Alice = x.[|$$Program|];
+                                }
+                            }
+
+                            namespace System
+                            {
+                                // struct with two values
+                                public struct ValueTuple&lt;T1, T2&gt;
+                                {
+                                    public T1 Item1;
+                                    public T2 Item2;
+
+                                    public ValueTuple(T1 item1, T2 item2)
+                                    {
+                                        this.Item1 = item1;
+                                        this.Item2 = item2;
+                                    }
+
+                                    public override string ToString()
+                                    {
+                                        return '{' + Item1?.ToString() + ", " + Item2?.ToString() + '}';
+                                    }
+                                }
+                            }
+                        </Document>
+                    </Project>
+                </Workspace>, renameTo:="Bar")
+
+                result.AssertLabeledSpansAre("stmt1", replacement:="Bar", type:=RelatedLocationType.NoConflict)
+            End Using
+        End Sub
+
 #End Region
 
     End Class

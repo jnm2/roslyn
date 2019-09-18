@@ -795,7 +795,7 @@ class Cat$$
             Assert.Equal(1, state.RefactorNotifyService.OnAfterSymbolRenamedCount);
             state.AssertNotificationMessage();
 
-            // Make sure the rename completed            
+            // Make sure the rename completed
             var expectedCode = @"
 class Cats
 {
@@ -997,7 +997,7 @@ class C
 
             await state.AssertTag("M", "Mat", invokeAction: true);
 
-            // Make sure the rename completed            
+            // Make sure the rename completed
             var expectedCode = @"
 class C
 {
@@ -1031,7 +1031,7 @@ class C
 
             await state.AssertTag("M", "Mat", invokeAction: true);
 
-            // Make sure the rename completed            
+            // Make sure the rename completed
             var expectedCode = @"
 class C
 {
@@ -1065,7 +1065,7 @@ class C
 
             await state.AssertTag("M", "Mat", invokeAction: true);
 
-            // Make sure the rename completed            
+            // Make sure the rename completed
             var expectedCode = @"
 class C
 {
@@ -1312,7 +1312,7 @@ class C
             state.EditorOperations.Backspace();
             state.EditorOperations.Backspace();
 
-            await state.AssertNoTag();
+            await state.AssertTag("abc", "a");
         }
 
         [WpfFact]
@@ -1352,7 +1352,7 @@ class C
             state.EditorOperations.Backspace();
             state.EditorOperations.Backspace();
 
-            await state.AssertNoTag();
+            await state.AssertTag("abc", "a");
         }
 
         [WpfFact]
@@ -1371,7 +1371,7 @@ End Class";
             state.EditorOperations.Backspace();
             state.EditorOperations.Backspace();
 
-            await state.AssertNoTag();
+            await state.AssertTag("abc", "a");
         }
 
         [WpfFact]
@@ -1389,7 +1389,7 @@ class C
 }";
             using var state = RenameTrackingTestState.Create(code, LanguageNames.CSharp);
             state.EditorOperations.InsertText("2");
-            await state.AssertNoTag();
+            await state.AssertTag("x", "x2");
         }
 
         [WpfFact]
@@ -1405,7 +1405,7 @@ Class C
 End Class";
             using var state = RenameTrackingTestState.Create(code, LanguageNames.VisualBasic);
             state.EditorOperations.InsertText("2");
-            await state.AssertNoTag();
+            await state.AssertTag("x", "x2");
         }
 
         [WpfFact]
@@ -1517,7 +1517,7 @@ class C&lt;T&gt; where T : $$unmanaged
 
             await state.AssertTag("unmanaged", "myunmanaged", invokeAction: true);
 
-            // Make sure the rename completed            
+            // Make sure the rename completed
             var expectedCode = @"
 interface myunmanaged
 {
