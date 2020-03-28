@@ -1078,6 +1078,13 @@ namespace Microsoft.CodeAnalysis
 
         internal const string ByRefLikeMarker = "Types with embedded references are not supported in this version of your compiler.";
 
+        internal bool HasModuleInitializerAttribute(EntityHandle token)
+        {
+            return FindTargetAttribute(token, AttributeDescription.ModuleInitializerAttribute).HasValue;
+        }
+
+        internal const string ModuleInitializerMarker = "The module initializer attribute is not supported in this version of your compiler.";
+
         internal ObsoleteAttributeData TryGetDeprecatedOrExperimentalOrObsoleteAttribute(
             EntityHandle token,
             bool ignoreByRefLikeMarker)
