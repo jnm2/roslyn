@@ -459,7 +459,7 @@ namespace Microsoft.CodeAnalysis.Emit
         where TEmbeddedTypesManager : CommonEmbeddedTypesManager
         where TModuleCompilationState : ModuleCompilationState<TNamedTypeSymbol, TMethodSymbol>
     {
-        private readonly Cci.RootModuleType _rootModuleType = new Cci.RootModuleType();
+        private readonly Cci.RootModuleType _rootModuleType;
 
         internal readonly TSourceModuleSymbol SourceModule;
         internal readonly TCompilation Compilation;
@@ -488,7 +488,13 @@ namespace Microsoft.CodeAnalysis.Emit
             Compilation = compilation;
             SourceModule = sourceModule;
             this.CompilationState = compilationState;
+
+            _rootModuleType = CreateRootModuleType();
         }
+
+        internal Cci.RootModuleType RootModuleType => _rootModuleType;
+
+        protected virtual Cci.RootModuleType CreateRootModuleType() => new Cci.RootModuleType();
 
         internal sealed override void CompilationFinished()
         {

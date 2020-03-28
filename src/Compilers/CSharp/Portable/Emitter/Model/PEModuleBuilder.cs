@@ -93,7 +93,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Emit
             {
                 _embeddedTypesManagerOpt = new NoPia.EmbeddedTypesManager(this);
             }
+
+            if (SourceModule.UserModuleInitializerType is object)
+            {
+                UserModuleInitializerTriggerMethod = new SynthesizedUserModuleInitializerTriggerMethod(SourceModule.UserModuleInitializerType);
+
+                ((CSharpRootModuleType)RootModuleType).TryAddSynthesizedMethod(
+                    new SynthesizedRootModuleTypeStaticConstructor(
+                        new SynthesizedRootModuleType(SourceModule.GlobalNamespace, RootModuleType),
+                        UserModuleInitializerTriggerMethod));
+            }
         }
+
+        internal SynthesizedUserModuleInitializerTriggerMethod UserModuleInitializerTriggerMethod { get; }
+
+        protected override Cci.RootModuleType CreateRootModuleType() => new CSharpRootModuleType();
 
         public override string Name
         {

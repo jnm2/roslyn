@@ -175,6 +175,14 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                     methodCompiler.CompileSynthesizedMethods(privateImplClass, diagnostics);
                 }
+
+                var rootModuleType = (CSharpRootModuleType)moduleBeingBuiltOpt.RootModuleType;
+                if (rootModuleType != null)
+                {
+                    rootModuleType.Freeze();
+
+                    methodCompiler.CompileSynthesizedMethods(rootModuleType, diagnostics);
+                }
             }
 
             // If we are trying to emit and there's an error without a corresponding diagnostic (e.g. because
@@ -597,6 +605,21 @@ namespace Microsoft.CodeAnalysis.CSharp
                 }
             }
 
+            if (_moduleBeingBuiltOpt?.UserModuleInitializerTriggerMethod is { } userModuleInitializerTriggerMethod
+                && sourceTypeSymbol.Equals(userModuleInitializerTriggerMethod.ContainingType))
+            {
+                if (PassesFilter(_filterOpt, userModuleInitializerTriggerMethod))
+                {
+                    CompileMethod(userModuleInitializerTriggerMethod, -1, ref processedStaticInitializers, synthesizedSubmissionFields, compilationState);
+
+                    // If this method has been successfully built, we emit it.
+                    if (_moduleBeingBuiltOpt.GetMethodBody(userModuleInitializerTriggerMethod) != null)
+                    {
+                        _moduleBeingBuiltOpt.AddSynthesizedDefinition(sourceTypeSymbol, userModuleInitializerTriggerMethod);
+                    }
+                }
+            }
+
             // If there is no explicit or implicit .cctor and no static initializers, then report
             // warnings for any static non-nullable fields. (If there is no .cctor, there
             // shouldn't be any initializers but for robustness, we check both.)
@@ -641,12 +664,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             compilationState.Free();
         }
 
-        private void CompileSynthesizedMethods(PrivateImplementationDetails privateImplClass, DiagnosticBag diagnostics)
+        private void CompileSynthesizedMethods(Cci.INamespaceTypeDefinition synthesizedTopLevelType, DiagnosticBag diagnostics)
         {
             Debug.Assert(_moduleBeingBuiltOpt != null);
 
             var compilationState = new TypeCompilationState(null, _compilation, _moduleBeingBuiltOpt);
-            foreach (MethodSymbol method in privateImplClass.GetMethods(new EmitContext(_moduleBeingBuiltOpt, null, diagnostics, metadataOnly: false, includePrivateMembers: true)))
+            foreach (MethodSymbol method in synthesizedTopLevelType.GetMethods(new EmitContext(_moduleBeingBuiltOpt, null, diagnostics, metadataOnly: false, includePrivateMembers: true)))
             {
                 Debug.Assert(method.SynthesizesLoweredBoundBody);
                 method.GenerateMethodBody(compilationState, diagnostics);

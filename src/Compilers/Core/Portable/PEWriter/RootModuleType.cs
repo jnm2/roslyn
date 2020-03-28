@@ -138,7 +138,7 @@ namespace Microsoft.Cci
             get { return LayoutKind.Auto; }
         }
 
-        public IEnumerable<IMethodDefinition> GetMethods(EmitContext context)
+        public virtual IEnumerable<IMethodDefinition> GetMethods(EmitContext context)
         {
             return SpecializedCollections.EmptyEnumerable<IMethodDefinition>();
         }
