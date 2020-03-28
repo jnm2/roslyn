@@ -2,11 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -525,6 +524,24 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 CSharpAttributeData.DecodeSkipLocalsInitAttribute<ModuleWellKnownAttributeData>(DeclaringCompilation, ref arguments);
             }
+            else if (attribute.IsTargetAttribute(this, AttributeDescription.ModuleInitializerAttribute))
+            {
+                if (attribute.CommonConstructorArguments[0].ValueInternal is SourceNamedTypeSymbol namedType
+                    && namedType.StaticConstructors.Any())
+                {
+                    arguments.GetOrCreateData<ModuleWellKnownAttributeData>().UserModuleInitializerType = namedType;
+                }
+                else
+                {
+                    // TODO: "The module initializer type must be a type with a static constructor defined within the
+                    // current compilation."
+
+                    arguments.Diagnostics.Add(
+                        ErrorCode.ERR_InvalidAttributeArgument,
+                        attribute.GetAttributeArgumentSyntax(0, arguments.AttributeSyntaxOpt).Location,
+                        arguments.AttributeSyntaxOpt.GetErrorDisplayName());
+                }
+            }
         }
 
         internal override void AddSynthesizedAttributes(PEModuleBuilder moduleBuilder, ref ArrayBuilder<SynthesizedAttributeData> attributes)
@@ -583,6 +600,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 var data = GetDecodedWellKnownAttributeData();
                 return data?.HasSkipLocalsInitAttribute != true;
+            }
+        }
+
+        public SourceNamedTypeSymbol UserModuleInitializerType
+        {
+            get
+            {
+                return GetDecodedWellKnownAttributeData()?.UserModuleInitializerType;
             }
         }
 

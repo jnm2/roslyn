@@ -30,5 +30,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
         #endregion
+
+        #region ModuleInitializerAttribute
+        private SourceNamedTypeSymbol _userModuleInitializerType;
+        public SourceNamedTypeSymbol UserModuleInitializerType
+        {
+            get
+            {
+                VerifySealed(expected: true);
+                return _userModuleInitializerType;
+            }
+            set
+            {
+                VerifySealed(expected: false);
+                _userModuleInitializerType = value;
+                SetDataStored();
+            }
+        }
+        #endregion
     }
 }
