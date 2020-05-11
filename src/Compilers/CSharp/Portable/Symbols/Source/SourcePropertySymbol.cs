@@ -47,6 +47,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private readonly Flags _propertyFlags;
         private readonly RefKind _refKind;
 
+        private SynthesizedBackingFieldSymbol _backingField;
         private SymbolCompletionState _state;
         private ImmutableArray<ParameterSymbol> _lazyParameters;
         private TypeWithAnnotations.Boxed _lazyType;
@@ -193,7 +194,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                     string fieldName = GeneratedNames.MakeBackingFieldName(_sourceName);
                     bool isInitOnly = !IsStatic && setSyntax?.Keyword.IsKind(SyntaxKind.InitKeyword) == true;
-                    BackingField = new SynthesizedBackingFieldSymbol(this,
+                    _backingField = new SynthesizedBackingFieldSymbol(this,
                                                                           fieldName,
                                                                           isReadOnly: isGetterOnly || isInitOnly,
                                                                           this.IsStatic,
@@ -763,10 +764,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             => (_propertyFlags & Flags.IsAutoProperty) != 0;
 
         /// <summary>
-        /// Backing field for automatically implemented property, or
-        /// for a property with an initializer.
+        /// Backing field, if not optimized away. A backing field will be created if the property is an auto property,
+        /// has an initializer, or uses the <c>field</c> keyword inside an accessor.
         /// </summary>
-        internal override SynthesizedBackingFieldSymbol BackingField { get; }
+        internal override SynthesizedBackingFieldSymbol BackingField
+        {
+            get
+            {
+                var backingField = Volatile.Read(ref _backingField);
+
+                // Need feedback about whether this part is necessary and how to test
+                if (backingField is null)
+                {
+                    GetMethod?.ForceComplete(locationOpt: null, CancellationToken.None);
+                    SetMethod?.ForceComplete(locationOpt: null, CancellationToken.None);
+                    backingField = Volatile.Read(ref _backingField);
+                }
+
+                return backingField;
+            }
+        }
 
         internal override bool MustCallMethodsDirectly
         {
@@ -1697,6 +1714,24 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private static BaseParameterListSyntax GetParameterListSyntax(BasePropertyDeclarationSyntax syntax)
         {
             return (syntax.Kind() == SyntaxKind.IndexerDeclaration) ? ((IndexerDeclarationSyntax)syntax).ParameterList : null;
+        }
+
+        internal SynthesizedBackingFieldSymbol GetOrCreateBackingFieldForFieldKeyword()
+        {
+            var backingField = Volatile.Read(ref _backingField);
+            if (backingField is null)
+            {
+                backingField = new SynthesizedBackingFieldSymbol(
+                    this,
+                    GeneratedNames.MakeBackingFieldName(_sourceName),
+                    isReadOnly: false, // It's not possible to reference `field` when readonly since the syntax must be `{ get; }`.
+                    IsStatic,
+                    hasInitializer: false); // If the backing field had an initializer, the constructor would have created the backing field.
+
+                backingField = Interlocked.CompareExchange(ref _backingField, backingField, null) ?? backingField;
+            }
+
+            return backingField;
         }
     }
 }

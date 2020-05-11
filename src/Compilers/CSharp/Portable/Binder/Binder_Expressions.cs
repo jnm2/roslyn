@@ -1450,6 +1450,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                     {
                         expression = new BoundDiscardExpression(node, type: null);
                     }
+                    else if (ContainingMemberOrLambda is SourcePropertyAccessorSymbol accessor && identifier.Identifier.Text == "field")
+                    {
+                        // TODO: CheckFeatureAvailability
+                        var backingField = ((SourcePropertySymbol)accessor.AssociatedSymbol).GetOrCreateBackingFieldForFieldKeyword();
+                        var receiver = SynthesizeReceiver(node, backingField, diagnostics);
+                        expression = new BoundFieldAccess(node, receiver, fieldSymbol: backingField, constantValueOpt: null);
+                    }
                 }
 
                 // Otherwise, the simple-name is undefined and a compile-time error occurs.
