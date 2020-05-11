@@ -43,12 +43,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private readonly ImmutableArray<CustomModifier> _refCustomModifiers;
         private readonly SourcePropertyAccessorSymbol _getMethod;
         private readonly SourcePropertyAccessorSymbol _setMethod;
-        private readonly SynthesizedBackingFieldSymbol _backingField;
         private readonly TypeSymbol _explicitInterfaceType;
         private readonly ImmutableArray<PropertySymbol> _explicitInterfaceImplementations;
         private readonly Flags _propertyFlags;
         private readonly RefKind _refKind;
 
+        private SynthesizedBackingFieldSymbol _backingField;
         private SymbolCompletionState _state;
         private ImmutableArray<ParameterSymbol> _lazyParameters;
         private TypeWithAnnotations.Boxed _lazyType;
@@ -764,12 +764,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             => (_propertyFlags & Flags.IsAutoProperty) != 0;
 
         /// <summary>
-        /// Backing field for automatically implemented property, or
-        /// for a property with an initializer.
+        /// Backing field, if not optimized away. A backing field will be created if the property is an auto property,
+        /// has an initializer, or uses the <c>field</c> keyword inside an accessor.
         /// </summary>
         internal SynthesizedBackingFieldSymbol BackingField
         {
-            get { return _backingField; }
+            get
+            {
+                // TODO: force completing accessor body binding?
+                return _backingField;
+            }
         }
 
         internal override bool MustCallMethodsDirectly
@@ -1699,6 +1703,24 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private static BaseParameterListSyntax GetParameterListSyntax(BasePropertyDeclarationSyntax syntax)
         {
             return (syntax.Kind() == SyntaxKind.IndexerDeclaration) ? ((IndexerDeclarationSyntax)syntax).ParameterList : null;
+        }
+
+        internal SynthesizedBackingFieldSymbol GetOrCreateBackingFieldForFieldKeyword()
+        {
+            var backingField = Volatile.Read(ref _backingField);
+            if (backingField is null)
+            {
+                backingField = new SynthesizedBackingFieldSymbol(
+                    this,
+                    GeneratedNames.MakeBackingFieldName(_sourceName),
+                    isReadOnly: false, // It's not possible to reference `field` when readonly since the syntax must be `{ get; }`.
+                    IsStatic,
+                    hasInitializer: false); // If the backing field had an initializer, the constructor would have created the backing field.
+
+                backingField = Interlocked.CompareExchange(ref _backingField, backingField, null) ?? backingField;
+            }
+
+            return backingField;
         }
     }
 }
