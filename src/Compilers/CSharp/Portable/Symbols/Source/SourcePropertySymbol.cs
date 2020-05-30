@@ -1722,5 +1722,22 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
             return backingField;
         }
+
+        internal override FieldSymbol AssociatedField
+        {
+            get
+            {
+                var backingField = Volatile.Read(ref _backingField);
+
+                if (backingField is null)
+                {
+                    GetMethod?.ForceComplete(locationOpt: null, CancellationToken.None);
+                    SetMethod?.ForceComplete(locationOpt: null, CancellationToken.None);
+                    backingField = Volatile.Read(ref _backingField);
+                }
+
+                return backingField;
+            }
+        }
     }
 }
