@@ -12,8 +12,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Semantics.BackingFieldAccess
         // indexers too- field of immediate class, field outside nested class, non-field objects like methods, classes,
         // namespaces)
 
-        // TODO: Emit with one auto and one non-auto accessor to flush out diagnostics work
-
         // TODO: ref-returning property
 
         // TODO: nullability of backing field

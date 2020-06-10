@@ -76,5 +76,51 @@ interface I
                 //     int Property { get => field + field; set => field = field + 1; }
                 Diagnostic(ErrorCode.ERR_InterfacesCantContainFields, "field").WithLocation(4, 57));
         }
+
+        [Fact]
+        public void Getter_using_field_and_auto_setter()
+        {
+            var source = @"
+class C
+{
+    static int Property { get => field * 10; set; }
+
+    static void Main()
+    {
+        Property = 1;
+        System.Console.WriteLine(Property);
+        Property = 2;
+        System.Console.WriteLine(Property);
+    }
+}";
+            CompileAndVerify(
+                source,
+                expectedOutput: @"
+10
+20");
+        }
+
+        [Fact]
+        public void Setter_using_field_and_auto_getter()
+        {
+            var source = @"
+class C
+{
+    static int Property { get; set => field = value * 10; }
+
+    static void Main()
+    {
+        Property = 1;
+        System.Console.WriteLine(Property);
+        Property = 2;
+        System.Console.WriteLine(Property);
+    }
+}";
+            CompileAndVerify(
+                source,
+                expectedOutput: @"
+10
+20");
+        }
     }
 }
