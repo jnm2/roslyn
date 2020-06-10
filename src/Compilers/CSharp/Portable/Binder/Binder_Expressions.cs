@@ -1453,7 +1453,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     else if (ContainingMemberOrLambda is SourcePropertyAccessorSymbol accessor && identifier.Identifier.Text == "field")
                     {
                         // TODO: CheckFeatureAvailability
-                        var backingField = ((SourcePropertySymbol)accessor.AssociatedSymbol).GetOrCreateBackingFieldForFieldKeyword();
+                        var property = (SourcePropertySymbol)accessor.AssociatedSymbol;
+                        var backingField = property.GetOrCreateBackingFieldForFieldKeyword(node.Location, diagnostics);
                         var receiver = SynthesizeReceiver(node, backingField, diagnostics);
                         expression = new BoundFieldAccess(node, receiver, fieldSymbol: backingField, constantValueOpt: null);
                     }

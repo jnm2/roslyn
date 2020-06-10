@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Xunit;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Semantics.BackingFieldAccess
@@ -14,8 +13,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Semantics.BackingFieldAccess
         // namespaces)
 
         // TODO: Emit with one auto and one non-auto accessor to flush out diagnostics work
-
-        // TODO: Diagnostic for use in interface
 
         [Fact]
         public void BackingFieldIsNotAccessibleInPropertyInitializer()
@@ -430,6 +427,18 @@ class C
             VerifyFieldBinding(text);
         }
 
+        [Fact]
+        public void SemanticModelRecognizesIllegalInstanceBackingFieldInInterface()
+        {
+            var text = @"
+interface I
+{
+    string Property => /*<bind>*/ field /*</bind>*/;
+}
+";
+            VerifyFieldBinding(text);
+        }
+
         private void VerifyFieldErrorBinding(string text)
         {
             var tree = Parse(text);
@@ -454,12 +463,12 @@ class C
             var sym = model.GetSymbolInfo(expr);
             Assert.Equal(SymbolKind.Field, sym.Symbol.Kind);
 
-            var propertySym = (SourcePropertySymbol)comp.GetTypeByMetadataName("C").GetMember("Property");
-            Assert.Equal(propertySym.GetPublicSymbol(), ((IFieldSymbol)sym.Symbol).AssociatedSymbol);
-            Assert.Equal(propertySym.BackingField.GetPublicSymbol(), sym.Symbol);
+            var propertySym = (IPropertySymbol)sym.Symbol.ContainingType.GetMember("Property");
+            Assert.Equal(propertySym, ((IFieldSymbol)sym.Symbol).AssociatedSymbol);
+            Assert.Equal(propertySym.AssociatedField, sym.Symbol);
 
             var info = model.GetTypeInfo(expr);
-            Assert.Equal(propertySym.Type.GetPublicSymbol(), info.Type);
+            Assert.Equal(propertySym.Type, info.Type);
         }
     }
 }

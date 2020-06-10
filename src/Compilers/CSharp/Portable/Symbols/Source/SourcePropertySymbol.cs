@@ -1716,9 +1716,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             return (syntax.Kind() == SyntaxKind.IndexerDeclaration) ? ((IndexerDeclarationSyntax)syntax).ParameterList : null;
         }
 
-        internal SynthesizedBackingFieldSymbol GetOrCreateBackingFieldForFieldKeyword()
+        internal SynthesizedBackingFieldSymbol GetOrCreateBackingFieldForFieldKeyword(Location location, DiagnosticBag diagnostics)
         {
+            if (!IsStatic && ContainingType.IsInterface)
+            {
+                diagnostics.Add(ErrorCode.ERR_InterfacesCantContainFields, location);
+            }
+
             var backingField = Volatile.Read(ref _backingField);
+
             if (backingField is null)
             {
                 backingField = new SynthesizedBackingFieldSymbol(
