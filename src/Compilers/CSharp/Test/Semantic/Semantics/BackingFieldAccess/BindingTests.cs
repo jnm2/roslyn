@@ -14,6 +14,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Semantics.BackingFieldAccess
 
         // TODO: Emit with one auto and one non-auto accessor to flush out diagnostics work
 
+        // TODO: ref-returning property
+
+        // TODO: nullability of backing field
+
         [Fact]
         public void BackingFieldIsNotAccessibleInPropertyInitializer()
         {
