@@ -97,7 +97,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             bool hasExpressionBody = arrowExpression != null;
             bool hasInitializer = !isIndexer && propertySyntax.Initializer != null;
 
-            GetAcessorDeclarations(syntax, diagnostics, out bool isAutoProperty, out bool hasAccessorList,
+            GetAccessorDeclarations(syntax, diagnostics, out bool isAutoProperty, out bool hasAccessorList,
                                    out AccessorDeclarationSyntax getSyntax, out AccessorDeclarationSyntax setSyntax);
 
             bool accessorsHaveImplementation;
@@ -431,7 +431,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
-        private static void GetAcessorDeclarations(BasePropertyDeclarationSyntax syntax, DiagnosticBag diagnostics,
+        private static void GetAccessorDeclarations(BasePropertyDeclarationSyntax syntax, DiagnosticBag diagnostics,
                                                    out bool isAutoProperty, out bool hasAccessorList,
                                                    out AccessorDeclarationSyntax getSyntax, out AccessorDeclarationSyntax setSyntax)
         {
