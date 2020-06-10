@@ -3398,34 +3398,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                             AddAccessorIfAvailable(builder.NonTypeNonIndexerMembers, property.GetMethod, diagnostics);
                             AddAccessorIfAvailable(builder.NonTypeNonIndexerMembers, property.SetMethod, diagnostics);
-                            FieldSymbol backingField = property.BackingField;
 
-                            if ((object)backingField != null)
+                            if (property.HasInitializer(out var initializer, out var backingField))
                             {
-                                // NOTE: specifically don't add the associated field to the members list
-                                // (regard it as an implementation detail).
-
-                                var initializer = propertySyntax.Initializer;
-                                if (initializer != null)
+                                if (IsScriptClass)
                                 {
-                                    if (IsScriptClass)
-                                    {
-                                        // also gather expression-declared variables from the initializer
-                                        ExpressionFieldFinder.FindExpressionVariables(builder.NonTypeNonIndexerMembers,
-                                                                                      initializer,
-                                                                                      this,
-                                                                                      DeclarationModifiers.Private | (property.IsStatic ? DeclarationModifiers.Static : 0),
-                                                                                      backingField);
-                                    }
+                                    // also gather expression-declared variables from the initializer
+                                    ExpressionFieldFinder.FindExpressionVariables(builder.NonTypeNonIndexerMembers,
+                                                                                    initializer,
+                                                                                    this,
+                                                                                    DeclarationModifiers.Private | (property.IsStatic ? DeclarationModifiers.Static : 0),
+                                                                                    backingField);
+                                }
 
-                                    if (property.IsStatic)
-                                    {
-                                        AddInitializer(ref staticInitializers, backingField, initializer);
-                                    }
-                                    else
-                                    {
-                                        AddInitializer(ref instanceInitializers, backingField, initializer);
-                                    }
+                                if (property.IsStatic)
+                                {
+                                    AddInitializer(ref staticInitializers, backingField, initializer);
+                                }
+                                else
+                                {
+                                    AddInitializer(ref instanceInitializers, backingField, initializer);
                                 }
                             }
                         }

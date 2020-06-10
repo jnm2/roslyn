@@ -764,6 +764,24 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             => (_propertyFlags & Flags.IsAutoProperty) != 0;
 
         /// <summary>
+        /// This is a way to obtain the backing field when there is an initializer without forcing the accessors to complete.
+        /// </summary>
+        internal bool HasInitializer(out EqualsValueClauseSyntax initializer, out SynthesizedBackingFieldSymbol backingField)
+        {
+            initializer = (CSharpSyntaxNode as PropertyDeclarationSyntax)?.Initializer;
+
+            if (initializer is object)
+            {
+                Debug.Assert(_backingField is object, "The constructor sets _backingField if there is an initializer.");
+                backingField = _backingField;
+                return true;
+            }
+
+            backingField = null;
+            return false;
+        }
+
+        /// <summary>
         /// Backing field, if not optimized away. A backing field will be created if the property is an auto property,
         /// has an initializer, or uses the <c>field</c> keyword inside an accessor.
         /// </summary>
