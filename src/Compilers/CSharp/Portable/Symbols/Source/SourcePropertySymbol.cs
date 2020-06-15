@@ -62,6 +62,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private OverriddenOrHiddenMembersResult _lazyOverriddenOrHiddenMembers;
         private SynthesizedSealedPropertyAccessor _lazySynthesizedSealedAccessor;
         private CustomAttributesBag<CSharpAttributeData> _lazyCustomAttributesBag;
+        private bool _didBindBothAccessors;
 
         // CONSIDER: if the parameters were computed lazily, ParameterCount could be overridden to fall back on the syntax (as in SourceMemberMethodSymbol).
 
@@ -789,17 +790,28 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         {
             get
             {
-                var backingField = Volatile.Read(ref _backingField);
-
-                // Need feedback about whether this part is necessary and how to test
-                if (backingField is null)
+                if (!_didBindBothAccessors)
                 {
-                    GetMethod?.ForceComplete(locationOpt: null, CancellationToken.None);
-                    SetMethod?.ForceComplete(locationOpt: null, CancellationToken.None);
-                    backingField = Volatile.Read(ref _backingField);
+                    var diagnostics = DiagnosticBag.GetInstance();
+                    var binder = CreateBinderForTypeAndParameters(); // TODO
+
+                    if (_getMethod is object)
+                    {
+                        binder.BindMethodBody(_getMethod.SyntaxNode, diagnostics);
+                    }
+
+                    if (_setMethod is object)
+                    {
+                        binder.BindMethodBody(_setMethod.SyntaxNode, diagnostics);
+                    }
+
+                    AddDeclarationDiagnostics(diagnostics);
+                    diagnostics.Free();
+
+                    _didBindBothAccessors = true;
                 }
 
-                return backingField;
+                return _backingField;
             }
         }
 
@@ -1736,6 +1748,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         internal SynthesizedBackingFieldSymbol GetOrCreateBackingFieldForFieldKeyword(Location location, DiagnosticBag diagnostics)
         {
+            Debug.Assert(!_didBindBothAccessors);
+
             if (!IsStatic && ContainingType.IsInterface)
             {
                 diagnostics.Add(ErrorCode.ERR_InterfacesCantContainFields, location);
