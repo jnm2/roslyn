@@ -380,5 +380,56 @@ namespace Microsoft.CodeAnalysis.SignatureHelp
 
             return null;
         }
+
+        protected static ImmutableArray<SymbolDisplayPart> GetParameterSelectedDisplayParts(
+            IParameterSymbol parameter,
+            SemanticModel semanticModel,
+            int position)
+        {
+            if ((parameter.Type as INamedTypeSymbol)?.DelegateInvokeMethod is not { } invokeMethod)
+            {
+                return ImmutableArray<SymbolDisplayPart>.Empty;
+            }
+
+            var parts = ImmutableArray.CreateBuilder<SymbolDisplayPart>();
+            parts.AddLineBreak();
+            parts.AddText(FeaturesResources.Delegate_signature_colon);
+            parts.AddSpace();
+
+            parts.AddPunctuation("(");
+
+            for (var i = 0; i < invokeMethod.Parameters.Length; i++)
+            {
+                if (i != 0)
+                {
+                    parts.AddPunctuation(",");
+                    parts.AddSpace();
+                }
+
+                parts.AddRange(invokeMethod.Parameters[i].ToMinimalDisplayParts(semanticModel, position));
+            }
+
+            parts.AddPunctuation(")");
+            parts.AddSpace();
+            parts.AddPunctuation("=>");
+            parts.AddSpace();
+
+            // TODO: this should live somewhere else. Seems like there would be another helper for this already.
+            if (invokeMethod.ReturnsByRefReadonly || invokeMethod.ReturnsByRef)
+            {
+                parts.AddKeyword("ref");
+                parts.AddSpace();
+            }
+
+            if (invokeMethod.ReturnsByRefReadonly)
+            {
+                parts.AddKeyword("readonly");
+                parts.AddSpace();
+            }
+
+            parts.AddRange(invokeMethod.ReturnType.ToMinimalDisplayParts(semanticModel, position));
+
+            return parts.ToImmutable();
+        }
     }
 }

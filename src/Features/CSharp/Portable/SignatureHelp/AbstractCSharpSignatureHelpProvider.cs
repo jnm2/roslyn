@@ -58,7 +58,8 @@ namespace Microsoft.CodeAnalysis.CSharp.SignatureHelp
                 parameter.Name,
                 parameter.IsOptional,
                 parameter.GetDocumentationPartsFactory(semanticModel, position, formatter),
-                parameter.ToMinimalDisplayParts(semanticModel, position, s_allowDefaultLiteralFormat));
+                parameter.ToMinimalDisplayParts(semanticModel, position, s_allowDefaultLiteralFormat),
+                selectedDisplayParts: GetParameterSelectedDisplayParts(parameter, semanticModel, position));
         }
 
         /// <summary>
