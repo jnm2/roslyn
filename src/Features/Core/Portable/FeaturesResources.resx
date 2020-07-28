@@ -2813,4 +2813,7 @@ Zero-width positive lookbehind assertions are typically used at the beginning of
   <data name="The_assembly_0_containing_type_1_references_NET_Framework" xml:space="preserve">
     <value>The assembly '{0}' containing type '{1}' references .NET Framework, which is not supported.</value>
   </data>
+  <data name="Delegate_signature_colon" xml:space="preserve">
+    <value>Delegate signature:</value>
+  </data>
 </root>
