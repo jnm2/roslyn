@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Microsoft.CodeAnalysis.Shared.Extensions
 {
@@ -11,6 +12,9 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
     {
         public static string GetFullText(this IEnumerable<SymbolDisplayPart> parts)
             => string.Join(string.Empty, parts.Select(p => p.ToString()));
+
+        public static void AddKeyword(this IList<SymbolDisplayPart> parts, string text)
+            => parts.Add(new SymbolDisplayPart(SymbolDisplayPartKind.Keyword, null, text));
 
         public static void AddLineBreak(this IList<SymbolDisplayPart> parts, string text = "\r\n")
             => parts.Add(new SymbolDisplayPart(SymbolDisplayPartKind.LineBreak, null, text));
