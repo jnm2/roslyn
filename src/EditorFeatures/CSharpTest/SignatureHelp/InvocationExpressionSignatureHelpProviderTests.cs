@@ -633,6 +633,148 @@ $@"void List<'a>.Add('a item)
             await TestAsync(markup, expectedOrderedItems);
         }
 
+        [WorkItem(46190, "https://github.com/dotnet/roslyn/issues/46190")]
+        [Fact, Trait(Traits.Feature, Traits.Features.SignatureHelp)]
+        public async Task TestInvocationOnDelegateType()
+        {
+            var markup = @"
+using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Goo($$);
+    }
+
+    static void Goo(Func<int, string, byte> func) { }
+}";
+
+            var expectedOrderedItems = new List<SignatureHelpTestItem>
+            {
+                new SignatureHelpTestItem(
+$@"void Program.Goo(Func<int, string, byte> func)
+
+{FeaturesResources.Delegate_signature_colon}
+(int arg1, string arg2) => byte",
+                    methodDocumentation: string.Empty,
+                    parameterDocumentation: string.Empty,
+                    currentParameterIndex: 0,
+                    description: $@"
+
+{FeaturesResources.Delegate_signature_colon}
+(int arg1, string arg2) => byte")
+            };
+
+            await TestAsync(markup, expectedOrderedItems);
+        }
+
+        [WorkItem(46190, "https://github.com/dotnet/roslyn/issues/46190")]
+        [Fact, Trait(Traits.Feature, Traits.Features.SignatureHelp)]
+        public async Task TestInvocationOnVoidReturningDelegateType()
+        {
+            var markup = @"
+using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Goo($$);
+    }
+
+    static void Goo(Action p) { }
+}";
+
+            var expectedOrderedItems = new List<SignatureHelpTestItem>
+            {
+                new SignatureHelpTestItem(
+$@"void Program.Goo(Action p)
+
+{FeaturesResources.Delegate_signature_colon}
+() => void",
+                    methodDocumentation: string.Empty,
+                    parameterDocumentation: string.Empty,
+                    currentParameterIndex: 0,
+                    description: $@"
+
+{FeaturesResources.Delegate_signature_colon}
+() => void")
+            };
+
+            await TestAsync(markup, expectedOrderedItems);
+        }
+
+        [WorkItem(46190, "https://github.com/dotnet/roslyn/issues/46190")]
+        [Fact, Trait(Traits.Feature, Traits.Features.SignatureHelp)]
+        public async Task TestInvocationOnRefReturningDelegateType()
+        {
+            var markup = @"
+class Program
+{
+    static void Main(string[] args)
+    {
+        Goo($$);
+    }
+
+    delegate ref int RefReturningDelegate();
+    static void Goo(RefReturningDelegate p) { }
+}";
+
+            var expectedOrderedItems = new List<SignatureHelpTestItem>
+            {
+                new SignatureHelpTestItem(
+$@"void Program.Goo(RefReturningDelegate p)
+
+{FeaturesResources.Delegate_signature_colon}
+() => ref int",
+                    methodDocumentation: string.Empty,
+                    parameterDocumentation: string.Empty,
+                    currentParameterIndex: 0,
+                    description: $@"
+
+{FeaturesResources.Delegate_signature_colon}
+() => ref int")
+            };
+
+            await TestAsync(markup, expectedOrderedItems);
+        }
+
+        [WorkItem(46190, "https://github.com/dotnet/roslyn/issues/46190")]
+        [Fact, Trait(Traits.Feature, Traits.Features.SignatureHelp)]
+        public async Task TestInvocationOnRefReadonlyReturningDelegateType()
+        {
+            var markup = @"
+class Program
+{
+    static void Main(string[] args)
+    {
+        Goo($$);
+    }
+
+    delegate ref readonly int RefReadonlyReturningDelegate();
+    static void Goo(RefReadonlyReturningDelegate p) { }
+}";
+
+            var expectedOrderedItems = new List<SignatureHelpTestItem>
+            {
+                new SignatureHelpTestItem(
+$@"void Program.Goo(RefReadonlyReturningDelegate p)
+
+{FeaturesResources.Delegate_signature_colon}
+() => ref readonly int",
+                    methodDocumentation: string.Empty,
+                    parameterDocumentation: string.Empty,
+                    currentParameterIndex: 0,
+                    description: $@"
+
+{FeaturesResources.Delegate_signature_colon}
+() => ref readonly int")
+            };
+
+            await TestAsync(markup, expectedOrderedItems);
+        }
+
         [WorkItem(968188, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/968188")]
         [Fact, Trait(Traits.Feature, Traits.Features.SignatureHelp)]
         public async Task TestInvocationOnBaseExpression_ProtectedAccessibility()
