@@ -210,9 +210,11 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
             ParseOptions parseOptions,
             SyntaxNode expression)
         {
-            return factory.SyntaxFacts.SupportsNotPattern(parseOptions)
-                ? factory.IsPatternExpression(expression, factory.NotPattern(factory.ConstantPattern(factory.NullLiteralExpression())))
-                : factory.IsTypeExpression(expression, factory.TypeExpression(SpecialType.System_Object));
+            return !factory.IsReferenceEqualsOverloadable
+                ? factory.ReferenceNotEqualsExpression(expression, factory.NullLiteralExpression())
+                : factory.SyntaxFacts.SupportsNotPattern(parseOptions)
+                    ? factory.IsPatternExpression(expression, factory.NotPattern(factory.ConstantPattern(factory.NullLiteralExpression())))
+                    : factory.IsTypeExpression(expression, factory.TypeExpression(SpecialType.System_Object));
         }
 
         public static ImmutableArray<SyntaxNode> CreateAssignmentStatements(
