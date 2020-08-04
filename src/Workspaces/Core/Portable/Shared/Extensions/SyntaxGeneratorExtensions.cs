@@ -8,9 +8,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Simplification;
 using Roslyn.Utilities;
@@ -181,17 +183,36 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
             IParameterSymbol parameter)
         {
             var identifier = factory.IdentifierName(parameter.Name);
-            var nullExpr = factory.NullLiteralExpression();
-            var condition = factory.SupportsPatterns(semanticModel.SyntaxTree.Options)
-                ? factory.IsPatternExpression(identifier, factory.ConstantPattern(nullExpr))
-                : factory.ReferenceEqualsExpression(identifier, nullExpr);
+            var condition = factory.CreateNullCheck(semanticModel.SyntaxTree.Options, identifier);
 
-            // generates: if (s == null) throw new ArgumentNullException(nameof(s))
+            // generates: if (s is null) throw new ArgumentNullException(nameof(s))
             return factory.IfStatement(
-               condition,
+                condition,
                 SpecializedCollections.SingletonEnumerable(
                     factory.ThrowStatement(CreateNewArgumentNullException(
                         factory, semanticModel.Compilation, parameter))));
+        }
+
+        public static SyntaxNode CreateNullCheck(
+            this SyntaxGenerator factory,
+            ParseOptions parseOptions,
+            SyntaxNode expression)
+        {
+            var nullExpr = factory.NullLiteralExpression();
+
+            return factory.SupportsPatterns(parseOptions)
+                ? factory.IsPatternExpression(expression, factory.ConstantPattern(nullExpr))
+                : factory.ReferenceEqualsExpression(expression, nullExpr);
+        }
+
+        public static SyntaxNode CreateNotNullCheck(
+            this SyntaxGenerator factory,
+            ParseOptions parseOptions,
+            SyntaxNode expression)
+        {
+            return factory.SyntaxFacts.SupportsNotPattern(parseOptions)
+                ? factory.IsPatternExpression(expression, factory.NotPattern(factory.ConstantPattern(factory.NullLiteralExpression())))
+                : factory.IsTypeExpression(expression, factory.TypeExpression(SpecialType.System_Object));
         }
 
         public static ImmutableArray<SyntaxNode> CreateAssignmentStatements(

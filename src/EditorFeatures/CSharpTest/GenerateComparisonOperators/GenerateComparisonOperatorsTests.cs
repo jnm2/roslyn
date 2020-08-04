@@ -81,22 +81,22 @@ class C : IComparable<C>
 
     public static bool operator <(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, C right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, C right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, C right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is null ? right is null : left.CompareTo(right) >= 0;
     }
 }");
         }
@@ -122,10 +122,10 @@ class C : IComparable<C>
 {
     public int CompareTo(C c) => 0;
 
-    public static bool operator <(C left, C right) => left.CompareTo(right) < 0;
-    public static bool operator >(C left, C right) => left.CompareTo(right) > 0;
-    public static bool operator <=(C left, C right) => left.CompareTo(right) <= 0;
-    public static bool operator >=(C left, C right) => left.CompareTo(right) >= 0;
+    public static bool operator <(C left, C right) => left is null ? right is object : left.CompareTo(right) < 0;
+    public static bool operator >(C left, C right) => left is object && left.CompareTo(right) > 0;
+    public static bool operator <=(C left, C right) => left is null || left.CompareTo(right) <= 0;
+    public static bool operator >=(C left, C right) => left is null ? right is null : left.CompareTo(right) >= 0;
 }",
                 EditorConfig = CodeFixVerifierHelper.GetEditorConfigText(
                     new OptionsCollection(LanguageNames.CSharp)
@@ -155,22 +155,22 @@ class C : IComparable<C>
 
     public static bool operator <(C left, C right)
     {
-        return ((IComparable<C>)left).CompareTo(right) < 0;
+        return left is null ? right is object : ((IComparable<C>)left).CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, C right)
     {
-        return ((IComparable<C>)left).CompareTo(right) > 0;
+        return left is object && ((IComparable<C>)left).CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, C right)
     {
-        return ((IComparable<C>)left).CompareTo(right) <= 0;
+        return left is null || ((IComparable<C>)left).CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, C right)
     {
-        return ((IComparable<C>)left).CompareTo(right) >= 0;
+        return left is null ? right is null : ((IComparable<C>)left).CompareTo(right) >= 0;
     }
 }");
         }
@@ -195,22 +195,22 @@ class C : IComparable<C>
 
     public static bool operator <(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, C right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, C right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, C right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is null ? right is null : left.CompareTo(right) >= 0;
     }
 }");
         }
@@ -235,22 +235,22 @@ class C : IComparable<C>
 
     public static bool operator <(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, C right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, C right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, C right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is null ? right is null : left.CompareTo(right) >= 0;
     }
 }");
         }
@@ -277,22 +277,22 @@ class C : IComparable<C>
 
     public static bool operator <(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, C right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, C right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, C right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is null ? right is null : left.CompareTo(right) >= 0;
     }
 }");
         }
@@ -389,7 +389,7 @@ class C : IComparable<C>
 
     public static bool operator {|CS0216:<|}(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
 [||]
@@ -403,22 +403,22 @@ class C : IComparable<C>
 
     public static bool operator <(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, C right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, C right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, C right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is null ? right is null : left.CompareTo(right) >= 0;
     }
 }");
         }
@@ -447,22 +447,22 @@ class C : IComparable<C>, IComparable<int>
 
     public static bool operator <(C left, int right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null || left.CompareTo(right) < 0;
     }
 
     public static bool operator >(C left, int right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator <=(C left, int right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator >=(C left, int right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is object && left.CompareTo(right) >= 0;
     }
 }", index: 1);
         }
@@ -489,22 +489,22 @@ interface C : IComparable<C>
 
     public static bool operator {|CS8701:<|}(C left, C right)
     {
-        return left.CompareTo(right) < 0;
+        return left is null ? right is object : left.CompareTo(right) < 0;
     }
 
     public static bool operator {|CS8701:>|}(C left, C right)
     {
-        return left.CompareTo(right) > 0;
+        return left is object && left.CompareTo(right) > 0;
     }
 
     public static bool operator {|CS8701:<=|}(C left, C right)
     {
-        return left.CompareTo(right) <= 0;
+        return left is null || left.CompareTo(right) <= 0;
     }
 
     public static bool operator {|CS8701:>=|}(C left, C right)
     {
-        return left.CompareTo(right) >= 0;
+        return left is null ? right is null : left.CompareTo(right) >= 0;
     }
 }");
         }

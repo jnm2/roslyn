@@ -146,7 +146,7 @@ namespace Microsoft.CodeAnalysis.GenerateComparisonOperators
 
             var codeGenService = document.GetRequiredLanguageService<ICodeGenerationService>();
             var operators = GenerateComparisonOperators(
-                generator, semanticModel.Compilation, containingType, comparableType,
+                generator, semanticModel, containingType, comparableType,
                 GenerateLeftExpression(generator, comparableType, compareMethod));
 
             return await codeGenService.AddMembersAsync(
@@ -177,14 +177,14 @@ namespace Microsoft.CodeAnalysis.GenerateComparisonOperators
 
         private static ImmutableArray<IMethodSymbol> GenerateComparisonOperators(
             SyntaxGenerator generator,
-            Compilation compilation,
+            SemanticModel semanticModel,
             INamedTypeSymbol containingType,
             INamedTypeSymbol comparableType,
             SyntaxNode thisExpression)
         {
             using var _ = ArrayBuilder<IMethodSymbol>.GetInstance(out var operators);
 
-            var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
+            var boolType = semanticModel.Compilation.GetSpecialType(SpecialType.System_Boolean);
             var comparedType = comparableType.TypeArguments[0];
 
             var parameters = ImmutableArray.Create(
@@ -202,21 +202,23 @@ namespace Microsoft.CodeAnalysis.GenerateComparisonOperators
                         boolType,
                         kind,
                         parameters,
-                        ImmutableArray.Create(GenerateStatement(generator, kind, thisExpression))));
+                        ImmutableArray.Create(GenerateStatements(generator, semanticModel.SyntaxTree.Options, kind, thisExpression, comparedType))));
                 }
             }
 
             return operators.ToImmutable();
         }
 
-        private static SyntaxNode GenerateStatement(
-            SyntaxGenerator generator, CodeGenerationOperatorKind kind, SyntaxNode leftExpression)
+        private static SyntaxNode GenerateStatements(
+            SyntaxGenerator generator, ParseOptions parseOptions, CodeGenerationOperatorKind kind, SyntaxNode leftExpression, ITypeSymbol comparedType)
         {
             var zero = generator.LiteralExpression(0);
 
+            var rightExpression = generator.IdentifierName(RightName);
+
             var compareToCall = generator.InvocationExpression(
                 generator.MemberAccessExpression(leftExpression, nameof(IComparable.CompareTo)),
-                generator.IdentifierName(RightName));
+                rightExpression);
 
             var comparison = kind switch
             {
@@ -227,7 +229,39 @@ namespace Microsoft.CodeAnalysis.GenerateComparisonOperators
                 _ => throw ExceptionUtilities.Unreachable,
             };
 
-            return generator.ReturnStatement(comparison);
+            // https://docs.microsoft.com/en-us/dotnet/api/system.icomparable-1.compareto#remarks:
+            // By definition, any object compares greater than null, and two null references compare equal to each other.
+
+            return generator.ReturnStatement(kind switch
+            {
+                CodeGenerationOperatorKind.LessThan => comparedType.IsValueType && !comparedType.IsNullable()
+                    ? generator.LogicalOrExpression( // Right can't be null
+                        generator.CreateNullCheck(parseOptions, leftExpression),
+                        comparison)
+                    : generator.ConditionalExpression(
+                        generator.CreateNullCheck(parseOptions, leftExpression),
+                        generator.CreateNotNullCheck(parseOptions, rightExpression), // Null is only < non-null
+                        comparison),
+
+                CodeGenerationOperatorKind.LessThanOrEqual => generator.LogicalOrExpression( // Null is <= everything
+                    generator.CreateNullCheck(parseOptions, leftExpression),
+                    comparison),
+
+                CodeGenerationOperatorKind.GreaterThan => generator.LogicalAndExpression( // Null is > nothing
+                    generator.CreateNotNullCheck(parseOptions, leftExpression),
+                    comparison),
+
+                CodeGenerationOperatorKind.GreaterThanOrEqual => comparedType.IsValueType && !comparedType.IsNullable()
+                    ? generator.LogicalAndExpression( // Right can't be null
+                        generator.CreateNotNullCheck(parseOptions, leftExpression),
+                        comparison)
+                    : generator.ConditionalExpression(
+                        generator.CreateNullCheck(parseOptions, leftExpression),
+                        generator.CreateNullCheck(parseOptions, rightExpression), // Null is only >= null
+                        comparison),
+
+                _ => throw ExceptionUtilities.Unreachable,
+            });
         }
 
         private static bool HasAllComparisonOperators(INamedTypeSymbol containingType, ITypeSymbol comparedType)
