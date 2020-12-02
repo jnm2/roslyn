@@ -375,6 +375,11 @@ namespace Microsoft.CodeAnalysis.SignatureHelp
 
             var parts = ImmutableArray.CreateBuilder<SymbolDisplayPart>();
             parts.AddLineBreak();
+            /*
+            parts.AddRange(parameter.Type.ToMinimalDisplayParts(semanticModel, position, SymbolDisplayFormat.MinimallyQualifiedFormat));
+            parts.AddSpace();
+            parts.AddText(FeaturesResources.is_);*/
+
             parts.AddText(FeaturesResources.Delegate_signature_colon);
             parts.AddSpace();
 
