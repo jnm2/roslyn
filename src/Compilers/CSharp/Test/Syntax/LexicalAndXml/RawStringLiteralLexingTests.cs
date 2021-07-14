@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#pragma warning disable xUnit1024 // Test methods cannot have overloads
+
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -330,6 +332,63 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.LexicalAndXml
                 // (2,9): error CS9100: Raw string literals are not allowed in preprocessor directives
                 // #line 1 """c:\"""
                 Diagnostic(ErrorCode.ERR_Raw_string_literals_are_not_allowed_in_preprocessor_directives, "").WithLocation(2, 9));
+        }
+
+        [Fact]
+        public void AllSingleCharactersInSingleLineLiteral()
+        {
+            for (var charValue = '\0'; ; charValue++)
+            {
+                if (charValue == '"' || SyntaxFacts.IsNewLine(charValue))
+                    continue;
+
+                TestSingleToken("\"\"\"" + charValue + "\"\"\"", SyntaxKind.SingleLineRawStringLiteralToken, charValue.ToString());
+
+                if (charValue == char.MaxValue)
+                    break;
+            }
+        }
+
+        [Fact]
+        public void AllSingleCharactersInMultiLineLiteral()
+        {
+            for (var charValue = '\0'; ; charValue++)
+            {
+                TestSingleToken("\"\"\"\r\n" + charValue + "\r\n\"\"\"", SyntaxKind.MultiLineRawStringLiteralToken, charValue.ToString());
+
+                if (charValue == char.MaxValue)
+                    break;
+            }
+        }
+
+        public static IEnumerable<object[]> EscapeSequences => new[]
+        {
+            new object[] { "\\'" },
+            new object[] { "\\\"" },
+            new object[] { "\\\\" },
+            new object[] { "\\0" },
+            new object[] { "\\a" },
+            new object[] { "\\b" },
+            new object[] { "\\f" },
+            new object[] { "\\n" },
+            new object[] { "\\r" },
+            new object[] { "\\t" },
+            new object[] { "\\v" },
+            new object[] { "\\u1234" },
+            new object[] { "\\U12345678" },
+            new object[] { "\\x1234" },
+        };
+
+        [Theory, MemberData(nameof(EscapeSequences))]
+        public void AllEscapeSequencesInSingleLineLiteral(string escapeSequence)
+        {
+            TestSingleToken("\"\"\"" + escapeSequence + "\"\"\"", SyntaxKind.SingleLineRawStringLiteralToken, escapeSequence);
+        }
+
+        [Theory, MemberData(nameof(EscapeSequences))]
+        public void AllEscapeSequencesInMultiLineLiteral(string escapeSequence)
+        {
+            TestSingleToken("\"\"\"\r\n" + escapeSequence + "\r\n\"\"\"", SyntaxKind.MultiLineRawStringLiteralToken, escapeSequence);
         }
     }
 }

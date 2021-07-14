@@ -205,6 +205,19 @@ class C
         }
 
         [Fact]
+        public void TestSingleLineRawLiteralContainingClosingBraceInSingleLineInterpolatedString()
+        {
+            CreateCompilation(
+@"class C
+{
+    void M()
+    {
+        var v = $""{""""""}""""""}"";
+    }
+}").VerifyDiagnostics();
+        }
+
+        [Fact]
         public void TestMultiLineRawLiteralInSingleLineInterpolatedString()
         {
             CreateCompilation(
