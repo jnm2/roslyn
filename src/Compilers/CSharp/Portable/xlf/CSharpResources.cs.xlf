@@ -907,6 +907,11 @@
         <target state="translated">Konstruktor struktury bez parametrů musí být public.</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_NotEnoughQuotesForRawString">
+        <source>Not enough open quotes for raw string literal</source>
+        <target state="new">Not enough open quotes for raw string literal</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName">
         <source>'{0}' is not an instance method, the receiver cannot be an interpolated string handler argument.</source>
         <target state="translated">{0} není instanční metoda. Přijímač nemůže být argumentem obslužné rutiny interpolovaného řetězce.</target>

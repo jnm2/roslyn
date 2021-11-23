@@ -797,6 +797,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         CheckFeatureAvailability(MessageID.IDS_FeatureInterpolatedStrings);
                         break;
                     }
+                    else if (TextWindow.PeekChar(1) == '$')
+                    {
+                        // $$ must start a raw string literal.  Note $""" will be handled by ScanInterpolatedStringLiteral
+                        this.ScanRawInterpolatedStringLiteral(ref info);
+                        break;
+                    }
                     else if (this.ModeIs(LexerMode.DebuggerSyntax))
                     {
                         goto case 'a';

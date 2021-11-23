@@ -907,6 +907,11 @@
         <target state="translated">無參數結構建構函式必須是 'public'。</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_NotEnoughQuotesForRawString">
+        <source>Not enough open quotes for raw string literal</source>
+        <target state="new">Not enough open quotes for raw string literal</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName">
         <source>'{0}' is not an instance method, the receiver cannot be an interpolated string handler argument.</source>
         <target state="translated">'{0}' 不是執行個體方法，接收器不可為差補字串處理常式引數。</target>

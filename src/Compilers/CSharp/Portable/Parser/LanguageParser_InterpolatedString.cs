@@ -59,22 +59,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             //
 
             var originalToken = this.EatToken();
+            Debug.Assert(originalToken.Kind == SyntaxKind.InterpolatedStringToken);
+
             var originalText = originalToken.ValueText; // this is actually the source text
             Debug.Assert(originalText[0] == '$' || originalText[0] == '@');
 
             var isAltInterpolatedVerbatim = originalText.Length > 2 && originalText[0] == '@'; // @$
             var isVerbatim = isAltInterpolatedVerbatim || (originalText.Length > 2 && originalText[1] == '@');
 
-            Debug.Assert(originalToken.Kind == SyntaxKind.InterpolatedStringToken);
             var interpolations = ArrayBuilder<Lexer.Interpolation>.GetInstance();
-            SyntaxDiagnosticInfo error = null;
+            SyntaxDiagnosticInfo error;
             bool closeQuoteMissing;
             using (var tempLexer = new Lexer(Text.SourceText.From(originalText), this.Options, allowPreprocessorDirectives: false))
             {
                 // compute the positions of the interpolations in the original string literal, and also compute/preserve
                 // lexical errors
                 var info = default(Lexer.TokenInfo);
-                tempLexer.ScanInterpolatedStringLiteralTop(interpolations, isVerbatim, ref info, ref error, out closeQuoteMissing);
+                tempLexer.ScanInterpolatedStringLiteralTop(interpolations, isVerbatim, ref info, out error, out closeQuoteMissing);
             }
 
             // Make a token for the open quote $" or $@" or @$"

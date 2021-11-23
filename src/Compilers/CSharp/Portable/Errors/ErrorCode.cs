@@ -2022,6 +2022,8 @@ namespace Microsoft.CodeAnalysis.CSharp
         ERR_RawStringInVerbatimInterpolatedStrings = 9105,
         ERR_RawStringMustContainContent = 9106,
 
+        ERR_NotEnoughQuotesForRawString = 9107,
+
         #endregion
 
         // Note: you will need to re-generate compiler code after adding warnings (eng\generate-compiler-code.cmd)
