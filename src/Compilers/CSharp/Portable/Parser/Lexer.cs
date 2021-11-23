@@ -768,25 +768,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     break;
 
                 case '$':
-                    if (TextWindow.PeekChar(1) == '"')
+                    if (TryScanInterpolatedString(ref info))
                     {
-                        this.ScanInterpolatedStringLiteral(isVerbatim: false, ref info);
-                        CheckFeatureAvailability(MessageID.IDS_FeatureInterpolatedStrings);
                         break;
                     }
-                    else if (TextWindow.PeekChar(1) == '@' && TextWindow.PeekChar(2) == '"')
-                    {
-                        this.ScanInterpolatedStringLiteral(isVerbatim: true, ref info);
-                        CheckFeatureAvailability(MessageID.IDS_FeatureInterpolatedStrings);
-                        break;
-                    }
-                    else if (TextWindow.PeekChar(1) == '$')
-                    {
-                        // $$ must start a raw string literal.  Note $""" will be handled by ScanInterpolatedStringLiteral
-                        this.ScanRawInterpolatedStringLiteral(ref info);
-                        break;
-                    }
-                    else if (this.ModeIs(LexerMode.DebuggerSyntax))
+
+                    if (this.ModeIs(LexerMode.DebuggerSyntax))
                     {
                         goto case 'a';
                     }
@@ -951,6 +938,28 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 info.Text = TextWindow.GetText(intern: true);
                 this.AddError(ErrorCode.ERR_ExpectedVerbatimLiteral);
             }
+        }
+
+        private bool TryScanInterpolatedString(ref TokenInfo info)
+        {
+            if (TextWindow.PeekChar(1) == '"')
+            {
+                this.ScanInterpolatedStringLiteral(isVerbatim: false, ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '@' && TextWindow.PeekChar(2) == '"')
+            {
+                this.ScanInterpolatedStringLiteral(isVerbatim: true, ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '$')
+            {
+                // $$ must start a raw string literal.  Note $""" will be handled by ScanInterpolatedStringLiteral
+                this.ScanRawInterpolatedStringLiteral(ref info);
+                return true;
+            }
+
+            return false;
         }
 
 #nullable enable
