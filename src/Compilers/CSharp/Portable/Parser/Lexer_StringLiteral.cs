@@ -261,6 +261,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             var subScanner = new InterpolatedStringScanner(this, kind, startingDollarSignCount, startingQuoteCount);
             subScanner.ScanInterpolatedStringLiteralTop(interpolations, ref info, out closeQuoteMissing);
             error = subScanner.Error;
+
+            info.Kind = SyntaxKind.InterpolatedStringToken;
             info.Text = TextWindow.GetText(intern: false);
         }
 
@@ -388,7 +390,58 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             internal void ScanInterpolatedStringLiteralTop(ArrayBuilder<Interpolation>? interpolations, ref TokenInfo info, out bool closeQuoteMissing)
             {
-                if (_isVerbatim)
+                CanInterpolatedStringLiteralStart();
+                ScanInterpolatedStringLiteralContents(interpolations);
+                ScanInterpolatedStringLiteralEnd(out closeQuoteMissing);
+            }
+
+            private void ScanInterpolatedStringLiteralEnd(out bool closeQuoteMissing)
+            {
+                if (_lexer.TextWindow.PeekChar() != '"')
+                {
+                    Debug.Assert(IsAtEnd());
+                    int position = IsAtEnd(allowNewline: true) ? _lexer.TextWindow.Position - 1 : _lexer.TextWindow.Position;
+                    TrySetUnrecoverableError(_lexer.MakeError(
+                        position, 1,
+                        _kind == InterpolatedStringKind.Normal ? ErrorCode.ERR_NewlineInConst : ErrorCode.ERR_UnterminatedStringLit));
+
+                    closeQuoteMissing = true;
+                }
+                else if (_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
+                {
+                    // found the closing quote
+                    _lexer.TextWindow.AdvanceChar(); // "
+                    closeQuoteMissing = false;
+                }
+                else
+                {
+                    Debug.Assert(_kind is InterpolatedStringKind.Raw);
+
+                    // We should only get here if scanning the contents saw that we had an appropriate close sequence to
+                    // end on. That means we're on a fresh line that starts with spaces and ends with enough quotes for
+                    // us to finish.
+                    var currentQuoteCount = _lexer.ConsumeQuoteSequence();
+                    Debug.Assert(currentQuoteCount >= _startingQuoteCount);
+
+                    // A raw string could never be followed by another string.  So once we've consumed all the closing quotes
+                    // if we have any more closing quotes then that's an error we can give a message for.
+                    if (currentQuoteCount > _startingQuoteCount)
+                    {
+                        var excessQuoteCount = currentQuoteCount - _startingQuoteCount;
+                        this.TrySetUnrecoverableError(
+                            _lexer.MakeError(
+                                position: _lexer.TextWindow.Position - excessQuoteCount,
+                                width: excessQuoteCount,
+                                ErrorCode.ERR_TooManyQuotesForRawString));
+                    }
+
+                    closeQuoteMissing = false;
+                }
+            }
+
+            private readonly void CanInterpolatedStringLiteralStart()
+            {
+                if (_kind == InterpolatedStringKind.Verbatim)
                 {
                     Debug.Assert(
                         (_lexer.TextWindow.PeekChar() == '@' && _lexer.TextWindow.PeekChar(1) == '$') ||
@@ -397,32 +450,30 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // @$ or $@
                     _lexer.TextWindow.AdvanceChar();
                     _lexer.TextWindow.AdvanceChar();
+
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
+                    _lexer.TextWindow.AdvanceChar(); // "
+
                 }
-                else
+                else if (_kind == InterpolatedStringKind.Normal)
                 {
                     Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
                     _lexer.TextWindow.AdvanceChar(); // $
-                }
-
-                Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
-                _lexer.TextWindow.AdvanceChar(); // "
-                ScanInterpolatedStringLiteralContents(interpolations);
-                if (_lexer.TextWindow.PeekChar() != '"')
-                {
-                    Debug.Assert(IsAtEnd());
-                    int position = IsAtEnd(allowNewline: true) ? _lexer.TextWindow.Position - 1 : _lexer.TextWindow.Position;
-                    TrySetUnrecoverableError(_lexer.MakeError(position, 1, _isVerbatim ? ErrorCode.ERR_UnterminatedStringLit : ErrorCode.ERR_NewlineInConst));
-
-                    closeQuoteMissing = true;
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
+                    _lexer.TextWindow.AdvanceChar(); // "
                 }
                 else
                 {
-                    // found the closing quote
-                    _lexer.TextWindow.AdvanceChar(); // "
-                    closeQuoteMissing = false;
-                }
+                    Debug.Assert(_kind == InterpolatedStringKind.Raw);
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
 
-                info.Kind = SyntaxKind.InterpolatedStringToken;
+                    var dollarSignCount = _lexer.ConsumeDollarSignSequence();
+                    Debug.Assert(dollarSignCount == _startingDollarSignCount);
+
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
+                    var quoteCount = _lexer.ConsumeQuoteSequence();
+                    Debug.Assert(quoteCount == _startingQuoteCount);
+                }
             }
 
             private void ScanInterpolatedStringLiteralContents(ArrayBuilder<Interpolation>? interpolations)
