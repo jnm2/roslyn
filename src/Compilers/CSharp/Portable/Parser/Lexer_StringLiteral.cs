@@ -259,9 +259,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             out bool closeQuoteMissing)
         {
             var subScanner = new InterpolatedStringScanner(this, kind, startingDollarSignCount, startingQuoteCount);
-            subScanner.ScanInterpolatedStringLiteralTop(interpolations, ref info, out closeQuoteMissing);
+            subScanner.ScanInterpolatedStringLiteralTop(interpolations, out closeQuoteMissing);
             error = subScanner.Error;
-
             info.Kind = SyntaxKind.InterpolatedStringToken;
             info.Text = TextWindow.GetText(intern: false);
         }
@@ -388,15 +387,55 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // is a recoverable error.
             }
 
-            internal void ScanInterpolatedStringLiteralTop(ArrayBuilder<Interpolation>? interpolations, ref TokenInfo info, out bool closeQuoteMissing)
+            internal void ScanInterpolatedStringLiteralTop(ArrayBuilder<Interpolation>? interpolations, out bool closeQuoteMissing)
             {
-                CanInterpolatedStringLiteralStart();
+                ScanInterpolatedStringLiteralStart();
                 ScanInterpolatedStringLiteralContents(interpolations);
                 ScanInterpolatedStringLiteralEnd(out closeQuoteMissing);
             }
 
+            private readonly void ScanInterpolatedStringLiteralStart()
+            {
+                // Handles reading the start of the interpolated string literal (up to where the content begins)
+                if (_kind == InterpolatedStringKind.Verbatim)
+                {
+                    Debug.Assert(
+                        (_lexer.TextWindow.PeekChar() == '@' && _lexer.TextWindow.PeekChar(1) == '$') ||
+                        (_lexer.TextWindow.PeekChar() == '$' && _lexer.TextWindow.PeekChar(1) == '@'));
+
+                    // @$ or $@
+                    _lexer.TextWindow.AdvanceChar();
+                    _lexer.TextWindow.AdvanceChar();
+
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
+                    _lexer.TextWindow.AdvanceChar(); // "
+
+                }
+                else if (_kind == InterpolatedStringKind.Normal)
+                {
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
+                    _lexer.TextWindow.AdvanceChar(); // $
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
+                    _lexer.TextWindow.AdvanceChar(); // "
+                }
+                else
+                {
+                    Debug.Assert(_kind == InterpolatedStringKind.Raw);
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
+
+                    var dollarSignCount = _lexer.ConsumeDollarSignSequence();
+                    Debug.Assert(dollarSignCount == _startingDollarSignCount);
+
+                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
+                    var quoteCount = _lexer.ConsumeQuoteSequence();
+                    Debug.Assert(quoteCount == _startingQuoteCount);
+                }
+            }
+
             private void ScanInterpolatedStringLiteralEnd(out bool closeQuoteMissing)
             {
+                // Handles reading the end of the interpolated string literal (after where the content ends)
+
                 if (_lexer.TextWindow.PeekChar() != '"')
                 {
                     Debug.Assert(IsAtEnd());
@@ -436,43 +475,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
 
                     closeQuoteMissing = false;
-                }
-            }
-
-            private readonly void CanInterpolatedStringLiteralStart()
-            {
-                if (_kind == InterpolatedStringKind.Verbatim)
-                {
-                    Debug.Assert(
-                        (_lexer.TextWindow.PeekChar() == '@' && _lexer.TextWindow.PeekChar(1) == '$') ||
-                        (_lexer.TextWindow.PeekChar() == '$' && _lexer.TextWindow.PeekChar(1) == '@'));
-
-                    // @$ or $@
-                    _lexer.TextWindow.AdvanceChar();
-                    _lexer.TextWindow.AdvanceChar();
-
-                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
-                    _lexer.TextWindow.AdvanceChar(); // "
-
-                }
-                else if (_kind == InterpolatedStringKind.Normal)
-                {
-                    Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
-                    _lexer.TextWindow.AdvanceChar(); // $
-                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
-                    _lexer.TextWindow.AdvanceChar(); // "
-                }
-                else
-                {
-                    Debug.Assert(_kind == InterpolatedStringKind.Raw);
-                    Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
-
-                    var dollarSignCount = _lexer.ConsumeDollarSignSequence();
-                    Debug.Assert(dollarSignCount == _startingDollarSignCount);
-
-                    Debug.Assert(_lexer.TextWindow.PeekChar() == '"');
-                    var quoteCount = _lexer.ConsumeQuoteSequence();
-                    Debug.Assert(quoteCount == _startingQuoteCount);
                 }
             }
 
