@@ -240,7 +240,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             ScanInterpolatedStringLiteralTop(
                 interpolations: null,
-                isVerbatim,
+                isVerbatim ? InterpolatedStringKind.Verbatim : InterpolatedStringKind.Normal,
                 startingDollarSignCount: 1,
                 startingQuoteCount: 1,
                 ref info,
@@ -251,14 +251,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal void ScanInterpolatedStringLiteralTop(
             ArrayBuilder<Interpolation>? interpolations,
-            bool isVerbatim,
+            InterpolatedStringKind kind,
             int startingDollarSignCount,
             int startingQuoteCount,
             ref TokenInfo info,
             out SyntaxDiagnosticInfo? error,
             out bool closeQuoteMissing)
         {
-            var subScanner = new InterpolatedStringScanner(this, isVerbatim, startingDollarSignCount, startingQuoteCount);
+            var subScanner = new InterpolatedStringScanner(this, kind, startingDollarSignCount, startingQuoteCount);
             subScanner.ScanInterpolatedStringLiteralTop(interpolations, ref info, out closeQuoteMissing);
             error = subScanner.Error;
             info.Text = TextWindow.GetText(intern: false);
@@ -282,13 +282,39 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 interpolatedString.GetLastToken().GetTrailingTrivia());
         }
 
+        internal enum InterpolatedStringKind
+        {
+            /// <summary>
+            /// Normal interpolated string that just starts with $"
+            /// </summary>
+            Normal,
+            /// <summary>
+            /// Verbatim interpolated string that starts with $@" or @$"
+            /// </summary>
+            Verbatim,
+            /// <summary>
+            /// Raw interpolated string that starts with either $$ or with $"""
+            /// </summary>
+            Raw,
+        }
+
         [NonCopyable]
         private struct InterpolatedStringScanner
         {
             private readonly Lexer _lexer;
-            private readonly bool _isVerbatim;
 
+            private readonly InterpolatedStringKind _kind;
+
+            /// <summary>
+            /// Number of '$' characters this interpolated string started with.  We'll need to see that many '{' in a
+            /// row to start an interpolation.  Any less and we'll treat that as just text.  Note if this count is '1'
+            /// then this is a normal (non-raw) interpolation and `{{` is treated as an escape.
+            /// </summary>
             private readonly int _startingDollarSignCount;
+
+            /// <summary>
+            /// Number of '"' characters this interpolated string started with.  Will 
+            /// </summary>
             private readonly int _startingQuoteCount;
 
             /// <summary>
@@ -304,12 +330,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             public InterpolatedStringScanner(
                 Lexer lexer,
-                bool isVerbatim,
+                InterpolatedStringKind kind,
                 int startingDollarSignCount,
                 int startingQuoteCount)
             {
+#if DEBUG
+                if (kind == InterpolatedStringKind.Normal || kind == InterpolatedStringKind.Verbatim)
+                {
+                    Debug.Assert(startingDollarSignCount == 1);
+                    Debug.Assert(startingQuoteCount == 1);
+                }
+
+                if (kind == InterpolatedStringKind.Raw)
+                {
+                    Debug.Assert(startingDollarSignCount >= 1);
+                    Debug.Assert(startingQuoteCount >= 3);
+                }
+#endif
+
                 _lexer = lexer;
-                _isVerbatim = isVerbatim;
+                _kind = kind;
                 _startingDollarSignCount = startingDollarSignCount;
                 _startingQuoteCount = startingQuoteCount;
             }

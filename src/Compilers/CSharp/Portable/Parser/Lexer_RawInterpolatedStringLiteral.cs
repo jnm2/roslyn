@@ -30,13 +30,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             var beforeDollarSignPosition = this.TextWindow.Position;
             var startingDollarSignCount = ConsumeDollarSignSequence();
-            var startingQuoteCount = ConsumeQuoteSequence();
+            Debug.Assert(startingDollarSignCount >= 1);
 
-            Debug.Assert(startingDollarSignCount > 0);
+            var startingQuoteCount = ConsumeQuoteSequence();
             if (startingQuoteCount < 3)
             {
                 // Note: 0-2 quotes are possible as we can enter ScanRawInterpolatedStringLiteral after only seeing
-                // two $$ chars and nothing else.
+                // two or more $$ chars and nothing else.
+                Debug.Assert(startingDollarSignCount >= 2);
                 this.AddError(beforeDollarSignPosition, width: this.TextWindow.Position - beforeDollarSignPosition, ErrorCode.ERR_NotEnoughQuotesForRawString);
                 return;
             }
@@ -46,7 +47,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             ScanInterpolatedStringLiteralTop(
                 interpolations: null,
-                isVerbatim: false,
+                InterpolatedStringKind.Raw,
                 startingDollarSignCount,
                 startingQuoteCount,
                 ref info,
