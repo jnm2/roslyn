@@ -228,6 +228,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             if (!isVerbatim)
             {
+                Debug.Assert(this.TextWindow.PeekChar(0) == '$');
                 Debug.Assert(this.TextWindow.PeekChar(1) == '"');
                 if (TextWindow.PeekChar(1) == '"' &&
                     TextWindow.PeekChar(2) == '"' &&
@@ -294,9 +295,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// </summary>
             Verbatim,
             /// <summary>
-            /// Raw interpolated string that starts with either $$ or with $"""
+            /// Single-line raw interpolated string that starts with some number of $ and at least three """.
             /// </summary>
-            Raw,
+            SingleLineRaw,
+            /// <summary>
+            /// Multi-line raw interpolated string that starts with some number of $ and at least three """.
+            /// </summary>
+            MultiLineRaw,
         }
 
         [NonCopyable]
@@ -319,12 +324,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             private readonly int _startingQuoteCount;
 
             /// <summary>
-            /// If this is a multiline literal.  Important for determining if a sequence of quote characters ends a
-            /// raw string literal or not.
-            /// </summary>
-            private bool _isMultiLine = false;
-
-            /// <summary>
             /// There are two types of errors we can encounter when trying to scan out an interpolated string (and its
             /// interpolations).  The first are true syntax errors where we do not know what it is going on and have no
             /// good strategy to get back on track.  This happens when we see things in the interpolation we truly do
@@ -342,13 +341,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 int startingQuoteCount)
             {
 #if DEBUG
-                if (kind == InterpolatedStringKind.Normal || kind == InterpolatedStringKind.Verbatim)
+                if (kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
                 {
                     Debug.Assert(startingDollarSignCount == 1);
                     Debug.Assert(startingQuoteCount == 1);
                 }
 
-                if (kind == InterpolatedStringKind.Raw)
+                if (kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw)
                 {
                     Debug.Assert(startingDollarSignCount >= 1);
                     Debug.Assert(startingQuoteCount >= 3);

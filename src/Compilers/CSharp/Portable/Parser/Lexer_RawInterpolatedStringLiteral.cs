@@ -45,10 +45,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // TODO: We could consider looking for mistakes like the user using `@` here to provide them with a special
             // clarifying diagnostic message.
 
+            this.ConsumeWhitespace(builder: null);
+            var isMultiLine = SyntaxFacts.IsNewLine(this.TextWindow.PeekChar());
+
             this.TextWindow.Reset(beforeDollarSignPosition);
             ScanInterpolatedStringLiteralTop(
                 interpolations: null,
-                InterpolatedStringKind.Raw,
+                isMultiLine ? InterpolatedStringKind.MultiLineRaw : InterpolatedStringKind.SingleLineRaw,
                 startingDollarSignCount,
                 startingQuoteCount,
                 ref info,
