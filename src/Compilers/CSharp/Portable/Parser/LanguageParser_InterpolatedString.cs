@@ -4,12 +4,7 @@
 
 #nullable disable
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
@@ -24,7 +19,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <param name="first">index of first character to be included</param>
         /// <param name="last">index of last character to be included</param>
         /// </summary>
-        private string Substring(string s, int first, int last)
+        private static string Substring(string s, int first, int last)
         {
             if (last >= s.Length)
             {
@@ -83,8 +78,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             Debug.Assert(originalText[openQuoteIndex] == '"');
 
             var openQuoteKind = isVerbatim
-                    ? SyntaxKind.InterpolatedVerbatimStringStartToken // $@ or @$
-                    : SyntaxKind.InterpolatedStringStartToken; // $
+                ? SyntaxKind.InterpolatedVerbatimStringStartToken // $@ or @$
+                : SyntaxKind.InterpolatedStringStartToken; // $
 
             var openQuoteText = isAltInterpolatedVerbatim
                 ? "@$\""

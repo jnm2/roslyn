@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.PooledObjects;
+using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 {
@@ -281,10 +282,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 interpolatedString.GetLastToken().GetTrailingTrivia());
         }
 
-        private class InterpolatedStringScanner
+        [NonCopyable]
+        private struct InterpolatedStringScanner
         {
             private readonly Lexer _lexer;
-            private bool _isVerbatim;
+            private readonly bool _isVerbatim;
 
             private readonly int _startingDollarSignCount;
             private readonly int _startingQuoteCount;
@@ -297,8 +299,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// we're consuming.  In this case, we will often choose to bail out rather than go on and potentially make
             /// things worse.
             /// </summary>
-            public SyntaxDiagnosticInfo? Error;
-            private bool EncounteredUnrecoverableError;
+            public SyntaxDiagnosticInfo? Error = null;
+            private bool EncounteredUnrecoverableError = false;
 
             public InterpolatedStringScanner(
                 Lexer lexer,
@@ -578,11 +580,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             else if (_lexer.TextWindow.PeekChar(1) == '"' ||
                                      (_lexer.TextWindow.PeekChar(1) == '@' && _lexer.TextWindow.PeekChar(2) == '"'))
                             {
-                                var info = default(TokenInfo);
-                                bool wasVerbatim = _isVerbatim;
-                                _isVerbatim = _lexer.TextWindow.PeekChar(1) == '@';
-                                ScanInterpolatedStringLiteralTop(interpolations: null, ref info, closeQuoteMissing: out _);
-                                _isVerbatim = wasVerbatim;
+                                var discarded = default(TokenInfo);
+                                _lexer.ScanInterpolatedStringLiteral(
+                                    isVerbatim: _lexer.TextWindow.PeekChar(1) == '@',
+                                    ref discarded);
                                 continue;
                             }
 
@@ -641,18 +642,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             }
                             else if (_lexer.TextWindow.PeekChar(1) == '$' && _lexer.TextWindow.PeekChar(2) == '"')
                             {
-                                var interpolations = (ArrayBuilder<Interpolation>?)null;
-                                var info = default(TokenInfo);
-                                bool wasVerbatim = _isVerbatim;
-                                try
-                                {
-                                    _isVerbatim = true;
-                                    ScanInterpolatedStringLiteralTop(interpolations, ref info, closeQuoteMissing: out _);
-                                }
-                                finally
-                                {
-                                    _isVerbatim = wasVerbatim;
-                                }
+                                var discarded = default(TokenInfo);
+                                _lexer.ScanInterpolatedStringLiteral(isVerbatim: true, ref discarded);
                                 continue;
                             }
 
@@ -661,19 +652,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             switch (_lexer.TextWindow.PeekChar(1))
                             {
                                 case '/':
-                                    _lexer.TextWindow.AdvanceChar(); // skip /
-                                    _lexer.TextWindow.AdvanceChar(); // skip /
-
-                                    // read up to the end of the line.
-                                    while (!IsAtEnd(allowNewline: false))
-                                    {
-                                        _lexer.TextWindow.AdvanceChar(); // skip // comment character
-                                    }
-
+                                    _lexer.ScanToEndOfLine();
                                     continue;
                                 case '*':
-                                    // check for and scan /* comment */
-                                    ScanInterpolatedStringLiteralNestedComment();
+                                    _lexer.ScanMultiLineComment(out _);
                                     continue;
                                 default:
                                     _lexer.TextWindow.AdvanceChar();
@@ -705,32 +687,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// not make us think we're in runaway lexing.
             /// </summary>
             private bool RecoveringFromRunawayLexing() => this.EncounteredUnrecoverableError;
-
-            private void ScanInterpolatedStringLiteralNestedComment()
-            {
-                Debug.Assert(_lexer.TextWindow.PeekChar() == '/');
-                _lexer.TextWindow.AdvanceChar();
-                Debug.Assert(_lexer.TextWindow.PeekChar() == '*');
-                _lexer.TextWindow.AdvanceChar();
-                while (true)
-                {
-                    // Note: if we reach the end of the file without hitting */ just bail out.  It's not necessary for
-                    // us to report any issues, as this code is just being used to find the end of the interpolation hole.
-                    // When the full parse happens, the lexer will grab the string inside the interpolation hole and 
-                    // pass it to the regular parser.  This parser will then see the unterminated /* and will report the
-                    // error for it.
-                    if (IsAtEnd(allowNewline: true))
-                        return;
-
-                    var ch = _lexer.TextWindow.PeekChar();
-                    _lexer.TextWindow.AdvanceChar();
-                    if (ch == '*' && _lexer.TextWindow.PeekChar() == '/')
-                    {
-                        _lexer.TextWindow.AdvanceChar();
-                        return;
-                    }
-                }
-            }
 
             private void ScanInterpolatedStringLiteralNestedString()
             {
