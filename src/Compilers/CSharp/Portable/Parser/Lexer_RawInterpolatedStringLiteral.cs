@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
-using System.Text;
-using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 {
@@ -36,18 +34,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // TODO: We could consider looking for mistakes like the user using `@` here to provide them with a special
             // clarifying diagnostic message.
 
-            this.ConsumeWhitespace(builder: null);
-            var isMultiLine = SyntaxFacts.IsNewLine(this.TextWindow.PeekChar());
-
             this.TextWindow.Reset(beforeDollarSignPosition);
             ScanInterpolatedStringLiteralTop(
-                interpolations: null,
-                isMultiLine ? InterpolatedStringKind.MultiLineRaw : InterpolatedStringKind.SingleLineRaw,
-                startingDollarSignCount,
-                startingQuoteCount,
                 ref info,
                 out var error,
-                closeQuoteMissing: out _);
+                openQuoteRange: out _,
+                interpolations: null,
+                closeQuoteRange: out _);
             this.AddError(error);
         }
     }
