@@ -10,15 +10,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 {
     internal partial class Lexer
     {
-        private int ConsumeDollarSignSequence()
-        {
-            var start = TextWindow.Position;
-            while (TextWindow.PeekChar() == '$')
-                TextWindow.AdvanceChar();
-
-            return TextWindow.Position - start;
-        }
-
         private void ScanRawInterpolatedStringLiteral(ref TokenInfo info)
         {
             _builder.Length = 0;

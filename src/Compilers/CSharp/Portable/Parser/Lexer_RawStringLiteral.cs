@@ -11,14 +11,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     internal partial class Lexer
     {
         /// <returns>The number of quotes that were consumed</returns>
-        private int ConsumeQuoteSequence()
+        private int ConsumeCharSequence(char ch)
         {
             var start = TextWindow.Position;
-            while (TextWindow.PeekChar() == '"')
+            while (TextWindow.PeekChar() == ch)
                 TextWindow.AdvanceChar();
 
             return TextWindow.Position - start;
         }
+
+        private int ConsumeQuoteSequence()
+            => ConsumeCharSequence('"');
+
+        private int ConsumeDollarSignSequence()
+            => ConsumeCharSequence('$');
+
+        private int ConsumeOpenBraceSequence()
+            => ConsumeCharSequence('{');
+
+        private int ConsumeCloseBraceSequence()
+            => ConsumeCharSequence('}');
 
         private void ConsumeWhitespace(StringBuilder? builder)
         {

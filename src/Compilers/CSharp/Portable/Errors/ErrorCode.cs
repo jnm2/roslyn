@@ -2022,7 +2022,9 @@ namespace Microsoft.CodeAnalysis.CSharp
         ERR_RawStringInVerbatimInterpolatedStrings = 9105,
         ERR_RawStringMustContainContent = 9106,
 
-        ERR_NotEnoughQuotesForRawString = 9107,
+        // raw interpolated string literals
+        ERR_NotEnoughQuotesForRawString = 9120,
+        ERR_TooManyCloseBracesForRawString = 9121,
 
         #endregion
 

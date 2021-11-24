@@ -535,25 +535,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         return;
                     }
 
-                    if (afterNewLine && _kind == InterpolatedStringKind.MultiLineRaw)
-                    {
-                        // if we're after a newline we have to see if this line may be the one that is ending the raw
-                        // string literal.
-                        var startOfLinePosition = _lexer.TextWindow.Position;
-                        _lexer.ConsumeWhitespace(builder: null);
-
-                        var closeQuoteCount = _lexer.ConsumeQuoteSequence();
-                        _lexer.TextWindow.Reset(startOfLinePosition);
-
-                        if (closeQuoteCount >= _startingQuoteCount)
-                        {
-                            // found the end of the literal.  Pop out and have the caller consume the end part of the
-                            // literal.  If we got more quotes than appropriate the caller will error on that for us.
-                            return;
-                        }
-
-                        // not the end of the raw string.  continue consuming this as content.
-                    }
+                    if (afterNewLine && TryEndMultiLineRawLiteral())
+                        return;
 
                     afterNewLine = false;
 
@@ -567,44 +550,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                             continue;
                         case '}':
-                            var pos = _lexer.TextWindow.Position;
-                            _lexer.TextWindow.AdvanceChar(); // }
-                            // ensure any } characters are doubled up
-                            if (_lexer.TextWindow.PeekChar() == '}')
-                            {
-                                _lexer.TextWindow.AdvanceChar(); // }
-                            }
-                            else
-                            {
-                                TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "}"));
-                            }
+                            HandleCloseBraceInContent();
                             continue;
                         case '{':
-                            if (_lexer.TextWindow.PeekChar(1) == '{')
-                            {
-                                _lexer.TextWindow.AdvanceChar();
-                                _lexer.TextWindow.AdvanceChar();
-                            }
-                            else
-                            {
-                                int openBracePosition = _lexer.TextWindow.Position;
-                                _lexer.TextWindow.AdvanceChar();
-                                int colonPosition = 0;
-                                ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, ref colonPosition);
-                                int closeBracePosition = _lexer.TextWindow.Position;
-                                bool closeBraceMissing = false;
-                                if (_lexer.TextWindow.PeekChar() == '}')
-                                {
-                                    _lexer.TextWindow.AdvanceChar();
-                                }
-                                else
-                                {
-                                    closeBraceMissing = true;
-                                    TrySetUnrecoverableError(_lexer.MakeError(openBracePosition - 1, 2, ErrorCode.ERR_UnclosedExpressionHole));
-                                }
-
-                                interpolations?.Add(new Interpolation(openBracePosition, colonPosition, closeBracePosition, closeBraceMissing));
-                            }
+                            HandleOpenBraceInContent(interpolations);
                             continue;
                         case '\\':
                             // In a normal interpolated string a backslash starts an escape.
@@ -632,6 +581,31 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             continue;
                     }
                 }
+            }
+
+            private bool TryEndMultiLineRawLiteral()
+            {
+                if (_kind == InterpolatedStringKind.MultiLineRaw)
+                {
+                    // if we're after a newline we have to see if this line may be the one that is ending the raw
+                    // string literal.
+                    var startOfLinePosition = _lexer.TextWindow.Position;
+                    _lexer.ConsumeWhitespace(builder: null);
+
+                    var closeQuoteCount = _lexer.ConsumeQuoteSequence();
+                    _lexer.TextWindow.Reset(startOfLinePosition);
+
+                    if (closeQuoteCount >= _startingQuoteCount)
+                    {
+                        // found the end of the literal.  Pop out and have the caller consume the end part of the
+                        // literal.  If we got more quotes than appropriate the caller will error on that for us.
+                        return true;
+                    }
+
+                    // not the end of the raw string.  continue consuming this as content.
+                }
+
+                return false;
             }
 
             /// <summary>
@@ -718,6 +692,97 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
 
                 throw ExceptionUtilities.UnexpectedValue(_kind);
+            }
+
+            private void HandleCloseBraceInContent()
+            {
+                if (_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
+                {
+                    var pos = _lexer.TextWindow.Position;
+                    _lexer.TextWindow.AdvanceChar(); // }
+                                                     // ensure any } characters are doubled up
+                    if (_lexer.TextWindow.PeekChar() == '}')
+                    {
+                        _lexer.TextWindow.AdvanceChar(); // }
+                    }
+                    else
+                    {
+                        TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "}"));
+                    }
+                }
+                else
+                {
+                    Debug.Assert(_kind is InterpolatedStringKind.MultiLineRaw or InterpolatedStringKind.SingleLineRaw);
+
+                    // A close quote is normally fine as content in a raw interpolated string literal. However, similar
+                    // to the rules around quotes, we do not allow a subsequence of curlies to be longer than the number
+                    // of `$`s the literal starts with.  Note: this restriction is only on *content*.  It acceptable to
+                    // have a sequence of curlies be longer, as long as it is part content and also part of an
+                    // interpolation.  In that case, the content portion must abide by this rule.
+                    var closeBraceCount = _lexer.ConsumeCloseBraceSequence();
+                    if (closeBraceCount >= _startingDollarSignCount)
+                    {
+                        TrySetRecoverableError(
+                            _lexer.MakeError(
+                                position: _lexer.TextWindow.Position - closeBraceCount,
+                                width: closeBraceCount,
+                                ErrorCode.ERR_TooManyCloseBracesForRawString));
+                    }
+                }
+            }
+
+            private void HandleOpenBraceInContent(ArrayBuilder<Interpolation>? interpolations)
+            {
+                if (_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
+                {
+                    HandleOpenBraceInNormalOrVerbatimContent(interpolations);
+                }
+                else
+                {
+                    HandleOpenBraceInRawContent(interpolations);
+                }
+            }
+
+            private void HandleOpenBraceInNormalOrVerbatimContent(ArrayBuilder<Interpolation>? interpolations)
+            {
+                Debug.Assert(_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim);
+                if (_lexer.TextWindow.PeekChar(1) == '{')
+                {
+                    _lexer.TextWindow.AdvanceChar();
+                    _lexer.TextWindow.AdvanceChar();
+                }
+                else
+                {
+                    int openBracePosition = _lexer.TextWindow.Position;
+                    _lexer.TextWindow.AdvanceChar();
+                    int colonPosition = 0;
+                    ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, ref colonPosition);
+                    int closeBracePosition = _lexer.TextWindow.Position;
+                    bool closeBraceMissing = false;
+                    if (_lexer.TextWindow.PeekChar() == '}')
+                    {
+                        _lexer.TextWindow.AdvanceChar();
+                    }
+                    else
+                    {
+                        closeBraceMissing = true;
+                        TrySetUnrecoverableError(_lexer.MakeError(openBracePosition - 1, 2, ErrorCode.ERR_UnclosedExpressionHole));
+                    }
+
+                    interpolations?.Add(new Interpolation(openBracePosition, colonPosition, closeBracePosition, closeBraceMissing));
+                }
+            }
+
+            private void HandleOpenBraceInRawContent(ArrayBuilder<Interpolation>? interpolations)
+            {
+                Debug.Assert(_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw);
+
+                // In raw content we are allowed to see up to 2*N-1 open curlies.  For example, if the string literal
+                // starts with `$$$"""` then we can see up to `2*3-1 = 5` curlies like so `$$$""" {{{{{`.  The inner
+                // three curlies start the interpolation.  The outer two curies are just content.  This ensures the
+                // rule that the content cannot contain a sequence of open or close curlies equal to (or longer) than
+                // the dollar sequence.
+                var openBraceCount = _lexer.ConsumeOpenBraceSequence();
             }
 
             private void ScanFormatSpecifier()
