@@ -362,7 +362,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             private bool IsAtEnd()
             {
-                return IsAtEnd(allowNewline: _kind is InterpolatedStringKind.Verbatim or InterpolatedStringKind.Raw);
+                return IsAtEnd(allowNewline: _kind is InterpolatedStringKind.Verbatim or InterpolatedStringKind.MultiLineRaw);
             }
 
             private bool IsAtEnd(bool allowNewline)
@@ -425,7 +425,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
                 else
                 {
-                    Debug.Assert(_kind == InterpolatedStringKind.Raw);
+                    // We have a raw interpolated string literal.  First consume the $'s and "'s
+
+                    Debug.Assert(_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw);
                     Debug.Assert(_lexer.TextWindow.PeekChar() == '$');
 
                     var dollarSignCount = _lexer.ConsumeDollarSignSequence();
@@ -435,13 +437,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     var quoteCount = _lexer.ConsumeQuoteSequence();
                     Debug.Assert(quoteCount == _startingQuoteCount);
 
-                    var afterQuotePosition = _lexer.TextWindow.Position;
-                    _lexer.ConsumeWhitespace(builder: null);
-
-                    // if we see `$"""    ` followed by space then a newline, then this is a multiline literal. in that
-                    // case, we will only stop lexing if we see """ on a new line (maybe after some number of spaces).
-                    _isMultiLine = SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar());
-                    _lexer.TextWindow.Reset(afterQuotePosition);
+                    // Then, if we're multiline, consume up through the whitespace and newlines.
+                    if (_kind is InterpolatedStringKind.MultiLineRaw)
+                    {
+                        _lexer.ConsumeWhitespace(builder: null);
+                        _lexer.TextWindow.AdvanceChar(_lexer.GetNewLineWidth(_lexer.TextWindow.PeekChar()));
+                    }
                 }
             }
 
@@ -449,53 +450,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 // Handles reading the end of the interpolated string literal (after where the content ends)
 
-                if (_kind is InterpolatedStringKind.Raw)
+                if (_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw)
                 {
                     ScanRawInterpolatedStringLiteralEnd(out closeQuoteMissing);
                 }
                 else
                 {
                     ScanNormalOrVerbatimInterpolatedStringLiteralEnd(out closeQuoteMissing);
-                }
-            }
-
-            private void ScanRawInterpolatedStringLiteralEnd(out bool closeQuoteMissing)
-            {
-                Debug.Assert(_kind is InterpolatedStringKind.Raw);
-
-                if (_lexer.TextWindow.PeekChar() != '"')
-                {
-                    // we reached the end of the file.
-                    Debug.Assert(IsAtEnd());
-                    TrySetUnrecoverableError(_lexer.MakeError(
-                        position: _lexer.TextWindow.Position - 1,
-                        width: 1,
-                        ErrorCode.ERR_UnterminatedStringLit));
-
-                    closeQuoteMissing = true;
-                }
-                else
-                {
-                    // We should only get here if scanning the contents saw that we had an appropriate close sequence to
-                    // end on. That means we're on a fresh line that starts with spaces and ends with enough quotes for
-                    // us to finish.
-                    _lexer.ConsumeWhitespace();
-                    var currentQuoteCount = _lexer.ConsumeQuoteSequence();
-                    Debug.Assert(currentQuoteCount >= _startingQuoteCount);
-
-                    // A raw string could never be followed by another string.  So once we've consumed all the closing quotes
-                    // if we have any more closing quotes then that's an error we can give a message for.
-                    if (currentQuoteCount > _startingQuoteCount)
-                    {
-                        var excessQuoteCount = currentQuoteCount - _startingQuoteCount;
-                        this.TrySetUnrecoverableError(
-                            _lexer.MakeError(
-                                position: _lexer.TextWindow.Position - excessQuoteCount,
-                                width: excessQuoteCount,
-                                ErrorCode.ERR_TooManyQuotesForRawString));
-                    }
-
-                    closeQuoteMissing = false;
                 }
             }
 
@@ -521,9 +482,48 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
             }
 
+            private void ScanRawInterpolatedStringLiteralEnd(out bool closeQuoteMissing)
+            {
+                Debug.Assert(_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw);
+
+                if (_lexer.TextWindow.PeekChar() != '"')
+                {
+                    // we reached the end of the file or end of line.
+                    Debug.Assert(IsAtEnd());
+                    int position = IsAtEnd(allowNewline: true) ? _lexer.TextWindow.Position - 1 : _lexer.TextWindow.Position;
+                    TrySetUnrecoverableError(_lexer.MakeError(
+                        position, width: 1, ErrorCode.ERR_UnterminatedStringLit));
+
+                    closeQuoteMissing = true;
+                }
+                else
+                {
+                    // We should only get here if scanning the contents saw that we had an appropriate close sequence to
+                    // end on. That means we're on a fresh line that starts with spaces and ends with enough quotes for
+                    // us to finish.
+                    _lexer.ConsumeWhitespace(builder: null);
+                    var currentQuoteCount = _lexer.ConsumeQuoteSequence();
+                    Debug.Assert(currentQuoteCount >= _startingQuoteCount);
+
+                    // A raw string could never be followed by another string.  So once we've consumed all the closing quotes
+                    // if we have any more closing quotes then that's an error we can give a message for.
+                    if (currentQuoteCount > _startingQuoteCount)
+                    {
+                        var excessQuoteCount = currentQuoteCount - _startingQuoteCount;
+                        this.TrySetUnrecoverableError(
+                            _lexer.MakeError(
+                                position: _lexer.TextWindow.Position - excessQuoteCount,
+                                width: excessQuoteCount,
+                                ErrorCode.ERR_TooManyQuotesForRawString));
+                    }
+
+                    closeQuoteMissing = false;
+                }
+            }
+
             private void ScanInterpolatedStringLiteralContents(ArrayBuilder<Interpolation>? interpolations)
             {
-                var afterNewLine = false;
+                var afterNewLine = true;
                 while (true)
                 {
                     if (IsAtEnd())
@@ -533,7 +533,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         return;
                     }
 
-                    if (afterNewLine && _kind == InterpolatedStringKind.Raw)
+                    if (afterNewLine && _kind == InterpolatedStringKind.MultiLineRaw)
                     {
                         // if we're after a newline we have to see if this line may be the one that is ending the raw
                         // string literal.
@@ -571,17 +571,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                                 var closeQuoteCount = _lexer.ConsumeQuoteSequence();
                                 if (closeQuoteCount >= _startingQuoteCount)
                                 {
+                                    _lexer.TextWindow.Reset(beforeQuotePosition);
                                     return;
                                 }
                             }
 
                             if (_kind == InterpolatedStringKind.Normal)
                             {
+                                // Was in a normal $"  string, the next " closes us.
                                 return;
                             }
                             else if (_kind == InterpolatedStringKind.Verbatim)
                             {
-                                // in a verbatim string a "" sequence is an escape.
+                                // In a verbatim string a "" sequence is an escape.
+                                // Otherwise this terminates us.
                                 if (_lexer.TextWindow.PeekChar(1) == '"')
                                 {
                                     _lexer.TextWindow.AdvanceChar(); // "
@@ -591,11 +594,46 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                                 return;
                             }
+                            else if (_kind == InterpolatedStringKind.SingleLineRaw)
+                            {
+                                var beforeQuotePosition = _lexer.TextWindow.Position;
+                                var currentQuoteCount = _lexer.ConsumeQuoteSequence();
+                                if (currentQuoteCount >= _startingQuoteCount)
+                                {
+                                    // we saw a long enough sequence of close quotes to finish us.  Move back to before
+                                    // the close quotes and let the caller handle this (including if there are too many
+                                    // close quotes).
+                                    _lexer.TextWindow.Reset(beforeQuotePosition);
+                                    return;
+                                }
+
+                                // otherwise, these were just quotes that we should treat as raw content.
+                                continue;
+                            }
                             else
                             {
-                                Debug.Assert(_kind is InterpolatedStringKind.Raw);
+                                Debug.Assert(_kind == InterpolatedStringKind.MultiLineRaw);
+                                var currentQuoteCount = _lexer.ConsumeQuoteSequence();
+                                // Don't allow a content line to contain a quote sequence that looks like a delimiter (or longer).
+                                // We know this is a content line because if this was the actual end line, it would have been caught
+                                // in the check prior to this switch.
+                                if (currentQuoteCount >= _startingQuoteCount)
+                                {
+                                    this.TrySetUnrecoverableError(
+                                        _lexer.MakeError(
+                                            position: _lexer.TextWindow.Position - currentQuoteCount,
+                                            width: currentQuoteCount,
+                                            ErrorCode.ERR_RawStringDelimiterOnOwnLine));
 
+                                    // move back before the quotes so the caller will consume them and not emit another error.
+                                    _lexer.TextWindow.Reset(_lexer.TextWindow.Position - _startingQuoteCount);
+                                    return;
+                                }
+
+                                // otherwise, these were just quotes that we should treat as raw content.
+                                continue;
                             }
+
                         case '}':
                             var pos = _lexer.TextWindow.Position;
                             _lexer.TextWindow.AdvanceChar(); // }
@@ -637,31 +675,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             }
                             continue;
                         case '\\':
-                            if (_isVerbatim)
+                            if (_kind == InterpolatedStringKind.Normal)
                             {
-                                goto default;
-                            }
-
-                            var escapeStart = _lexer.TextWindow.Position;
-                            char ch = _lexer.ScanEscapeSequence(surrogateCharacter: out _);
-                            if (ch == '{' || ch == '}')
-                            {
-                                TrySetUnrecoverableError(_lexer.MakeError(escapeStart, _lexer.TextWindow.Position - escapeStart, ErrorCode.ERR_EscapedCurly, ch));
-                            }
-
-                            continue;
-                        default:
-                            // found some other character in the string portion
-                            if (SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()))
-                            {
-                                if (_isMultiLine)
+                                var escapeStart = _lexer.TextWindow.Position;
+                                char ch = _lexer.ScanEscapeSequence(surrogateCharacter: out _);
+                                if (ch == '{' || ch == '}')
                                 {
-
+                                    TrySetUnrecoverableError(_lexer.MakeError(escapeStart, _lexer.TextWindow.Position - escapeStart, ErrorCode.ERR_EscapedCurly, ch));
                                 }
 
-                                afterNewLine = true;
+                                continue;
                             }
 
+                            goto default;
+
+                        default:
+                            // found some other character in the string portion.
+                            afterNewLine = SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar());
                             _lexer.TextWindow.AdvanceChar();
                             continue;
                     }
