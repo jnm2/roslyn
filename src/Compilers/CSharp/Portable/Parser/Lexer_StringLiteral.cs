@@ -773,7 +773,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     int openBracePosition = _lexer.TextWindow.Position;
                     _lexer.TextWindow.AdvanceChar();
-                    ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, out var colonSpan);
+                    ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, out var colonRange);
                     int closeBracePosition = _lexer.TextWindow.Position;
                     if (_lexer.TextWindow.PeekChar() == '}')
                     {
@@ -785,9 +785,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
 
                     interpolations?.Add(new Interpolation(
-                        new TextSpan(openBracePosition, length: 1),
-                        colonSpan,
-                        TextSpan.FromBounds(closeBracePosition, _lexer.TextWindow.Position)));
+                        new Range(openBracePosition, openBracePosition + 1),
+                        colonRange,
+                        new Range(closeBracePosition, _lexer.TextWindow.Position)));
                 }
             }
 
