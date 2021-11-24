@@ -2024,7 +2024,9 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         // raw interpolated string literals
         ERR_NotEnoughQuotesForRawString = 9120,
-        ERR_TooManyCloseBracesForRawString = 9121,
+        ERR_NotEnoughCloseBracesForRawString = 9121,
+        ERR_TooManyOpenBracesForRawString = 9122,
+        ERR_TooManyCloseBracesForRawString = 9123,
 
         #endregion
 

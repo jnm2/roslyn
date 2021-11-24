@@ -795,12 +795,63 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 Debug.Assert(_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw);
 
-                // In raw content we are allowed to see up to 2*N-1 open curlies.  For example, if the string literal
-                // starts with `$$$"""` then we can see up to `2*3-1 = 5` curlies like so `$$$""" {{{{{`.  The inner
-                // three curlies start the interpolation.  The outer two curies are just content.  This ensures the
-                // rule that the content cannot contain a sequence of open or close curlies equal to (or longer) than
-                // the dollar sequence.
+                // In raw content we are allowed to see up to 2*N-1 open (or close) curlies.  For example, if the string
+                // literal starts with `$$$"""` then we can see up to `2*3-1 = 5` curlies like so `$$$""" {{{{{`.  The
+                // inner three curlies start the interpolation.  The outer two curies are just content.  This ensures
+                // the rule that the content cannot contain a sequence of open or close curlies equal to (or longer)
+                // than the dollar sequence.
+                var beforeOpenBracesPosition = _lexer.TextWindow.Position;
                 var openBraceCount = _lexer.ConsumeOpenBraceSequence();
+                if (openBraceCount < _startingDollarSignCount)
+                {
+                    // not enough open curlies to matter.  Just treat as content.
+                    return;
+                }
+
+                var afterOpenBracePosition = _lexer.TextWindow.Position;
+                if (openBraceCount >= 2 * _startingDollarSignCount)
+                {
+                    // Too many open braces.  Report an error on the portion up before the section that counts as the
+                    // start of the interpolation.
+                    TrySetUnrecoverableError(_lexer.MakeError(
+                        beforeOpenBracesPosition,
+                        width: openBraceCount - _startingDollarSignCount,
+                        ErrorCode.ERR_TooManyOpenBracesForRawString));
+                }
+
+                // Now, try to scan the contents of the interpolation.  Ending when we hit a close brace.
+                ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, out var colonRange);
+
+                var beforeCloseBracePosition = _lexer.TextWindow.Position;
+                var closeBraceCount = _lexer.ConsumeCloseBraceSequence();
+
+                if (closeBraceCount == 0)
+                {
+                    // Didn't find any close braces.  Report a particular error on the open curlies that they are unclosed.
+                    TrySetUnrecoverableError(_lexer.MakeError(
+                        position: afterOpenBracePosition - _startingDollarSignCount,
+                        width: _startingDollarSignCount,
+                        ErrorCode.ERR_UnclosedExpressionHole));
+                }
+                else if (closeBraceCount < _startingDollarSignCount)
+                {
+                    // not enough close braces to end the interpolation.  Report here.
+                    TrySetUnrecoverableError(_lexer.MakeError(
+                        beforeOpenBracesPosition,
+                        width: openBraceCount - _startingDollarSignCount,
+                        ErrorCode.ERR_NotEnoughCloseBracesForRawString));
+                }
+                else
+                {
+                    // Only consume up to the minimum number of close braces we need to end the interpolation. Any
+                    // excess will be consumed in the content consumption pass in ScanInterpolatedStringLiteralContents.
+                    _lexer.TextWindow.Reset(beforeCloseBracePosition + _startingDollarSignCount);
+                }
+
+                interpolations?.Add(new Interpolation(
+                    new Range(afterOpenBracePosition - _startingDollarSignCount, afterOpenBracePosition),
+                    colonRange,
+                    new Range(beforeCloseBracePosition, _lexer.TextWindow.Position)));
             }
 
             private void ScanFormatSpecifier()
@@ -810,7 +861,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 while (true)
                 {
                     char ch = _lexer.TextWindow.PeekChar();
-                    if (ch == '\\' && !_isVerbatim)
+                    if (ch == '\\' && _kind == InterpolatedStringKind.Normal)
                     {
                         // normal string & char constants can have escapes
                         var pos = _lexer.TextWindow.Position;
@@ -822,7 +873,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else if (ch == '"')
                     {
-                        if (_isVerbatim && _lexer.TextWindow.PeekChar(1) == '"')
+                        if (_kind == InterpolatedStringKind.Verbatim && _lexer.TextWindow.PeekChar(1) == '"')
                         {
                             _lexer.TextWindow.AdvanceChar(2); // ""
                         }
@@ -893,21 +944,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             _lexer.TextWindow.AdvanceChar();
                             continue;
                         case '$':
-<<<<<<< HEAD
                             {
                                 var discarded = default(TokenInfo);
                                 if (_lexer.TryScanInterpolatedString(ref discarded))
                                 {
                                     continue;
                                 }
-=======
-                            if (_lexer.TextWindow.PeekChar(1) == '"' || (_lexer.TextWindow.PeekChar(1) == '@' && _lexer.TextWindow.PeekChar(2) == '"'))
-                            {
-                                var discarded = default(TokenInfo);
-                                _lexer.ScanInterpolatedStringLiteral(ref discarded);
-                                continue;
-                            }
->>>>>>> simplifyInterpolationPArsing4
 
                                 goto default;
                             }
@@ -949,18 +991,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                                 if (_lexer.TryScanAtStringToken(ref discarded))
                                     continue;
 
-<<<<<<< HEAD
                                 // Wasn't an @"" or @$"" string.  Just consume this as normal code.
                                 goto default;
-=======
-                                continue;
-                            }
-                            else if (_lexer.TextWindow.PeekChar(1) == '$' && _lexer.TextWindow.PeekChar(2) == '"')
-                            {
-                                var discarded = default(TokenInfo);
-                                _lexer.ScanInterpolatedStringLiteral(ref discarded);
-                                continue;
->>>>>>> simplifyInterpolationPArsing4
                             }
                         case '/':
                             switch (_lexer.TextWindow.PeekChar(1))
