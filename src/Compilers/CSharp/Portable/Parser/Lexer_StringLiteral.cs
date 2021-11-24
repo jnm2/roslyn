@@ -523,6 +523,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             private void ScanInterpolatedStringLiteralContents(ArrayBuilder<Interpolation>? interpolations)
             {
+                // This is true for multi-line raw interpolated string literals (which is the only case which needs to
+                // read this value).  So it's fine to unilaterally set this to 'true' here.
                 var afterNewLine = true;
                 while (true)
                 {
@@ -558,82 +560,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     switch (_lexer.TextWindow.PeekChar())
                     {
                         case '"':
-                            if (RecoveringFromRunawayLexing())
-                            {
-                                // When recovering from mismatched delimiters, we consume the next sequence of quote
-                                // characters as the close quote for the interpolated string. In practice this gets us
-                                // out of trouble in scenarios we've encountered. See, for example,
-                                // https://github.com/dotnet/roslyn/issues/44789
-                                //
-                                // Note: if this is runaway lexing for a raw string, then we only terminate if we find a
-                                // sequence of quotes at least as long as the starting sequnce.
-                                var beforeQuotePosition = _lexer.TextWindow.Position;
-                                var closeQuoteCount = _lexer.ConsumeQuoteSequence();
-                                if (closeQuoteCount >= _startingQuoteCount)
-                                {
-                                    _lexer.TextWindow.Reset(beforeQuotePosition);
-                                    return;
-                                }
-                            }
-
-                            if (_kind == InterpolatedStringKind.Normal)
-                            {
-                                // Was in a normal $"  string, the next " closes us.
+                            // Depending on the type of string or the escapes involved, this may be the
+                            // of the string literal, or it may just be content.
+                            if (TryConsumeQuoteAsEndDelimeter())
                                 return;
-                            }
-                            else if (_kind == InterpolatedStringKind.Verbatim)
-                            {
-                                // In a verbatim string a "" sequence is an escape.
-                                // Otherwise this terminates us.
-                                if (_lexer.TextWindow.PeekChar(1) == '"')
-                                {
-                                    _lexer.TextWindow.AdvanceChar(); // "
-                                    _lexer.TextWindow.AdvanceChar(); // "
-                                    continue;
-                                }
 
-                                return;
-                            }
-                            else if (_kind == InterpolatedStringKind.SingleLineRaw)
-                            {
-                                var beforeQuotePosition = _lexer.TextWindow.Position;
-                                var currentQuoteCount = _lexer.ConsumeQuoteSequence();
-                                if (currentQuoteCount >= _startingQuoteCount)
-                                {
-                                    // we saw a long enough sequence of close quotes to finish us.  Move back to before
-                                    // the close quotes and let the caller handle this (including if there are too many
-                                    // close quotes).
-                                    _lexer.TextWindow.Reset(beforeQuotePosition);
-                                    return;
-                                }
-
-                                // otherwise, these were just quotes that we should treat as raw content.
-                                continue;
-                            }
-                            else
-                            {
-                                Debug.Assert(_kind == InterpolatedStringKind.MultiLineRaw);
-                                var currentQuoteCount = _lexer.ConsumeQuoteSequence();
-                                // Don't allow a content line to contain a quote sequence that looks like a delimiter (or longer).
-                                // We know this is a content line because if this was the actual end line, it would have been caught
-                                // in the check prior to this switch.
-                                if (currentQuoteCount >= _startingQuoteCount)
-                                {
-                                    this.TrySetUnrecoverableError(
-                                        _lexer.MakeError(
-                                            position: _lexer.TextWindow.Position - currentQuoteCount,
-                                            width: currentQuoteCount,
-                                            ErrorCode.ERR_RawStringDelimiterOnOwnLine));
-
-                                    // move back before the quotes so the caller will consume them and not emit another error.
-                                    _lexer.TextWindow.Reset(_lexer.TextWindow.Position - _startingQuoteCount);
-                                    return;
-                                }
-
-                                // otherwise, these were just quotes that we should treat as raw content.
-                                continue;
-                            }
-
+                            continue;
                         case '}':
                             var pos = _lexer.TextWindow.Position;
                             _lexer.TextWindow.AdvanceChar(); // }
@@ -675,6 +607,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             }
                             continue;
                         case '\\':
+                            // In a normal interpolated string a backslash starts an escape.
+                            // In all other interpolated strings it's just a backslash.
                             if (_kind == InterpolatedStringKind.Normal)
                             {
                                 var escapeStart = _lexer.TextWindow.Position;
@@ -683,11 +617,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                                 {
                                     TrySetUnrecoverableError(_lexer.MakeError(escapeStart, _lexer.TextWindow.Position - escapeStart, ErrorCode.ERR_EscapedCurly, ch));
                                 }
-
-                                continue;
+                            }
+                            else
+                            {
+                                _lexer.TextWindow.AdvanceChar();
                             }
 
-                            goto default;
+                            continue;
 
                         default:
                             // found some other character in the string portion.
@@ -696,6 +632,92 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             continue;
                     }
                 }
+            }
+
+            /// <summary>
+            /// Returns <see langword="true"/> if the quote was an end delimeter and lexing of the contents of the
+            /// interpolated string literal should stop.
+            /// </summary>
+            private bool TryConsumeQuoteAsEndDelimeter()
+            {
+                if (RecoveringFromRunawayLexing())
+                {
+                    // When recovering from mismatched delimiters, we consume the next sequence of quote
+                    // characters as the close quote for the interpolated string. In practice this gets us
+                    // out of trouble in scenarios we've encountered. See, for example,
+                    // https://github.com/dotnet/roslyn/issues/44789
+                    //
+                    // Note: if this is runaway lexing for a raw string, then we only terminate if we find a
+                    // sequence of quotes at least as long as the starting sequnce.
+                    var beforeQuotePosition = _lexer.TextWindow.Position;
+                    var closeQuoteCount = _lexer.ConsumeQuoteSequence();
+                    if (closeQuoteCount >= _startingQuoteCount)
+                    {
+                        _lexer.TextWindow.Reset(beforeQuotePosition);
+                        return true;
+                    }
+                }
+
+                if (_kind == InterpolatedStringKind.Normal)
+                {
+                    // Was in a normal $"  string, the next " closes us.
+                    return true;
+                }
+
+                if (_kind == InterpolatedStringKind.Verbatim)
+                {
+                    // In a verbatim string a "" sequence is an escape. Otherwise this terminates us.
+                    if (_lexer.TextWindow.PeekChar(1) != '"')
+                    {
+                        return true;
+                    }
+
+                    _lexer.TextWindow.AdvanceChar(); // "
+                    _lexer.TextWindow.AdvanceChar(); // "
+                    return false;
+                }
+
+                if (_kind == InterpolatedStringKind.SingleLineRaw)
+                {
+                    var beforeQuotePosition = _lexer.TextWindow.Position;
+                    var currentQuoteCount = _lexer.ConsumeQuoteSequence();
+                    if (currentQuoteCount >= _startingQuoteCount)
+                    {
+                        // we saw a long enough sequence of close quotes to finish us.  Move back to before
+                        // the close quotes and let the caller handle this (including if there are too many
+                        // close quotes).
+                        _lexer.TextWindow.Reset(beforeQuotePosition);
+                        return true;
+                    }
+
+                    // otherwise, these were just quotes that we should treat as raw content.
+                    return false;
+                }
+
+                if (_kind == InterpolatedStringKind.MultiLineRaw)
+                {
+                    var currentQuoteCount = _lexer.ConsumeQuoteSequence();
+                    // Don't allow a content line to contain a quote sequence that looks like a delimiter (or longer).
+                    // We know this is a content line because if this was the actual end line, it would have been caught
+                    // in the check prior to this switch in ScanInterpolatedStringLiteralContents
+                    if (currentQuoteCount >= _startingQuoteCount)
+                    {
+                        this.TrySetUnrecoverableError(
+                            _lexer.MakeError(
+                                position: _lexer.TextWindow.Position - currentQuoteCount,
+                                width: currentQuoteCount,
+                                ErrorCode.ERR_RawStringDelimiterOnOwnLine));
+
+                        // move back before the quotes so the caller will consume them and not emit another error.
+                        _lexer.TextWindow.Reset(_lexer.TextWindow.Position - _startingQuoteCount);
+                        return true;
+                    }
+
+                    // otherwise, these were just quotes that we should treat as raw content.
+                    return false;
+                }
+
+                throw ExceptionUtilities.UnexpectedValue(_kind);
             }
 
             private void ScanFormatSpecifier()
