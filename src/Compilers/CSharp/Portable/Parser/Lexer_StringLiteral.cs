@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.PooledObjects;
+using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
@@ -748,28 +749,27 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 Debug.Assert(_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim);
                 if (_lexer.TextWindow.PeekChar(1) == '{')
                 {
-                    _lexer.TextWindow.AdvanceChar();
-                    _lexer.TextWindow.AdvanceChar();
+                    _lexer.TextWindow.AdvanceChar(2); // {{
                 }
                 else
                 {
                     int openBracePosition = _lexer.TextWindow.Position;
                     _lexer.TextWindow.AdvanceChar();
-                    int colonPosition = 0;
-                    ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, ref colonPosition);
+                    ScanInterpolatedStringLiteralHoleBalancedText('}', isHole: true, out var colonSpan);
                     int closeBracePosition = _lexer.TextWindow.Position;
-                    bool closeBraceMissing = false;
                     if (_lexer.TextWindow.PeekChar() == '}')
                     {
                         _lexer.TextWindow.AdvanceChar();
                     }
                     else
                     {
-                        closeBraceMissing = true;
                         TrySetUnrecoverableError(_lexer.MakeError(openBracePosition - 1, 2, ErrorCode.ERR_UnclosedExpressionHole));
                     }
 
-                    interpolations?.Add(new Interpolation(openBracePosition, colonPosition, closeBracePosition, closeBraceMissing));
+                    interpolations?.Add(new Interpolation(
+                        new TextSpan(openBracePosition, length: 1),
+                        colonSpan,
+                        TextSpan.FromBounds(closeBracePosition, _lexer.TextWindow.Position)));
                 }
             }
 
@@ -854,8 +854,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// <summary>
             /// Scan past the hole inside an interpolated string literal, leaving the current character on the '}' (if any)
             /// </summary>
-            private void ScanInterpolatedStringLiteralHoleBalancedText(char endingChar, bool isHole, ref int colonPosition)
+            private void ScanInterpolatedStringLiteralHoleBalancedText(char endingChar, bool isHole, out TextSpan colonSpan)
             {
+                colonSpan = default;
                 while (true)
                 {
                     char ch = _lexer.TextWindow.PeekChar();
@@ -889,8 +890,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             // the first colon not nested within matching delimiters is the start of the format string
                             if (isHole)
                             {
-                                Debug.Assert(colonPosition == 0);
-                                colonPosition = _lexer.TextWindow.Position;
+                                Debug.Assert(colonSpan == default);
+                                colonSpan = new TextSpan(_lexer.TextWindow.Position, length: 1);
                                 ScanFormatSpecifier();
                                 return;
                             }
@@ -920,8 +921,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         case '@':
                             {
                                 var discarded = default(TokenInfo);
-                                _lexer.ScanAtSignToken(ref discarded);
-                                continue;
+                                if (_lexer.TryScanAtStringToken(ref discarded))
+                                    continue;
+
+                                // Wasn't an @"" or @$"" string.  Just consume this as normal code.
+                                goto default;
                             }
                         case '/':
                             switch (_lexer.TextWindow.PeekChar(1))
@@ -973,8 +977,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 Debug.Assert(start == _lexer.TextWindow.PeekChar());
                 _lexer.TextWindow.AdvanceChar();
-                int colon = 0;
-                ScanInterpolatedStringLiteralHoleBalancedText(end, isHole: false, ref colon);
+                ScanInterpolatedStringLiteralHoleBalancedText(end, isHole: false, out _);
                 if (_lexer.TextWindow.PeekChar() == end)
                 {
                     _lexer.TextWindow.AdvanceChar();
