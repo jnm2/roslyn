@@ -953,17 +953,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             if (TextWindow.PeekChar(1) == '"')
             {
-                this.ScanInterpolatedStringLiteral(isVerbatim: false, ref info);
+                this.ScanInterpolatedStringLiteral(ref info);
                 return true;
             }
             else if (TextWindow.PeekChar(1) == '@' && TextWindow.PeekChar(2) == '"')
             {
-                this.ScanInterpolatedStringLiteral(isVerbatim: true, ref info);
+                this.ScanInterpolatedStringLiteral(ref info);
                 return true;
             }
             else if (TextWindow.PeekChar(1) == '$')
             {
-                // $$ must start a raw string literal.  Note $""" will be handled by ScanInterpolatedStringLiteral
+                // $$ must start a raw string literal.  Note $""" will be handled by ScanInterpolatedStringLiteral above.
                 this.ScanRawInterpolatedStringLiteral(ref info);
                 return true;
             }
