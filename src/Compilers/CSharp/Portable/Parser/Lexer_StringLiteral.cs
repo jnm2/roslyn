@@ -885,27 +885,37 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     else if (ch == '{')
                     {
                         var pos = _lexer.TextWindow.Position;
-                        _lexer.TextWindow.AdvanceChar();
-                        // ensure any { characters are doubled up
-                        if (_lexer.TextWindow.PeekChar() == '{')
+                        if (_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
                         {
-                            _lexer.TextWindow.AdvanceChar(); // {
+                            _lexer.TextWindow.AdvanceChar();
+                            // ensure any { characters are doubled up
+                            if (_lexer.TextWindow.PeekChar() == '{')
+                            {
+                                _lexer.TextWindow.AdvanceChar(); // {
+                            }
+                            else
+                            {
+                                TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "{"));
+                            }
                         }
                         else
                         {
-                            TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "{"));
+                            TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_OpenBraceInRawStringFormatClause));
                         }
                     }
                     else if (ch == '}')
                     {
-                        if (_lexer.TextWindow.PeekChar(1) == '}')
+                        if (_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
                         {
-                            _lexer.TextWindow.AdvanceChar(2); // }}
+                            if (_lexer.TextWindow.PeekChar(1) == '}')
+                            {
+                                _lexer.TextWindow.AdvanceChar(2); // }}
+                                continue;
+                            }
                         }
-                        else
-                        {
-                            return; // end of interpolation
-                        }
+
+                        // end of interpolation
+                        return;
                     }
                     else if (IsAtEnd())
                     {

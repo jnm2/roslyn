@@ -6881,6 +6881,9 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
   <data name="ERR_UnterminatedRawString" xml:space="preserve">
     <value>Unterminated raw string literal</value>
   </data>
+  <data name="ERR_OpenBraceInRawStringFormatClause" xml:space="preserve">
+    <value>Open brace not allowed in raw string literal format clause</value>
+  </data>
   <data name="IDS_FeatureRawStringLiterals" xml:space="preserve">
     <value>raw string literals</value>
   </data>
