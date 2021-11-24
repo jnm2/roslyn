@@ -907,6 +907,11 @@
         <target state="translated">Konstruktor struktury bez parametrów musi mieć wartość „public”.</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_NotEnoughCloseBracesForRawString">
+        <source>Not enough closing braces for raw string literal</source>
+        <target state="new">Not enough closing braces for raw string literal</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ERR_NotEnoughQuotesForRawString">
         <source>Not enough open quotes for raw string literal</source>
         <target state="new">Not enough open quotes for raw string literal</target>
@@ -950,6 +955,11 @@
       <trans-unit id="ERR_OmittedTypeArgument">
         <source>Omitting the type argument is not allowed in the current context</source>
         <target state="translated">Pominięcie argumentu typu jest niedozwolone w bieżącym kontekście</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="ERR_OpenBraceInRawStringFormatClause">
+        <source>Open brace not allowed in raw string literal format clause</source>
+        <target state="new">Open brace not allowed in raw string literal format clause</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_OutVariableCannotBeByRef">
@@ -1210,6 +1220,16 @@
       <trans-unit id="ERR_SwitchGoverningExpressionRequiresParens">
         <source>Parentheses are required around the switch governing expression.</source>
         <target state="translated">Wymagane są nawiasy wokół wyrażenia sterującego instrukcją switch.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="ERR_TooManyCloseBracesForRawString">
+        <source>Too many closing braces for raw string literal</source>
+        <target state="new">Too many closing braces for raw string literal</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="ERR_TooManyOpenBracesForRawString">
+        <source>Too many open braces for raw string literal</source>
+        <target state="new">Too many open braces for raw string literal</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyQuotesForRawString">

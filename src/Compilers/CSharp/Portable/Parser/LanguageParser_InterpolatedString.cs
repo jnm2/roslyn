@@ -133,12 +133,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ? SyntaxFactory.MissingToken(SyntaxKind.InterpolatedStringEndToken).TokenWithTrailingTrivia(originalToken.GetTrailingTrivia())
                     : SyntaxFactory.Token(null, SyntaxKind.InterpolatedStringEndToken, closeQuoteText, closeQuoteText, originalToken.GetTrailingTrivia());
             }
-<<<<<<< HEAD
-
-            Debug.Assert(originalToken.ToFullString() == result.ToFullString()); // yield from text equals yield from node
-            return result;
-=======
->>>>>>> simplifyInterpolationPArsing4
         }
 
         private static InterpolationSyntax ParseInterpolation(CSharpParseOptions options, string text, Lexer.Interpolation interpolation, bool isVerbatim)

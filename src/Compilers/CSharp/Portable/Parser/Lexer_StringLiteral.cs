@@ -719,7 +719,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     var pos = _lexer.TextWindow.Position;
                     _lexer.TextWindow.AdvanceChar(); // }
-                                                     // ensure any } characters are doubled up
+
+                    // ensure any } characters are doubled up
                     if (_lexer.TextWindow.PeekChar() == '}')
                     {
                         _lexer.TextWindow.AdvanceChar(); // }
