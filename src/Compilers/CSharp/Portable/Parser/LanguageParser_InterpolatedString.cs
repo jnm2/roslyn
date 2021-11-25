@@ -120,7 +120,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     var lastText = originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)];
                     if (lastText.Length > 0)
                     {
-                        var token = MakeStringToken(lastText, lastText, isVerbatim, SyntaxKind.InterpolatedStringTextToken);
+                        var token = MakeInterpolatedStringTextToken(lastText, lastText, isVerbatim, SyntaxKind.InterpolatedStringTextToken);
                         builder.Add(SyntaxFactory.InterpolatedStringText(token));
                     }
                 }
@@ -225,25 +225,38 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// </summary>
         /// <param name="text">The text for the full string literal, including the quotes and contents</param>
         /// <param name="bodyText">The text for the string literal's contents, excluding surrounding quotes</param>
-        /// <param name="isVerbatim">True if the string contents should be scanned using the rules for verbatim strings</param>
-        /// <param name="kind">The token kind to be assigned to the resulting token</param>
-        private SyntaxToken MakeStringToken(string text, string bodyText, bool isVerbatim, SyntaxKind kind)
+        /// <param name="kind">The kind of the interpolated string we were processing</param>
+        private SyntaxToken MakeInterpolatedStringTextToken(
+            string text,
+            string bodyText,
+            Lexer.InterpolatedStringKind kind)
         {
-            var prefix = isVerbatim ? "@\"" : "\"";
-            var fakeString = prefix + bodyText + "\"";
-            using (var tempLexer = new Lexer(Text.SourceText.From(fakeString), this.Options, allowPreprocessorDirectives: false))
+            if (kind is Lexer.InterpolatedStringKind.SingleLineRaw or Lexer.InterpolatedStringKind.MultiLineRaw)
             {
-                LexerMode mode = LexerMode.Syntax;
-                SyntaxToken token = tempLexer.Lex(ref mode);
-                Debug.Assert(token.Kind == SyntaxKind.StringLiteralToken);
-                var result = SyntaxFactory.Literal(null, text, kind, token.ValueText, null);
-                if (token.ContainsDiagnostics)
-                {
-                    result = result.WithDiagnosticsGreen(MoveDiagnostics(token.GetDiagnostics(), -prefix.Length));
-                }
-
-                return result;
+                // with a raw string, we don't do any interpretation of the content, except to remove the indentation
+                // whitespace.
+                // PROTOTYPE: remove the indentation whitespace.
+                return SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, text, trailing: null);
             }
+
+            Debug.Assert(kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim);
+
+            // For a normal/verbatim piece of content, process the inner content as if it was in a corresponding
+            // *non*-interpolated string to get the correct meaning of all the escapes/diagnostics within.
+            var prefix = kind is Lexer.InterpolatedStringKind.Verbatim ? "@\"" : "\"";
+            var fakeString = prefix + bodyText + "\"";
+            using var tempLexer = new Lexer(SourceText.From(fakeString), this.Options, allowPreprocessorDirectives: false);
+
+            var mode = LexerMode.Syntax;
+            var token = tempLexer.Lex(ref mode);
+            Debug.Assert(token.Kind == SyntaxKind.StringLiteralToken);
+            var result = SyntaxFactory.Literal(null, text, SyntaxKind.InterpolatedStringTextToken, token.ValueText, null);
+            if (token.ContainsDiagnostics)
+            {
+                result = result.WithDiagnosticsGreen(MoveDiagnostics(token.GetDiagnostics(), -prefix.Length));
+            }
+
+            return result;
         }
 
         private static DiagnosticInfo[] MoveDiagnostics(DiagnosticInfo[] infos, int offset)
