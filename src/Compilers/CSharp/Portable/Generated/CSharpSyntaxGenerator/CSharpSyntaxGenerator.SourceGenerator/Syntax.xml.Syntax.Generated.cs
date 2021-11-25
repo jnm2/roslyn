@@ -4765,6 +4765,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     /// <para>This node is associated with the following syntax kinds:</para>
     /// <list type="bullet">
     /// <item><description><see cref="SyntaxKind.InterpolatedStringExpression"/></description></item>
+    /// <item><description><see cref="SyntaxKind.RawInterpolatedStringExpression"/></description></item>
     /// </list>
     /// </remarks>
     public sealed partial class InterpolatedStringExpressionSyntax : ExpressionSyntax
@@ -4796,7 +4797,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         {
             if (stringStartToken != this.StringStartToken || contents != this.Contents || stringEndToken != this.StringEndToken)
             {
-                var newNode = SyntaxFactory.InterpolatedStringExpression(stringStartToken, contents, stringEndToken);
+                var newNode = SyntaxFactory.InterpolatedStringExpression(this.Kind(), stringStartToken, contents, stringEndToken);
                 var annotations = GetAnnotations();
                 return annotations?.Length > 0 ? newNode.WithAnnotations(annotations) : newNode;
             }

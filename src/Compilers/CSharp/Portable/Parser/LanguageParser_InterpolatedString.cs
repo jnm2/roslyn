@@ -48,10 +48,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // and where the open and close quotes can be found.
             var interpolations = ArrayBuilder<Lexer.Interpolation>.GetInstance();
 
-            rescanInterpolation(out var openQuoteRange, out var error, out var closeQuoteRange);
+            rescanInterpolation(out var kind, out var openQuoteRange, out var error, out var closeQuoteRange);
 
             var result = SyntaxFactory.InterpolatedStringExpression(
-                getOpenQuote(openQuoteRange), getContent(interpolations), getCloseQuote(closeQuoteRange));
+                kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim
+                    ? SyntaxKind.InterpolatedStringExpression
+                    : SyntaxKind.RawInterpolatedStringExpression,
+                getOpenQuote(openQuoteRange),
+                getContent(interpolations),
+                getCloseQuote(closeQuoteRange));
 
             interpolations.Free();
             if (error != null)
@@ -62,11 +67,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             Debug.Assert(originalToken.ToFullString() == result.ToFullString()); // yield from text equals yield from node
             return result;
 
-            void rescanInterpolation(out Range openQuoteRange, out SyntaxDiagnosticInfo error, out Range closeQuoteRange)
+            void rescanInterpolation(out Lexer.InterpolatedStringKind kind, out Range openQuoteRange, out SyntaxDiagnosticInfo error, out Range closeQuoteRange)
             {
                 using var tempLexer = new Lexer(SourceText.From(originalText), this.Options, allowPreprocessorDirectives: false);
                 var info = default(Lexer.TokenInfo);
-                tempLexer.ScanInterpolatedStringLiteralTop(ref info, out error, out openQuoteRange, interpolations, out closeQuoteRange);
+                tempLexer.ScanInterpolatedStringLiteralTop(
+                    ref info, out kind, out error, out openQuoteRange, interpolations, out closeQuoteRange);
             }
 
             SyntaxToken getOpenQuote(Range openQuoteRange)

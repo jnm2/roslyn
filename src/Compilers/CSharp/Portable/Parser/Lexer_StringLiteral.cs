@@ -238,19 +238,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 return;
             }
 
-            ScanInterpolatedStringLiteralTop(ref info, out var error, openQuoteRange: out _, interpolations: null, closeQuoteRange: out _);
+            ScanInterpolatedStringLiteralTop(
+                ref info, kind: out _, out var error, openQuoteRange: out _, interpolations: null, closeQuoteRange: out _);
             this.AddError(error);
         }
 
         internal void ScanInterpolatedStringLiteralTop(
             ref TokenInfo info,
+            out InterpolatedStringKind kind,
             out SyntaxDiagnosticInfo? error,
             out Range openQuoteRange,
             ArrayBuilder<Interpolation>? interpolations,
             out Range closeQuoteRange)
         {
             var subScanner = new InterpolatedStringScanner(this);
-            subScanner.ScanInterpolatedStringLiteralTop(out openQuoteRange, interpolations, out closeQuoteRange);
+            subScanner.ScanInterpolatedStringLiteralTop(out kind, out openQuoteRange, interpolations, out closeQuoteRange);
             error = subScanner.Error;
             info.Kind = SyntaxKind.InterpolatedStringToken;
             info.Text = TextWindow.GetText(intern: false);
@@ -405,10 +407,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
 
             internal void ScanInterpolatedStringLiteralTop(
+                out InterpolatedStringKind kind,
                 out Range openQuoteRange,
                 ArrayBuilder<Interpolation>? interpolations,
                 out Range closeQuoteRange)
             {
+                kind = _kind;
                 ScanInterpolatedStringLiteralStart(out openQuoteRange);
                 ScanInterpolatedStringLiteralContents(interpolations);
                 ScanInterpolatedStringLiteralEnd(out closeQuoteRange);

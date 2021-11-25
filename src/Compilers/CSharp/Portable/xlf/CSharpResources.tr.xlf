@@ -913,8 +913,8 @@
         <note />
       </trans-unit>
       <trans-unit id="ERR_NotEnoughQuotesForRawString">
-        <source>Not enough open quotes for raw string literal</source>
-        <target state="new">Not enough open quotes for raw string literal</target>
+        <source>Not enough quotes for raw string literal</source>
+        <target state="new">Not enough quotes for raw string literal</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName">

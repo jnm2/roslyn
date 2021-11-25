@@ -1939,9 +1939,11 @@
   </Node>
   <Node Name="InterpolatedStringExpressionSyntax" Base="ExpressionSyntax">
     <Kind Name="InterpolatedStringExpression"/>
+    <Kind Name="RawInterpolatedStringExpression"/>
     <Field Name="StringStartToken" Type="SyntaxToken">
       <Kind Name="InterpolatedStringStartToken"/>
       <Kind Name="InterpolatedVerbatimStringStartToken"/>
+      <Kind Name="RawInterpolatedStringStartToken"/>
       <PropertyComment>
         <summary>The first part of an interpolated string, $" or $@"</summary>
       </PropertyComment>
@@ -1953,6 +1955,7 @@
     </Field>
     <Field Name="StringEndToken" Type="SyntaxToken">
       <Kind Name="InterpolatedStringEndToken"/>
+      <Kind Name="RawInterpolatedStringEndToken"/>
       <PropertyComment>
         <summary>The closing quote of the interpolated string.</summary>
       </PropertyComment>
@@ -2126,12 +2129,14 @@
     <Kind Name="Interpolation"/>
     <Field Name="OpenBraceToken" Type="SyntaxToken">
       <Kind Name="OpenBraceToken"/>
+      <Kind Name="RawInterpolationOpenToken"/>
     </Field>
     <Field Name="Expression" Type="ExpressionSyntax"/>
     <Field Name="AlignmentClause" Type="InterpolationAlignmentClauseSyntax" Optional="true"/>
     <Field Name="FormatClause" Type="InterpolationFormatClauseSyntax" Optional="true"/>
     <Field Name="CloseBraceToken" Type="SyntaxToken">
       <Kind Name="CloseBraceToken"/>
+      <Kind Name="RawInterpolationCloseToken"/>
     </Field>
   </Node>
   <Node Name="InterpolationAlignmentClauseSyntax" Base="CSharpSyntaxNode">

@@ -870,9 +870,10 @@ namespace Microsoft.CodeAnalysis.CSharp
         SingleLineRawStringLiteralExpression = 9074,
         MultiLineRawStringLiteralExpression = 9075,
 
-        /// <summary>
-        /// Token for a whole raw interpolated string $""" ... { expr } ...""". This only exists in transient form during parsing.
-        /// </summary>
-        //RawInterpolatedStringToken = 9076,
+        RawInterpolatedStringStartToken = 9076,     // $"""
+        RawInterpolatedStringEndToken = 9077,       // """
+        RawInterpolatedStringExpression = 9078,     // $""" ... """
+        RawInterpolationOpenToken = 9079,           // {{{
+        RawInterpolationCloseToken = 9079,          // }}}
     }
 }
