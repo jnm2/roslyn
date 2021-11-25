@@ -10076,8 +10076,9 @@ tryAgain:
                 case SyntaxKind.StringLiteralToken:
                 case SyntaxKind.SingleLineRawStringLiteralToken:
                 case SyntaxKind.MultiLineRawStringLiteralToken:
-                case SyntaxKind.InterpolatedStringStartToken:
                 case SyntaxKind.InterpolatedStringToken:
+                case SyntaxKind.InterpolatedStringStartToken:
+                case SyntaxKind.InterpolatedVerbatimStringStartToken:
                 case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
                 case SyntaxKind.MultiLineRawInterpolatedStringStartToken:
                 case SyntaxKind.CharacterLiteralToken:
@@ -10366,8 +10367,9 @@ tryAgain:
                     case SyntaxKind.StringLiteralToken:
                     case SyntaxKind.SingleLineRawStringLiteralToken:
                     case SyntaxKind.MultiLineRawStringLiteralToken:
-                    case SyntaxKind.InterpolatedStringStartToken:
                     case SyntaxKind.InterpolatedStringToken:
+                    case SyntaxKind.InterpolatedStringStartToken:
+                    case SyntaxKind.InterpolatedVerbatimStringStartToken:
                     case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
                     case SyntaxKind.MultiLineRawInterpolatedStringStartToken:
                     case SyntaxKind.NumericLiteralToken:
@@ -10808,6 +10810,7 @@ tryAgain:
                 case SyntaxKind.CharacterLiteralToken:
                     return _syntaxFactory.LiteralExpression(SyntaxFacts.GetLiteralExpression(tk), this.EatToken());
                 case SyntaxKind.InterpolatedStringStartToken:
+                case SyntaxKind.InterpolatedVerbatimStringStartToken:
                 case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
                 case SyntaxKind.MultiLineRawInterpolatedStringStartToken:
                     throw new NotImplementedException(); // this should not occur because these tokens are produced and parsed immediately
