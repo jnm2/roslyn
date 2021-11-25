@@ -758,7 +758,6 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return BadExpression(node);
 
                 case SyntaxKind.InterpolatedStringExpression:
-                case SyntaxKind.RawInterpolatedStringExpression:
                     return BindInterpolatedString((InterpolatedStringExpressionSyntax)node, diagnostics);
 
                 case SyntaxKind.IsPatternExpression:

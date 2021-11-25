@@ -49,7 +49,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             rescanInterpolation(out var kind, out var openQuoteRange, out var error, out var closeQuoteRange);
 
             var result = SyntaxFactory.InterpolatedStringExpression(
-                getOpenQuote(kind, openQuoteRange), getContent(interpolations), getCloseQuote(kind, closeQuoteRange));
+                getOpenQuote(), getContent(), getCloseQuote());
 
             interpolations.Free();
             if (error != null)
@@ -68,7 +68,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ref info, out kind, out error, out openQuoteRange, interpolations, out closeQuoteRange);
             }
 
-            SyntaxToken getOpenQuote(Lexer.InterpolatedStringKind kind, Range openQuoteRange)
+            SyntaxToken getOpenQuote()
             {
                 var openQuoteText = originalText[openQuoteRange];
                 return SyntaxFactory.Token(
@@ -86,7 +86,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     trailing: null);
             }
 
-            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getContent(ArrayBuilder<Lexer.Interpolation> interpolations)
+            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getContent()
             {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
@@ -126,7 +126,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 return result;
             }
 
-            SyntaxToken getCloseQuote(Lexer.InterpolatedStringKind kind, Range openQuoteRange)
+            SyntaxToken getCloseQuote()
             {
                 // Make a token for the close quote " (even if it was missing)
                 var closeQuoteText = originalText[closeQuoteRange];
@@ -150,25 +150,38 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             Lexer.Interpolation interpolation,
             Lexer.InterpolatedStringKind kind)
         {
-            // Grab from before the { all the way to the start of the } (or the start of the : if present).  The parsing
-            // of the colon and/or close curly is specially handled in ParseInterpolation below.
-            var parsedText = text[new Range(
-                interpolation.OpenBraceRange.Start,
+            // Grab from after the { all the way to the start of the } (or the start of the : if present).
+            // This will be used to parse out the expression of the interpolation.  The lexing/parsing of
+            // the remainder is handed specially.
+            var expressionText = text[new Range(
+                interpolation.OpenBraceRange.End,
                 interpolation.HasColon ? interpolation.ColonRange.Start : interpolation.CloseBraceRange.Start)];
 
-            // TODO: some of the trivia in the interpolation maybe should be trailing trivia of the openBraceToken
-            using var tempLexer = new Lexer(SourceText.From(parsedText), options, allowPreprocessorDirectives: false, interpolationFollowedByColon: interpolation.HasColon);
+            using var tempLexer = new Lexer(SourceText.From(expressionText), options, allowPreprocessorDirectives: false, interpolationFollowedByColon: interpolation.HasColon);
+
+            // First, grab the text after the { that can be treated as trailing trivia.  It will be attached to the {
+            // token we create.
+            var openTokenTrailingTrivia = tempLexer.LexSyntaxTrailingTrivia();
+            var openTokenText = text[interpolation.OpenBraceRange];
+
+            var openTokenKind = kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim
+                ? SyntaxKind.OpenBraceToken
+                : SyntaxKind.RawInterpolationOpenToken;
+
+            // Now, parse the remainder out as an expression
             using var tempParser = new LanguageParser(tempLexer, oldTree: null, changes: null);
 
-            return tempParser.ParseInterpolation(text, interpolation, kind);
+            return tempParser.ParseInterpolation(
+                text, interpolation, kind,
+                SyntaxFactory.Token(leading: null, openTokenKind, openTokenText, openTokenText, openTokenTrailingTrivia.Node));
         }
 
         private InterpolationSyntax ParseInterpolation(
             string text,
             Lexer.Interpolation interpolation,
-            Lexer.InterpolatedStringKind kind)
+            Lexer.InterpolatedStringKind kind,
+            SyntaxToken openBraceToken)
         {
-            var openBraceToken = this.EatToken(SyntaxKind.OpenBraceToken);
             var (expression, alignment) = getExpressionAndAlignment();
             var (format, closeBraceToken) = getFormatAndCloseBrace();
 
@@ -200,26 +213,29 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     var colonText = text[interpolation.ColonRange];
                     var colonToken = SyntaxFactory.Token(leading, SyntaxKind.ColonToken, colonText, colonText, trailing: null);
-                    var formatText = text[new Range(interpolation.ColonRange.End, interpolation.CloseBraceRange.Start)];
-                    var formatString = MakeInterpolatedStringTextToken(formatText, kind);
-                    var format = SyntaxFactory.InterpolationFormatClause(colonToken, formatString);
-                    var closeBraceToken = getInterpolationCloseBraceToken(leading: null);
-                    return (format, closeBraceToken);
+                    var format = SyntaxFactory.InterpolationFormatClause(
+                        colonToken,
+                        MakeInterpolatedStringTextToken(
+                            text[new Range(interpolation.ColonRange.End, interpolation.CloseBraceRange.Start)], kind));
+                    return (format, getInterpolationCloseToken(leading: null));
                 }
                 else
                 {
-                    var closeBraceToken = getInterpolationCloseBraceToken(leading);
-                    return (format: null, closeBraceToken);
+                    return (format: null, getInterpolationCloseToken(leading));
                 }
             }
 
-            SyntaxToken getInterpolationCloseBraceToken(GreenNode leading)
+            SyntaxToken getInterpolationCloseToken(GreenNode leading)
             {
+                var closeTokenKind = kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim
+                    ? SyntaxKind.CloseBraceToken
+                    : SyntaxKind.RawInterpolationCloseToken;
+
                 var tokenText = text[interpolation.CloseBraceRange];
                 if (tokenText == "")
-                    return SyntaxFactory.MissingToken(leading, SyntaxKind.CloseBraceToken, trailing: null);
+                    return SyntaxFactory.MissingToken(leading, closeTokenKind, trailing: null);
 
-                return SyntaxFactory.Token(leading, SyntaxKind.CloseBraceToken, tokenText, tokenText, trailing: null);
+                return SyntaxFactory.Token(leading, closeTokenKind, tokenText, tokenText, trailing: null);
             }
         }
 

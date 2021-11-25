@@ -3505,45 +3505,29 @@ namespace Microsoft.CodeAnalysis.CSharp
             => SyntaxFactory.OmittedArraySizeExpression(SyntaxFactory.Token(SyntaxKind.OmittedArraySizeExpressionToken));
 
         /// <summary>Creates a new InterpolatedStringExpressionSyntax instance.</summary>
-        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxKind kind, SyntaxToken stringStartToken, SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
+        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
         {
-            switch (kind)
-            {
-                case SyntaxKind.InterpolatedStringExpression:
-                case SyntaxKind.RawInterpolatedStringExpression: break;
-                default: throw new ArgumentException(nameof(kind));
-            }
             switch (stringStartToken.Kind())
             {
                 case SyntaxKind.InterpolatedStringStartToken:
                 case SyntaxKind.InterpolatedVerbatimStringStartToken:
-                case SyntaxKind.RawInterpolatedStringStartToken: break;
+                case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringStartToken: break;
                 default: throw new ArgumentException(nameof(stringStartToken));
             }
             switch (stringEndToken.Kind())
             {
                 case SyntaxKind.InterpolatedStringEndToken:
-                case SyntaxKind.RawInterpolatedStringEndToken: break;
+                case SyntaxKind.SingleLineRawInterpolatedStringEndToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringEndToken: break;
                 default: throw new ArgumentException(nameof(stringEndToken));
             }
-            return (InterpolatedStringExpressionSyntax)Syntax.InternalSyntax.SyntaxFactory.InterpolatedStringExpression(kind, (Syntax.InternalSyntax.SyntaxToken)stringStartToken.Node!, contents.Node.ToGreenList<Syntax.InternalSyntax.InterpolatedStringContentSyntax>(), (Syntax.InternalSyntax.SyntaxToken)stringEndToken.Node!).CreateRed();
+            return (InterpolatedStringExpressionSyntax)Syntax.InternalSyntax.SyntaxFactory.InterpolatedStringExpression((Syntax.InternalSyntax.SyntaxToken)stringStartToken.Node!, contents.Node.ToGreenList<Syntax.InternalSyntax.InterpolatedStringContentSyntax>(), (Syntax.InternalSyntax.SyntaxToken)stringEndToken.Node!).CreateRed();
         }
 
         /// <summary>Creates a new InterpolatedStringExpressionSyntax instance.</summary>
-        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxKind kind, SyntaxToken stringStartToken, SyntaxList<InterpolatedStringContentSyntax> contents)
-            => SyntaxFactory.InterpolatedStringExpression(kind, stringStartToken, contents, SyntaxFactory.Token(GetInterpolatedStringExpressionStringEndTokenKind(kind)));
-
-        /// <summary>Creates a new InterpolatedStringExpressionSyntax instance.</summary>
-        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxKind kind, SyntaxToken stringStartToken)
-            => SyntaxFactory.InterpolatedStringExpression(kind, stringStartToken, default, SyntaxFactory.Token(GetInterpolatedStringExpressionStringEndTokenKind(kind)));
-
-        private static SyntaxKind GetInterpolatedStringExpressionStringEndTokenKind(SyntaxKind kind)
-            => kind switch
-            {
-                SyntaxKind.InterpolatedStringExpression => SyntaxKind.InterpolatedStringEndToken,
-                SyntaxKind.RawInterpolatedStringExpression => SyntaxKind.RawInterpolatedStringEndToken,
-                _ => throw new ArgumentOutOfRangeException(),
-            };
+        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, SyntaxToken stringEndToken)
+            => SyntaxFactory.InterpolatedStringExpression(stringStartToken, default, stringEndToken);
 
         /// <summary>Creates a new IsPatternExpressionSyntax instance.</summary>
         public static IsPatternExpressionSyntax IsPatternExpression(ExpressionSyntax expression, SyntaxToken isKeyword, PatternSyntax pattern)

@@ -10284,7 +10284,6 @@ tryAgain:
                 case SyntaxKind.ImplicitStackAllocArrayCreationExpression:
                 case SyntaxKind.ImplicitObjectCreationExpression:
                 case SyntaxKind.InterpolatedStringExpression:
-                case SyntaxKind.RawInterpolatedStringExpression:
                 case SyntaxKind.InvocationExpression:
                 case SyntaxKind.NullLiteralExpression:
                 case SyntaxKind.NumericLiteralExpression:

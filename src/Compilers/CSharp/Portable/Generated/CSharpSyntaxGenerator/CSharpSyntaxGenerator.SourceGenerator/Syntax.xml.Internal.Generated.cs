@@ -9962,7 +9962,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.stringEndToken = stringEndToken;
         }
 
-        /// <summary>The first part of an interpolated string, $" or $@"</summary>
+        /// <summary>The first part of an interpolated string, $" or $@" or $"""</summary>
         public SyntaxToken StringStartToken => this.stringStartToken;
         /// <summary>List of parts of the interpolated string, each one is either a literal part or an interpolation.</summary>
         public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> Contents => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax>(this.contents);
@@ -9987,7 +9987,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
             if (stringStartToken != this.StringStartToken || contents != this.Contents || stringEndToken != this.StringEndToken)
             {
-                var newNode = SyntaxFactory.InterpolatedStringExpression(this.Kind, stringStartToken, contents, stringEndToken);
+                var newNode = SyntaxFactory.InterpolatedStringExpression(stringStartToken, contents, stringEndToken);
                 var diags = GetDiagnostics();
                 if (diags?.Length > 0)
                     newNode = newNode.WithDiagnosticsGreen(diags);
@@ -36830,37 +36830,33 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxKind kind, SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
+        public InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
         {
-            switch (kind)
-            {
-                case SyntaxKind.InterpolatedStringExpression:
-                case SyntaxKind.RawInterpolatedStringExpression: break;
-                default: throw new ArgumentException(nameof(kind));
-            }
 #if DEBUG
             if (stringStartToken == null) throw new ArgumentNullException(nameof(stringStartToken));
             switch (stringStartToken.Kind)
             {
                 case SyntaxKind.InterpolatedStringStartToken:
                 case SyntaxKind.InterpolatedVerbatimStringStartToken:
-                case SyntaxKind.RawInterpolatedStringStartToken: break;
+                case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringStartToken: break;
                 default: throw new ArgumentException(nameof(stringStartToken));
             }
             if (stringEndToken == null) throw new ArgumentNullException(nameof(stringEndToken));
             switch (stringEndToken.Kind)
             {
                 case SyntaxKind.InterpolatedStringEndToken:
-                case SyntaxKind.RawInterpolatedStringEndToken: break;
+                case SyntaxKind.SingleLineRawInterpolatedStringEndToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringEndToken: break;
                 default: throw new ArgumentException(nameof(stringEndToken));
             }
 #endif
 
             int hash;
-            var cached = CSharpSyntaxNodeCache.TryGetNode((int)kind, stringStartToken, contents.Node, stringEndToken, this.context, out hash);
+            var cached = CSharpSyntaxNodeCache.TryGetNode((int)SyntaxKind.InterpolatedStringExpression, stringStartToken, contents.Node, stringEndToken, this.context, out hash);
             if (cached != null) return (InterpolatedStringExpressionSyntax)cached;
 
-            var result = new InterpolatedStringExpressionSyntax(kind, stringStartToken, contents.Node, stringEndToken, this.context);
+            var result = new InterpolatedStringExpressionSyntax(SyntaxKind.InterpolatedStringExpression, stringStartToken, contents.Node, stringEndToken, this.context);
             if (hash >= 0)
             {
                 SyntaxNodeCache.AddNode(result, hash);
@@ -41829,37 +41825,33 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxKind kind, SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
+        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
         {
-            switch (kind)
-            {
-                case SyntaxKind.InterpolatedStringExpression:
-                case SyntaxKind.RawInterpolatedStringExpression: break;
-                default: throw new ArgumentException(nameof(kind));
-            }
 #if DEBUG
             if (stringStartToken == null) throw new ArgumentNullException(nameof(stringStartToken));
             switch (stringStartToken.Kind)
             {
                 case SyntaxKind.InterpolatedStringStartToken:
                 case SyntaxKind.InterpolatedVerbatimStringStartToken:
-                case SyntaxKind.RawInterpolatedStringStartToken: break;
+                case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringStartToken: break;
                 default: throw new ArgumentException(nameof(stringStartToken));
             }
             if (stringEndToken == null) throw new ArgumentNullException(nameof(stringEndToken));
             switch (stringEndToken.Kind)
             {
                 case SyntaxKind.InterpolatedStringEndToken:
-                case SyntaxKind.RawInterpolatedStringEndToken: break;
+                case SyntaxKind.SingleLineRawInterpolatedStringEndToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringEndToken: break;
                 default: throw new ArgumentException(nameof(stringEndToken));
             }
 #endif
 
             int hash;
-            var cached = SyntaxNodeCache.TryGetNode((int)kind, stringStartToken, contents.Node, stringEndToken, out hash);
+            var cached = SyntaxNodeCache.TryGetNode((int)SyntaxKind.InterpolatedStringExpression, stringStartToken, contents.Node, stringEndToken, out hash);
             if (cached != null) return (InterpolatedStringExpressionSyntax)cached;
 
-            var result = new InterpolatedStringExpressionSyntax(kind, stringStartToken, contents.Node, stringEndToken);
+            var result = new InterpolatedStringExpressionSyntax(SyntaxKind.InterpolatedStringExpression, stringStartToken, contents.Node, stringEndToken);
             if (hash >= 0)
             {
                 SyntaxNodeCache.AddNode(result, hash);

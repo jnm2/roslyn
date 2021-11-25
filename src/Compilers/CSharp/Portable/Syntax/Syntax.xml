@@ -1943,7 +1943,7 @@
       <Kind Name="InterpolatedStringStartToken"/>
       <Kind Name="InterpolatedVerbatimStringStartToken"/>
       <Kind Name="SingleLineRawInterpolatedStringStartToken"/>
-      <Kind Name="MultiLineLineRawInterpolatedStringStartToken"/>
+      <Kind Name="MultiLineRawInterpolatedStringStartToken"/>
       <PropertyComment>
         <summary>The first part of an interpolated string, $" or $@" or $"""</summary>
       </PropertyComment>
