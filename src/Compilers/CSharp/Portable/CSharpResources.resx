@@ -6873,7 +6873,7 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
     <value>Too many closing braces for raw string literal</value>
   </data>
   <data name="ERR_NotEnoughQuotesForRawString" xml:space="preserve">
-    <value>Not enough open quotes for raw string literal</value>
+    <value>Not enough quotes for raw string literal</value>
   </data>
   <data name="ERR_NotEnoughCloseBracesForRawString" xml:space="preserve">
     <value>Not enough closing braces for raw string literal</value>
