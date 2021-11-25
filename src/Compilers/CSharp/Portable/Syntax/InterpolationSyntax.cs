@@ -8,8 +8,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
 {
     public partial class InterpolationSyntax
     {
-        //public IfStatementSyntax Update(SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax? @else)
-        //    => Update(AttributeLists, ifKeyword, openParenToken, condition, closeParenToken, statement, @else);
     }
 }
 
