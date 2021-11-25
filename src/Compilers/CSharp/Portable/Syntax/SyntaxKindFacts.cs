@@ -204,12 +204,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.InterpolatedVerbatimStringStartToken:
                 case SyntaxKind.InterpolatedStringTextToken:
                 case SyntaxKind.InterpolatedStringEndToken:
-                case SyntaxKind.RawInterpolationCloseToken:
                 case SyntaxKind.RawInterpolationOpenToken:
-                case SyntaxKind.MultiLineRawInterpolatedStringEndToken:
+                case SyntaxKind.RawInterpolationCloseToken:
                 case SyntaxKind.MultiLineRawInterpolatedStringStartToken:
-                case SyntaxKind.SingleLineRawInterpolatedStringEndToken:
+                case SyntaxKind.MultiLineRawInterpolatedStringEndToken:
                 case SyntaxKind.SingleLineRawInterpolatedStringStartToken:
+                case SyntaxKind.SingleLineRawInterpolatedStringEndToken:
                 case SyntaxKind.LoadKeyword:
                 case SyntaxKind.NullableKeyword:
                 case SyntaxKind.EnableKeyword:
