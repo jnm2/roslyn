@@ -771,6 +771,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         info.Text = TextWindow.GetText(intern: true);
                         this.AddError(ErrorCode.ERR_ExpectedVerbatimLiteral);
                     }
+
                     break;
 
                 case '$':
