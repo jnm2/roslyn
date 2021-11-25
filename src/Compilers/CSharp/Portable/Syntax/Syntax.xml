@@ -1939,13 +1939,13 @@
   </Node>
   <Node Name="InterpolatedStringExpressionSyntax" Base="ExpressionSyntax">
     <Kind Name="InterpolatedStringExpression"/>
-    <Kind Name="RawInterpolatedStringExpression"/>
     <Field Name="StringStartToken" Type="SyntaxToken">
       <Kind Name="InterpolatedStringStartToken"/>
       <Kind Name="InterpolatedVerbatimStringStartToken"/>
-      <Kind Name="RawInterpolatedStringStartToken"/>
+      <Kind Name="SingleLineRawInterpolatedStringStartToken"/>
+      <Kind Name="MultiLineLineRawInterpolatedStringStartToken"/>
       <PropertyComment>
-        <summary>The first part of an interpolated string, $" or $@"</summary>
+        <summary>The first part of an interpolated string, $" or $@" or $"""</summary>
       </PropertyComment>
     </Field>
     <Field Name="Contents" Type="SyntaxList&lt;InterpolatedStringContentSyntax&gt;" >
@@ -1955,7 +1955,8 @@
     </Field>
     <Field Name="StringEndToken" Type="SyntaxToken">
       <Kind Name="InterpolatedStringEndToken"/>
-      <Kind Name="RawInterpolatedStringEndToken"/>
+      <Kind Name="SingleLineRawInterpolatedStringEndToken"/>
+      <Kind Name="MultiLineRawInterpolatedStringEndToken"/>
       <PropertyComment>
         <summary>The closing quote of the interpolated string.</summary>
       </PropertyComment>

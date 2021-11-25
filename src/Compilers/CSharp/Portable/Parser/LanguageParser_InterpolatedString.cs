@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Text;
+using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 {
@@ -41,9 +42,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             var originalText = originalToken.ValueText; // this is actually the source text
             Debug.Assert(originalText[0] == '$' || originalText[0] == '@');
 
-            var isVerbatim = (originalText[0] == '$' && originalText[1] == '@') ||
-                             (originalText[0] == '@' && originalText[1] == '$');
-
             // compute the positions of the interpolations in the original string literal, if there was an error or not,
             // and where the open and close quotes can be found.
             var interpolations = ArrayBuilder<Lexer.Interpolation>.GetInstance();
@@ -51,12 +49,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             rescanInterpolation(out var kind, out var openQuoteRange, out var error, out var closeQuoteRange);
 
             var result = SyntaxFactory.InterpolatedStringExpression(
-                kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim
-                    ? SyntaxKind.InterpolatedStringExpression
-                    : SyntaxKind.RawInterpolatedStringExpression,
-                getOpenQuote(openQuoteRange),
-                getContent(interpolations),
-                getCloseQuote(closeQuoteRange));
+                getOpenQuote(kind, openQuoteRange), getContent(interpolations), getCloseQuote(kind, closeQuoteRange));
 
             interpolations.Free();
             if (error != null)
@@ -75,13 +68,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ref info, out kind, out error, out openQuoteRange, interpolations, out closeQuoteRange);
             }
 
-            SyntaxToken getOpenQuote(Range openQuoteRange)
+            SyntaxToken getOpenQuote(Lexer.InterpolatedStringKind kind, Range openQuoteRange)
             {
                 var openQuoteText = originalText[openQuoteRange];
+                var syntaxKind = kind switch
+                {
+                    Lexer.InterpolatedStringKind.Normal => SyntaxKind.InterpolatedStringStartToken,
+                    Lexer.InterpolatedStringKind.Verbatim => SyntaxKind.InterpolatedVerbatimStringStartToken,
+                    Lexer.InterpolatedStringKind.SingleLineRaw => SyntaxKind.SingleLineRawInterpolatedStringStartToken,
+                    Lexer.InterpolatedStringKind.MultiLineRaw => SyntaxKind.MultiLineRawInterpolatedStringStartToken,
+                    _ => throw ExceptionUtilities.UnexpectedValue(kind),
+                };
                 return SyntaxFactory.Token(
-                    originalToken.GetLeadingTrivia(),
-                    isVerbatim ? SyntaxKind.InterpolatedVerbatimStringStartToken : SyntaxKind.InterpolatedStringStartToken,
-                    openQuoteText, openQuoteText, trailing: null);
+                    originalToken.GetLeadingTrivia(), syntaxKind, openQuoteText, openQuoteText, trailing: null);
             }
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getContent(ArrayBuilder<Lexer.Interpolation> interpolations)
@@ -131,13 +130,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 return result;
             }
 
-            SyntaxToken getCloseQuote(Range openQuoteRange)
+            SyntaxToken getCloseQuote(Lexer.InterpolatedStringKind kind, Range openQuoteRange)
             {
                 // Make a token for the close quote " (even if it was missing)
                 var closeQuoteText = originalText[closeQuoteRange];
+                var syntaxKind = kind switch
+                {
+                    Lexer.InterpolatedStringKind.Normal => SyntaxKind.InterpolatedStringEndToken,
+                    Lexer.InterpolatedStringKind.Verbatim => SyntaxKind.InterpolatedStringEndToken,
+                    Lexer.InterpolatedStringKind.SingleLineRaw => SyntaxKind.SingleLineRawInterpolatedStringEndToken,
+                    Lexer.InterpolatedStringKind.MultiLineRaw => SyntaxKind.MultiLineRawInterpolatedStringEndToken,
+                    _ => throw ExceptionUtilities.UnexpectedValue(kind),
+                };
                 return closeQuoteText == ""
-                    ? SyntaxFactory.MissingToken(SyntaxKind.InterpolatedStringEndToken).TokenWithTrailingTrivia(originalToken.GetTrailingTrivia())
-                    : SyntaxFactory.Token(null, SyntaxKind.InterpolatedStringEndToken, closeQuoteText, closeQuoteText, originalToken.GetTrailingTrivia());
+                    ? SyntaxFactory.MissingToken(leading: null, syntaxKind, originalToken.GetTrailingTrivia())
+                    : SyntaxFactory.Token(leading: null, syntaxKind, closeQuoteText, closeQuoteText, originalToken.GetTrailingTrivia());
             }
         }
 
