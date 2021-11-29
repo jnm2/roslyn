@@ -31,6 +31,42 @@ class C
             CreateCompilation(text).VerifyDiagnostics();
         }
 
+        [Fact]
+        public void SingleLineTooManyCloseQuotes1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $"""""" """""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                    // (6,25): error CS9102: Too many closing quotes for raw string literal
+                    //         var v = $""" """";
+                    Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @"""").WithLocation(6, 25));
+        }
+
+        [Fact]
+        public void SingleLineTooManyCloseQuotes2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $"""""" """""""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,25): error CS9102: Too many closing quotes for raw string literal
+                //         var v = $""" """"";
+                Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @"""""").WithLocation(6, 25));
+        }
+
         #endregion
     }
 }
