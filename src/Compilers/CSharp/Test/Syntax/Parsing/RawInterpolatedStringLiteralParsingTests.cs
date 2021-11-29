@@ -67,6 +67,96 @@ class C
                 Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @"""""").WithLocation(6, 25));
         }
 
+        [Fact]
+        public void SingleLineSingleQuoteInside()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $"""""" "" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineDoubleQuoteInside()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $"""""" """" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationInside()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{0}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationInsideSpacesOutside()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $"""""" {0} """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationInsideSpacesInside()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{ 0 }"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationInsideSpacesInsideAndOutside()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $"""""" { 0 } """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
         #endregion
     }
 }
