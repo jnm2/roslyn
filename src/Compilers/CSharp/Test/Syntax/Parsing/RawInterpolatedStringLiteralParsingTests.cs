@@ -157,6 +157,108 @@ class C
             CreateCompilation(text).VerifyDiagnostics();
         }
 
+        [Fact]
+        public void SingleLineInterpolationMultipleCurliesNotAllowed1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{{0}}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,21): error CS9122: Too many open braces for raw string literal
+                //         var v = $"""{{0}}""";
+                Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(6, 21));
+        }
+
+        [Fact]
+        public void SingleLineInterpolationMultipleCurliesNotAllowed2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$""""""{{{{0}}}}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,22): error CS9122: Too many open braces for raw string literal
+                //         var v = $$"""{{{{0}}}}""";
+                Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{{").WithLocation(6, 22));
+        }
+
+        [Fact]
+        public void SingleLineInterpolationMultipleCurliesNotAllowed3()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{0}}}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,24): error CS9123: Too many closing braces for raw string literal
+                //         var v = $"""{0}}}""";
+                Diagnostic(ErrorCode.ERR_TooManyCloseBracesForRawString, "}}").WithLocation(6, 24));
+        }
+
+        [Fact]
+        public void SingleLineInterpolationMultipleCurliesNotAllowed4()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$""""""{{{0}}}}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,28): error CS9123: Too many closing braces for raw string literal
+                //         var v = $$"""{{{0}}}}""";
+                Diagnostic(ErrorCode.ERR_TooManyCloseBracesForRawString, "}}").WithLocation(6, 28));
+        }
+
+        [Fact]
+        public void SingleLineInterpolationMultipleCurliesAllowed1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$""""""{{0}}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationMultipleCurliesAllowed2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$""""""{{{0}}}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
         #endregion
     }
 }
