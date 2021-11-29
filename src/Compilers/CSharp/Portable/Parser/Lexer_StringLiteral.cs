@@ -425,13 +425,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 if (_kind == InterpolatedStringKind.Normal)
                 {
-                    // skip past $
-                    _lexer.TextWindow.AdvanceChar();
+                    // skip past $"
+                    _lexer.TextWindow.AdvanceChar(2);
                 }
                 else if (_kind == InterpolatedStringKind.Verbatim)
                 {
-                    // skip past @$ or $!
-                    _lexer.TextWindow.AdvanceChar(2);
+                    // skip past @$" or $!"
+                    _lexer.TextWindow.AdvanceChar(3);
                 }
                 else if (_kind == InterpolatedStringKind.SingleLineRaw)
                 {

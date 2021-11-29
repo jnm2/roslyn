@@ -20,6 +20,11 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             CheckFeatureAvailability(node, MessageID.IDS_FeatureInterpolatedStrings, diagnostics);
 
+            if (node.StringStartToken.Kind() is SyntaxKind.SingleLineRawInterpolatedStringStartToken or SyntaxKind.MultiLineRawInterpolatedStringStartToken)
+            {
+                CheckFeatureAvailability(node, MessageID.IDS_FeatureRawStringLiterals, diagnostics);
+            }
+
             var startText = node.StringStartToken.Text;
             if (startText.StartsWith("@$\"") && !Compilation.IsFeatureEnabled(MessageID.IDS_FeatureAltInterpolatedVerbatimStrings))
             {
