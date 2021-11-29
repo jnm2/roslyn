@@ -37,8 +37,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.TextWindow.Reset(beforeDollarSignPosition);
             ScanInterpolatedStringLiteralTop(
                 ref info,
-                kind: out _,
                 out var error,
+                kind: out _,
                 openQuoteRange: out _,
                 interpolations: null,
                 closeQuoteRange: out _);

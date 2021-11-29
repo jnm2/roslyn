@@ -239,14 +239,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
 
             ScanInterpolatedStringLiteralTop(
-                ref info, kind: out _, out var error, openQuoteRange: out _, interpolations: null, closeQuoteRange: out _);
+                ref info,
+                out var error,
+                kind: out _,
+                openQuoteRange: out _,
+                interpolations: null,
+                closeQuoteRange: out _);
             this.AddError(error);
         }
 
         internal void ScanInterpolatedStringLiteralTop(
             ref TokenInfo info,
-            out InterpolatedStringKind kind,
             out SyntaxDiagnosticInfo? error,
+            out InterpolatedStringKind kind,
             out Range openQuoteRange,
             ArrayBuilder<Interpolation>? interpolations,
             out Range closeQuoteRange)
@@ -297,7 +302,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         [NonCopyable]
-        private struct InterpolatedStringScanner
+        private ref struct InterpolatedStringScanner
         {
             private readonly Lexer _lexer;
 
@@ -866,7 +871,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 while (true)
                 {
                     char ch = _lexer.TextWindow.PeekChar();
-                    if (ch == '\\' && _kind == InterpolatedStringKind.Normal)
+                    if (ch == '\\' && _kind is InterpolatedStringKind.Normal)
                     {
                         // normal string & char constants can have escapes
                         var pos = _lexer.TextWindow.Position;
@@ -878,7 +883,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else if (ch == '"')
                     {
-                        if (_kind == InterpolatedStringKind.Verbatim && _lexer.TextWindow.PeekChar(1) == '"')
+                        if (_kind is InterpolatedStringKind.Verbatim && _lexer.TextWindow.PeekChar(1) == '"')
                         {
                             _lexer.TextWindow.AdvanceChar(2); // ""
                         }

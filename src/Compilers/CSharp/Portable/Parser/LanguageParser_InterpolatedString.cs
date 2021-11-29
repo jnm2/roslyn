@@ -48,8 +48,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             rescanInterpolation(out var kind, out var openQuoteRange, out var error, out var closeQuoteRange);
 
-            var result = SyntaxFactory.InterpolatedStringExpression(
-                getOpenQuote(), getContent(), getCloseQuote());
+            var result = SyntaxFactory.InterpolatedStringExpression(getOpenQuote(), getContent(), getCloseQuote());
 
             interpolations.Free();
             if (error != null)
@@ -64,8 +63,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 using var tempLexer = new Lexer(SourceText.From(originalText), this.Options, allowPreprocessorDirectives: false);
                 var info = default(Lexer.TokenInfo);
-                tempLexer.ScanInterpolatedStringLiteralTop(
-                    ref info, out kind, out error, out openQuoteRange, interpolations, out closeQuoteRange);
+                tempLexer.ScanInterpolatedStringLiteralTop(ref info, out error, out kind, out openQuoteRange, interpolations, out closeQuoteRange);
             }
 
             SyntaxToken getOpenQuote()
@@ -150,30 +148,30 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             Lexer.Interpolation interpolation,
             Lexer.InterpolatedStringKind kind)
         {
-            // Grab from after the { all the way to the start of the } (or the start of the : if present).
-            // This will be used to parse out the expression of the interpolation.  The lexing/parsing of
-            // the remainder is handed specially.
+            // Grab the text from after the { all the way to the start of the } (or the start of the : if present). This
+            // will be used to parse out the expression of the interpolation.
+            //
+            // The parsing of the open brace, close brace and colon is specially handled in ParseInterpolation below.
             var expressionText = text[new Range(
                 interpolation.OpenBraceRange.End,
                 interpolation.HasColon ? interpolation.ColonRange.Start : interpolation.CloseBraceRange.Start)];
 
             using var tempLexer = new Lexer(SourceText.From(expressionText), options, allowPreprocessorDirectives: false, interpolationFollowedByColon: interpolation.HasColon);
 
-            // First, grab the text after the { that can be treated as trailing trivia.  It will be attached to the {
-            // token we create.
-            var openTokenTrailingTrivia = tempLexer.LexSyntaxTrailingTrivia();
+            // First grab any trivia right after the {, it will be trailing trivia for the { token.
+            var openTokenTrailingTrivia = tempLexer.LexSyntaxTrailingTrivia().Node;
             var openTokenText = text[interpolation.OpenBraceRange];
 
             var openTokenKind = kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim
                 ? SyntaxKind.OpenBraceToken
                 : SyntaxKind.RawInterpolationOpenToken;
 
-            // Now, parse the remainder out as an expression
+            // Now create a parser to actually handle the expression portion of the interpolation
             using var tempParser = new LanguageParser(tempLexer, oldTree: null, changes: null);
 
             return tempParser.ParseInterpolation(
                 text, interpolation, kind,
-                SyntaxFactory.Token(leading: null, openTokenKind, openTokenText, openTokenText, openTokenTrailingTrivia.Node));
+                SyntaxFactory.Token(leading: null, openTokenKind, openTokenText, openTokenText, openTokenTrailingTrivia));
         }
 
         private InterpolationSyntax ParseInterpolation(
@@ -254,25 +252,27 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // PROTOTYPE: remove the indentation whitespace.
                 return SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, text, trailing: null);
             }
-
-            Debug.Assert(kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim);
-
-            // For a normal/verbatim piece of content, process the inner content as if it was in a corresponding
-            // *non*-interpolated string to get the correct meaning of all the escapes/diagnostics within.
-            var prefix = kind is Lexer.InterpolatedStringKind.Verbatim ? "@\"" : "\"";
-            var fakeString = prefix + text + "\"";
-            using var tempLexer = new Lexer(SourceText.From(fakeString), this.Options, allowPreprocessorDirectives: false);
-
-            var mode = LexerMode.Syntax;
-            var token = tempLexer.Lex(ref mode);
-            Debug.Assert(token.Kind == SyntaxKind.StringLiteralToken);
-            var result = SyntaxFactory.Literal(null, text, SyntaxKind.InterpolatedStringTextToken, token.ValueText, null);
-            if (token.ContainsDiagnostics)
+            else
             {
-                result = result.WithDiagnosticsGreen(MoveDiagnostics(token.GetDiagnostics(), -prefix.Length));
-            }
+                Debug.Assert(kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim);
 
-            return result;
+                // For a normal/verbatim piece of content, process the inner content as if it was in a corresponding
+                // *non*-interpolated string to get the correct meaning of all the escapes/diagnostics within.
+                var prefix = kind is Lexer.InterpolatedStringKind.Verbatim ? "@\"" : "\"";
+                var fakeString = prefix + text + "\"";
+                using var tempLexer = new Lexer(SourceText.From(fakeString), this.Options, allowPreprocessorDirectives: false);
+
+                var mode = LexerMode.Syntax;
+                var token = tempLexer.Lex(ref mode);
+                Debug.Assert(token.Kind == SyntaxKind.StringLiteralToken);
+                var result = SyntaxFactory.Literal(null, text, SyntaxKind.InterpolatedStringTextToken, token.ValueText, null);
+                if (token.ContainsDiagnostics)
+                {
+                    result = result.WithDiagnosticsGreen(MoveDiagnostics(token.GetDiagnostics(), -prefix.Length));
+                }
+
+                return result;
+            }
         }
 
         private static DiagnosticInfo[] MoveDiagnostics(DiagnosticInfo[] infos, int offset)
