@@ -94,7 +94,7 @@ class Program {
     }
 }";
             string expectedOutput =
-@"Jenny don't change your number 867-5309 867-5309.";
+@"Jenny don\'t change your number 867-5309 867-5309.";
             CompileAndVerify(source, expectedOutput: expectedOutput);
         }
 
@@ -386,18 +386,18 @@ class Program
         var x = $"""""";";
             // The precise error messages are not important, but this must be an error.
             CreateCompilationWithMscorlib45(source).VerifyDiagnostics(
-                // (5,19): error CS1039: Unterminated string literal
-                //         var x = $";
-                Diagnostic(ErrorCode.ERR_UnterminatedStringLit, ";").WithLocation(5, 19),
-                // (5,20): error CS1002: ; expected
-                //         var x = $";
-                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(5, 20),
-                // (5,20): error CS1513: } expected
-                //         var x = $";
-                Diagnostic(ErrorCode.ERR_RbraceExpected, "").WithLocation(5, 20),
-                // (5,20): error CS1513: } expected
-                //         var x = $";
-                Diagnostic(ErrorCode.ERR_RbraceExpected, "").WithLocation(5, 20));
+                    // (5,21): error CS9101: Unterminated raw string literal
+                    //         var x = $""";
+                    Diagnostic(ErrorCode.ERR_UnterminatedRawString, ";").WithLocation(5, 21),
+                    // (5,22): error CS1002: ; expected
+                    //         var x = $""";
+                    Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(5, 22),
+                    // (5,22): error CS1513: } expected
+                    //         var x = $""";
+                    Diagnostic(ErrorCode.ERR_RbraceExpected, "").WithLocation(5, 22),
+                    // (5,22): error CS1513: } expected
+                    //         var x = $""";
+                    Diagnostic(ErrorCode.ERR_RbraceExpected, "").WithLocation(5, 22));
         }
 
         [Fact]
@@ -1254,10 +1254,9 @@ static class C
     }
 }";
             CreateCompilationWithMscorlib40AndSystemCore(text).VerifyEmitDiagnostics(
-                // (23,33): error CS0029: Cannot implicitly convert type 'FormattableString' to 'IFormattable'
-                //         System.IFormattable i = $"{""}";
-                Diagnostic(ErrorCode.ERR_NoImplicitConv, @"$""{""""}""").WithArguments("System.FormattableString", "System.IFormattable").WithLocation(23, 33)
-                );
+                    // (23,33): error CS0029: Cannot implicitly convert type 'FormattableString' to 'IFormattable'
+                    //         System.IFormattable i = $"""{""}""";
+                    Diagnostic(ErrorCode.ERR_NoImplicitConv, @"$""""""{""""}""""""").WithArguments("System.FormattableString", "System.IFormattable").WithLocation(23, 33));
         }
 
         [Theory, WorkItem(54702, "https://github.com/dotnet/roslyn/issues/54702")]
@@ -1831,10 +1830,9 @@ Console.WriteLine($""""""{span}"""""");";
 
             var comp = CreateCompilation(new[] { source, GetInterpolatedStringHandlerDefinition(includeSpanOverloads: true, useDefaultParameters: false, useBoolReturns: false) }, parseOptions: TestOptions.Regular9, targetFramework: TargetFramework.NetCoreApp);
             comp.VerifyDiagnostics(
-                // (4,22): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                // Console.WriteLine($"{span}");
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "span").WithArguments("interpolated string handlers", "10.0").WithLocation(4, 22)
-                );
+                    // (4,24): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
+                    // Console.WriteLine($"""{span}""");
+                    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "span").WithArguments("interpolated string handlers", "10.0").WithLocation(4, 24));
         }
 
         [ConditionalTheory(typeof(MonoOrCoreClrOnly))]
@@ -3008,10 +3006,9 @@ namespace System.Runtime.CompilerServices
 
             var comp = CreateCompilation(new[] { code, interpolatedStringBuilder });
             comp.VerifyDiagnostics(
-                // (1,5): error CS0619: 'DefaultInterpolatedStringHandler.DefaultInterpolatedStringHandler(int, int)' is obsolete: 'Constructor is obsolete'
-                // _ = $"{(object)1}";
-                Diagnostic(ErrorCode.ERR_DeprecatedSymbolStr, @"$""{(object)1}""").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.DefaultInterpolatedStringHandler(int, int)", "Constructor is obsolete").WithLocation(1, 5)
-            );
+                    // (1,5): error CS0619: 'DefaultInterpolatedStringHandler.DefaultInterpolatedStringHandler(int, int)' is obsolete: 'Constructor is obsolete'
+                    // _ = $"""{(object)1}""";
+                    Diagnostic(ErrorCode.ERR_DeprecatedSymbolStr, @"$""""""{(object)1}""""""").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.DefaultInterpolatedStringHandler(int, int)", "Constructor is obsolete").WithLocation(1, 5));
         }
 
         [Fact]
@@ -3036,10 +3033,9 @@ namespace System.Runtime.CompilerServices
 
             var comp = CreateCompilation(new[] { code, interpolatedStringBuilder });
             comp.VerifyDiagnostics(
-                // (1,7): error CS0619: 'DefaultInterpolatedStringHandler.AppendLiteral(string)' is obsolete: 'AppendLiteral is obsolete'
-                // _ = $"base{(object)1}";
-                Diagnostic(ErrorCode.ERR_DeprecatedSymbolStr, "base").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)", "AppendLiteral is obsolete").WithLocation(1, 7)
-            );
+                    // (1,9): error CS0619: 'DefaultInterpolatedStringHandler.AppendLiteral(string)' is obsolete: 'AppendLiteral is obsolete'
+                    // _ = $"""base{(object)1}""";
+                    Diagnostic(ErrorCode.ERR_DeprecatedSymbolStr, "base").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)", "AppendLiteral is obsolete").WithLocation(1, 9));
         }
 
         [Fact]
@@ -3064,10 +3060,9 @@ namespace System.Runtime.CompilerServices
 
             var comp = CreateCompilation(new[] { code, interpolatedStringBuilder });
             comp.VerifyDiagnostics(
-                // (1,11): error CS0619: 'DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)' is obsolete: 'AppendFormatted is obsolete'
-                // _ = $"base{(object)1}";
-                Diagnostic(ErrorCode.ERR_DeprecatedSymbolStr, "{(object)1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)", "AppendFormatted is obsolete").WithLocation(1, 11)
-            );
+                    // (1,13): error CS0619: 'DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)' is obsolete: 'AppendFormatted is obsolete'
+                    // _ = $"""base{(object)1}""";
+                    Diagnostic(ErrorCode.ERR_DeprecatedSymbolStr, "{(object)1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)", "AppendFormatted is obsolete").WithLocation(1, 13));
         }
 
         private const string UnmanagedCallersOnlyIl = @"
@@ -3164,10 +3159,9 @@ namespace System.Runtime.CompilerServices
 
             var comp = CreateCompilationWithIL(code, ilSource: interpolatedStringBuilder + UnmanagedCallersOnlyIl);
             comp.VerifyDiagnostics(
-                // (1,7): error CS0570: 'DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)' is not supported by the language
-                // _ = $"{(object)1}";
-                Diagnostic(ErrorCode.ERR_BindToBogus, "{(object)1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)").WithLocation(1, 7)
-            );
+                    // (1,9): error CS0570: 'DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)' is not supported by the language
+                    // _ = $"""{(object)1}""";
+                    Diagnostic(ErrorCode.ERR_BindToBogus, "{(object)1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted<T>(T, int, string)").WithLocation(1, 9));
         }
 
         [Fact]
@@ -3240,10 +3234,9 @@ namespace System.Runtime.CompilerServices
             var comp = CreateCompilationWithIL(code, ilSource: interpolatedStringBuilder + UnmanagedCallersOnlyIl);
             comp.VerifyDiagnostics();
             comp.VerifyEmitDiagnostics(
-                // (1,5): error CS0570: 'DefaultInterpolatedStringHandler.ToStringAndClear()' is not supported by the language
-                // _ = $"{(object)1}";
-                Diagnostic(ErrorCode.ERR_BindToBogus, @"$""{(object)1}""").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.ToStringAndClear()").WithLocation(1, 5)
-            );
+                    // (1,5): error CS0570: 'DefaultInterpolatedStringHandler.ToStringAndClear()' is not supported by the language
+                    // _ = $"""{(object)1}""";
+                    Diagnostic(ErrorCode.ERR_BindToBogus, @"$""""""{(object)1}""""""").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.ToStringAndClear()").WithLocation(1, 5));
         }
 
         [Theory]
@@ -3348,16 +3341,15 @@ value:");
             var interpolatedStringBuilder = GetInterpolatedStringHandlerDefinition(includeSpanOverloads: false, useDefaultParameters: false, useBoolReturns: false);
             var comp = CreateCompilation(new[] { source, interpolatedStringBuilder }, parseOptions: TestOptions.Regular9);
             comp.VerifyDiagnostics(
-                // (1,29): error CS1503: Argument 1: cannot convert from '(<null>, default)' to 'object'
-                // System.Console.WriteLine($"{(null, default)}{new()}");
-                Diagnostic(ErrorCode.ERR_BadArgType, "(null, default)").WithArguments("1", "(<null>, default)", "object").WithLocation(1, 29),
-                // (1,29): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                // System.Console.WriteLine($"{(null, default)}{new()}");
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "(null, default)").WithArguments("interpolated string handlers", "10.0").WithLocation(1, 29),
-                // (1,46): error CS1729: 'string' does not contain a constructor that takes 0 arguments
-                // System.Console.WriteLine($"{(null, default)}{new()}");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, "new()").WithArguments("string", "0").WithLocation(1, 19 + expression.Length)
-            );
+                // (1,31): error CS1503: Argument 1: cannot convert from '(<null>, default)' to 'object'
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_BadArgType, "(null, default)").WithArguments("1", "(<null>, default)", "object").WithLocation(1, 31),
+                // (1,31): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "(null, default)").WithArguments("interpolated string handlers", "10.0").WithLocation(1, 31),
+                // (1,58): error CS1729: 'string' does not contain a constructor that takes 0 arguments
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, "new()").WithArguments("string", "0").WithLocation(1, 58));
         }
 
         [Fact]
@@ -4958,12 +4950,11 @@ public ref struct S
             VerifyInterpolatedStringExpression(comp);
             var verifier = CompileAndVerifyOnCorrectPlatforms(comp, expectedOutput: @"value:Field");
 
-            verifier.VerifyIL(@"Program.<>c.<<Main>$>b__0_0()", @"
-{
-  // Code size       35 (0x23)
+            verifier.VerifyIL(@"Program.<>c.<<Main>$>b__0_0()", @" {
+  // Code size       46 (0x2e)
   .maxstack  4
   .locals init (S V_0)
-  IL_0000:  ldc.i4.0
+  IL_0000:  ldc.i4.1
   IL_0001:  ldc.i4.1
   IL_0002:  newobj     ""CustomHandler..ctor(int, int)""
   IL_0007:  dup
@@ -4974,85 +4965,10 @@ public ref struct S
   IL_0017:  call       ""void S.Field.set""
   IL_001c:  ldloc.0
   IL_001d:  callvirt   ""void CustomHandler.AppendFormatted(S)""
-  IL_0022:  ret
-}
-");
-        }
-
-        [Theory]
-        [InlineData(@"$""""""{new S { Field = """"""Field"""""" }} """"""")]
-        [InlineData(@"$""""""{new S { Field = """"""Field"""""" }}"""""" + $"""""" """"""")]
-        public void LambdaReturnInference_04(string expression)
-        {
-            // Same as 3, but with S added to DefaultInterpolatedStringHandler (which then allows the lambda to be bound as Func<string>, matching the natural return type)
-
-            var code = @"
-using System;
-C.M(() => " + expression + @");
-
-static class C
-{
-    public static void M(Func<string> f) => Console.WriteLine(f());
-    public static void M(Func<CustomHandler> f) => throw null;
-}
-
-public partial class CustomHandler
-{
-    public void AppendFormatted(S value) => throw null;
-}
-public ref struct S
-{
-    public string Field { get; set; }
-}
-namespace System.Runtime.CompilerServices
-{
-    public ref partial struct DefaultInterpolatedStringHandler
-    {
-        public void AppendFormatted(S value) => _builder.AppendLine(""value:"" + value.Field);
-    }
-}
-";
-
-            string[] source = new[] {
-                code,
-                GetInterpolatedStringCustomHandlerType("CustomHandler", "partial class", useBoolReturns: false),
-                GetInterpolatedStringHandlerDefinition(includeSpanOverloads: false, useDefaultParameters: true, useBoolReturns: false)
-            };
-
-            var comp = CreateCompilation(source, parseOptions: TestOptions.Regular9, targetFramework: TargetFramework.NetCoreApp);
-            comp.VerifyDiagnostics(
-                // (3,11): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                // C.M(() => $"{new S { Field = "Field" }}");
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, expression).WithArguments("interpolated string handlers", "10.0").WithLocation(3, 11),
-                // (3,14): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                // C.M(() => $"{new S { Field = "Field" }}");
-                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, @"new S { Field = ""Field"" }").WithArguments("interpolated string handlers", "10.0").WithLocation(3, 14)
-            );
-
-            comp = CreateCompilation(source, parseOptions: TestOptions.Regular10, targetFramework: TargetFramework.NetCoreApp);
-            var verifier = CompileAndVerifyOnCorrectPlatforms(comp, expectedOutput: @"value:Field");
-
-            verifier.VerifyIL(@"Program.<>c.<<Main>$>b__0_0()", @"
-{
-  // Code size       45 (0x2d)
-  .maxstack  3
-  .locals init (System.Runtime.CompilerServices.DefaultInterpolatedStringHandler V_0,
-                S V_1)
-  IL_0000:  ldloca.s   V_0
-  IL_0002:  ldc.i4.0
-  IL_0003:  ldc.i4.1
-  IL_0004:  call       ""System.Runtime.CompilerServices.DefaultInterpolatedStringHandler..ctor(int, int)""
-  IL_0009:  ldloca.s   V_0
-  IL_000b:  ldloca.s   V_1
-  IL_000d:  initobj    ""S""
-  IL_0013:  ldloca.s   V_1
-  IL_0015:  ldstr      ""Field""
-  IL_001a:  call       ""void S.Field.set""
-  IL_001f:  ldloc.1
-  IL_0020:  call       ""void System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(S)""
-  IL_0025:  ldloca.s   V_0
-  IL_0027:  call       ""string System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.ToStringAndClear()""
-  IL_002c:  ret
+  IL_0022:  dup
+  IL_0023:  ldstr      "" ""
+  IL_0028:  callvirt   ""void CustomHandler.AppendLiteral(string)""
+  IL_002d:  ret
 }
 ");
         }
@@ -5473,7 +5389,7 @@ public partial struct CustomHandler
 
         [Theory]
         [InlineData(@"$""""""{1,2:f}Literal""""""")]
-        [InlineData(@"$""""""{1,2:f}"""""" + $""Literal""""""")]
+        [InlineData(@"$""""""{1,2:f}"""""" + $""""""Literal""""""")]
         public void TernaryTypes_04(string expression)
         {
             // Same 01, but with a conversion from string to CustomHandler. The rules here are similar to LambdaReturnInference_07
@@ -9021,7 +8937,7 @@ public partial struct CustomHandler
         [Theory]
         [CombinatorialData]
         public void RefReturningMethodAsReceiver_MismatchedRefness_02([CombinatorialValues("in", "")] string refness,
-            [CombinatorialValues(@"$""""""literal""""""", @"$""""""literal"""""" + $"""""" """"""")] string expression)
+            [CombinatorialValues(@"$""""""literal """"""", @"$""""""literal"""""" + $"""""" """"""")] string expression)
         {
             var code = @"
 using System;
@@ -9283,7 +9199,7 @@ s2.I:2");
         }
 
         [Theory]
-        [InlineData(@"$"""""" """"""")]
+        [InlineData(@"$""""""  """"""")]
         [InlineData(@"$"""""" + $"""""" """"""")]
         public void StructReceiver_Lvalue(string expression)
         {
@@ -9327,7 +9243,7 @@ public partial struct CustomHandler
         }
 
         [Theory]
-        [InlineData(@"$"""""" """"""")]
+        [InlineData(@"$""""""  """"""")]
         [InlineData(@"$"""""" """""" + $"""""" """"""")]
         public void StructParameter_ByVal(string expression)
         {
@@ -9389,7 +9305,7 @@ public partial struct CustomHandler
         }
 
         [Theory]
-        [InlineData(@"$"""""" """"""")]
+        [InlineData(@"$""""""  """"""")]
         [InlineData(@"$"""""" """""" + $"""""" """"""")]
         public void StructParameter_ByRef(string expression)
         {
@@ -9457,7 +9373,7 @@ public partial struct CustomHandler
         [Theory]
         [CombinatorialData]
         public void SideEffects(bool useBoolReturns, bool validityParameter,
-            [CombinatorialValues(@"$""""""literal""""""", @"$"""""" """""" + $""""""literal""""""")] string expression)
+            [CombinatorialValues(@"$"""""" literal""""""", @"$"""""" """""" + $""""""literal""""""")] string expression)
         {
             var code = @"
 using System;
@@ -11230,7 +11146,7 @@ Expression<Func<string, string>> e = o => $""""""{o.Length}"""""" + $""""""liter
         [Theory]
         [CombinatorialData]
         public void CustomHandlerUsedAsArgumentToCustomHandler(bool useBoolReturns, bool validityParameter,
-            [CombinatorialValues(@"$"""""" """"""", @"$"""""" """""" + $"""""" """"""")] string expression)
+            [CombinatorialValues(@"$""""""  """"""", @"$"""""" """""" + $"""""" """"""")] string expression)
         {
             var code = @"
 using System;
@@ -11593,21 +11509,26 @@ public partial struct CustomHandler
             var verifier = CompileAndVerify(comp, expectedOutput: "d:1");
             verifier.VerifyDiagnostics();
 
-            verifier.VerifyIL("<top-level-statements-entry-point>", @"
-{
-  // Code size       22 (0x16)
-  .maxstack  4
-  .locals init (int V_0)
+            verifier.VerifyIL("<top-level-statements-entry-point>", @"{
+  // Code size       37 (0x25)
+  .maxstack  5
+  .locals init (int V_0,
+                CustomHandler V_1)
   IL_0000:  ldc.i4.1
   IL_0001:  stloc.0
   IL_0002:  ldloc.0
-  IL_0003:  ldc.i4.0
-  IL_0004:  ldc.i4.0
-  IL_0005:  ldloc.0
-  IL_0006:  box        ""int""
-  IL_000b:  newobj     ""CustomHandler..ctor(int, int, dynamic)""
-  IL_0010:  call       ""void Program.<<Main>$>g__M|0_0(int, CustomHandler)""
-  IL_0015:  ret
+  IL_0003:  ldloca.s   V_1
+  IL_0005:  ldc.i4.2
+  IL_0006:  ldc.i4.0
+  IL_0007:  ldloc.0
+  IL_0008:  box        ""int""
+  IL_000d:  call       ""CustomHandler..ctor(int, int, dynamic)""
+  IL_0012:  ldloca.s   V_1
+  IL_0014:  ldstr      ""  ""
+  IL_0019:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_001e:  ldloc.1
+  IL_001f:  call       ""void Program.<<Main>$>g__M|0_0(int, CustomHandler)""
+  IL_0024:  ret
 }
 ");
         }
@@ -11998,7 +11919,7 @@ AppendFormatted");
         }
 
         [Theory]
-        [InlineData(@"$""""""{s}""""""")]
+        [InlineData(@"$""""""{s} """"""")]
         [InlineData(@"$""""""{s}"""""" + $"""""" """"""")]
         public void RefEscape_01(string expression)
         {
@@ -12100,7 +12021,7 @@ public ref struct CustomHandler
         }
 
         [Theory]
-        [InlineData(@"$""""""{s}""""""")]
+        [InlineData(@"$""""""{s} """"""")]
         [InlineData(@"$""""""{s}"""""" + $"""""" """"""")]
         public void RefEscape_04(string expression)
         {
@@ -12144,7 +12065,7 @@ public ref struct S1
         }
 
         [Theory]
-        [InlineData(@"$""""""{s1}""""""")]
+        [InlineData(@"$""""""{s1} """"""")]
         [InlineData(@"$""""""{s1}"""""" + $"""""" """"""")]
         public void RefEscape_05(string expression)
         {
@@ -12181,7 +12102,7 @@ public ref struct S1
         }
 
         [Theory]
-        [InlineData(@"$""""""{s2}""""""")]
+        [InlineData(@"$""""""{s2} """"""")]
         [InlineData(@"$""""""{s2}"""""" + $"""""" """"""")]
         public void RefEscape_06(string expression)
         {
@@ -12212,7 +12133,7 @@ public ref struct CustomHandler
         }
 
         [Theory]
-        [InlineData(@"$""""""{s2}""""""")]
+        [InlineData(@"$""""""{s2} """"""")]
         [InlineData(@"$""""""{s2}"""""" + $"""""" """"""")]
         public void RefEscape_07(string expression)
         {
@@ -12321,8 +12242,8 @@ public ref struct S1
         }
 
         [Theory, WorkItem(54703, "https://github.com/dotnet/roslyn/issues/54703")]
-        [InlineData(@"$""""""{{ {i} }}""""""")]
-        [InlineData(@"$""""""{{ "" + $""""""{i}"""""" + $"" }}""""""")]
+        [InlineData(@"$$""""""{ {{i}} }""""""")]
+        [InlineData(@"$$""""""{ """""" + $""""""{i}"""""" + $"""""" }""""""")]
         public void BracesAreEscaped_01(string expression)
         {
             var code = @"
@@ -12366,8 +12287,8 @@ value:1
         }
 
         [Theory, WorkItem(54703, "https://github.com/dotnet/roslyn/issues/54703")]
-        [InlineData(@"$""""""{{ {i} }}""""""")]
-        [InlineData(@"$""""""{{ "" + $""""""{i}"""""" + $"" }}""""""")]
+        [InlineData(@"$$""""""{ {{i}} }""""""")]
+        [InlineData(@"$""""""{ """""" + $""""""{i}"""""" + $"""""" }""""""")]
         public void BracesAreEscaped_02(string expression)
         {
             var code = @"
@@ -12729,21 +12650,21 @@ format:
             verifier.VerifyDiagnostics();
 
             VerifyOperationTreeForTest<BinaryExpressionSyntax>(comp, @"
-IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
   Left:
-    IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '(($""{i1}"" + ... + $""{i6}""))')
+    IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '(($""""""{i1}"" ... """"{i6}""""""))')
       Left:
-        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '($""{i1}"" +  ... ) + $""{i3}""')
+        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '($""""""{i1}"""" ... $""""""{i3}""""""')
           Left:
-            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""{i1}"" + $""{i2}""')
+            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""""""{i1}"""""" ... $""""""{i2}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i1}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i1}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i1}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i1}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i1')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i1')
@@ -12761,13 +12682,13 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i2}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i2}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i2}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i2}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i2')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i2')
@@ -12785,13 +12706,13 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
           Right:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i3}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i3}""""""')
               Parts(1):
                   IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i3}')
                     AppendCall:
                       IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i3}')
                         Instance Receiver:
-                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                         Arguments(3):
                             IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i3')
                               IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i3')
@@ -12809,15 +12730,15 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                               InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                               OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
       Right:
-        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""{i4}"" + ( ...  + $""{i6}"")')
+        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""""""{i4}"""""" ... """"""{i6}"""""")')
           Left:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i4}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i4}""""""')
               Parts(1):
                   IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i4}')
                     AppendCall:
                       IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i4}')
                         Instance Receiver:
-                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                         Arguments(3):
                             IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i4')
                               IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i4')
@@ -12835,15 +12756,15 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                               InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                               OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
           Right:
-            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""{i5}"" + $""{i6}""')
+            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""""""{i5}"""""" ... $""""""{i6}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i5}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i5}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i5}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i5}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i5')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i5')
@@ -12861,13 +12782,13 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i6}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i6}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i6}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i6}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i6')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i6')
@@ -12885,17 +12806,17 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
   Right:
-    IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '($""{i1}"" +  ...  + $""{i6}"")')
+    IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '($""""""{i1}"""" ... """"""{i6}"""""")')
       Left:
-        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""{i1}"" + ( ...  + $""{i3}"")')
+        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""""""{i1}"""""" ... """"""{i3}"""""")')
           Left:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i1}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i1}""""""')
               Parts(1):
                   IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i1}')
                     AppendCall:
                       IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i1}')
                         Instance Receiver:
-                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                         Arguments(3):
                             IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i1')
                               IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i1')
@@ -12913,15 +12834,15 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                               InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                               OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
           Right:
-            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""{i2}"" + $""{i3}""')
+            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""""""{i2}"""""" ... $""""""{i3}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i2}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i2}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i2}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i2}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i2')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i2')
@@ -12939,13 +12860,13 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i3}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i3}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i3}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i3}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i3')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i3')
@@ -12963,17 +12884,17 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
       Right:
-        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '($""{i4}"" +  ... ) + $""{i6}""')
+        IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '($""""""{i4}"""" ... $""""""{i6}""""""')
           Left:
-            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""{i4}"" + $""{i5}""')
+            IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, Type: null) (Syntax: '$""""""{i4}"""""" ... $""""""{i5}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i4}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i4}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i4}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i4}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i4')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i4')
@@ -12991,13 +12912,13 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i5}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i5}""""""')
                   Parts(1):
                       IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i5}')
                         AppendCall:
                           IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i5}')
                             Instance Receiver:
-                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                              IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                             Arguments(3):
                                 IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i5')
                                   IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i5')
@@ -13015,13 +12936,13 @@ IInterpolatedStringAdditionOperation (OperationKind.InterpolatedStringAddition, 
                                   InConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
                                   OutConversion: CommonConversion (Exists: True, IsIdentity: True, IsNumeric: False, IsReference: False, IsUserDefined: False) (MethodSymbol: null)
           Right:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i6}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i6}""""""')
               Parts(1):
                   IInterpolatedStringAppendOperation (OperationKind.InterpolatedStringAppendFormatted, Type: null, IsImplicit) (Syntax: '{i6}')
                     AppendCall:
                       IInvocationOperation ( void CustomHandler.AppendFormatted(System.Object o, [System.Int32 alignment = 0], [System.String format = null])) (OperationKind.Invocation, Type: System.Void, IsImplicit) (Syntax: '{i6}')
                         Instance Receiver:
-                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+                          IInstanceReferenceOperation (ReferenceKind: InterpolatedStringHandler) (OperationKind.InstanceReference, Type: CustomHandler, IsImplicit) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
                         Arguments(3):
                             IArgumentOperation (ArgumentKind.Explicit, Matching Parameter: o) (OperationKind.Argument, Type: null, IsImplicit) (Syntax: 'i6')
                               IConversionOperation (TryCast: False, Unchecked) (OperationKind.Conversion, Type: System.Object, IsImplicit) (Syntax: 'i6')
@@ -13208,15 +13129,15 @@ System.Console.WriteLine(s);";
             verifier.VerifyDiagnostics();
 
             VerifyOperationTreeForTest<BinaryExpressionSyntax>(comp, @"
-IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '((($""{i1}""  ... + $""{i6}""))')
+IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '((($""""""{i1} ... """"{i6}""""""))')
   Left:
-    IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '(($""{i1}"" + ... + $""{i6}""))')
+    IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '(($""""""{i1}"" ... """"{i6}""""""))')
       Left:
-        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '($""{i1}"" +  ... ) + $""{i3}""')
+        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '($""""""{i1}"""" ... $""""""{i3}""""""')
           Left:
-            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""{i1}"" + $""{i2}""')
+            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""""""{i1}"""""" ... $""""""{i2}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i1}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i1}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i1}')
                         Expression:
@@ -13226,7 +13147,7 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i2}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i2}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i2}')
                         Expression:
@@ -13236,7 +13157,7 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
           Right:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i3}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i3}""""""')
               Parts(1):
                   IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i3}')
                     Expression:
@@ -13246,9 +13167,9 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                     FormatString:
                       null
       Right:
-        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""{i4}"" + ( ...  + $""{i6}"")')
+        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""""""{i4}"""""" ... """"""{i6}"""""")')
           Left:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i4}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i4}""""""')
               Parts(1):
                   IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i4}')
                     Expression:
@@ -13258,9 +13179,9 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                     FormatString:
                       null
           Right:
-            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""{i5}"" + $""{i6}""')
+            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""""""{i5}"""""" ... $""""""{i6}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i5}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i5}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i5}')
                         Expression:
@@ -13270,7 +13191,7 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i6}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i6}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i6}')
                         Expression:
@@ -13280,11 +13201,11 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
   Right:
-    IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '($""{i1}"" +  ...  + $""{i6}"")')
+    IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '($""""""{i1}"""" ... """"""{i6}"""""")')
       Left:
-        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""{i1}"" + ( ...  + $""{i3}"")')
+        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""""""{i1}"""""" ... """"""{i3}"""""")')
           Left:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i1}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i1}""""""')
               Parts(1):
                   IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i1}')
                     Expression:
@@ -13294,9 +13215,9 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                     FormatString:
                       null
           Right:
-            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""{i2}"" + $""{i3}""')
+            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""""""{i2}"""""" ... $""""""{i3}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i2}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i2}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i2}')
                         Expression:
@@ -13306,7 +13227,7 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i3}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i3}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i3}')
                         Expression:
@@ -13316,11 +13237,11 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
       Right:
-        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '($""{i4}"" +  ... ) + $""{i6}""')
+        IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '($""""""{i4}"""" ... $""""""{i6}""""""')
           Left:
-            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""{i4}"" + $""{i5}""')
+            IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.String) (Syntax: '$""""""{i4}"""""" ... $""""""{i5}""""""')
               Left:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i4}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i4}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i4}')
                         Expression:
@@ -13330,7 +13251,7 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
               Right:
-                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i5}""')
+                IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i5}""""""')
                   Parts(1):
                       IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i5}')
                         Expression:
@@ -13340,7 +13261,7 @@ IBinaryOperation (BinaryOperatorKind.Add) (OperationKind.Binary, Type: System.St
                         FormatString:
                           null
           Right:
-            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""{i6}""')
+            IInterpolatedStringOperation (OperationKind.InterpolatedString, Type: System.String) (Syntax: '$""""""{i6}""""""')
               Parts(1):
                   IInterpolationOperation (OperationKind.Interpolation, Type: null) (Syntax: '{i6}')
                     Expression:
@@ -13629,18 +13550,24 @@ partial struct CustomHandler
 
             verifier.VerifyIL("<top-level-statements-entry-point>", @"
 {
-  // Code size       17 (0x11)
-  .maxstack  4
-  .locals init (int V_0)
+  // Code size       32 (0x20)
+  .maxstack  5
+  .locals init (int V_0,
+                CustomHandler V_1)
   IL_0000:  ldc.i4.1
   IL_0001:  stloc.0
   IL_0002:  ldloc.0
-  IL_0003:  ldc.i4.0
-  IL_0004:  ldc.i4.0
-  IL_0005:  ldloc.0
-  IL_0006:  newobj     ""CustomHandler..ctor(int, int, int)""
-  IL_000b:  call       ""void Program.<<Main>$>g__M|0_0(int, CustomHandler)""
-  IL_0010:  ret
+  IL_0003:  ldloca.s   V_1
+  IL_0005:  ldc.i4.1
+  IL_0006:  ldc.i4.0
+  IL_0007:  ldloc.0
+  IL_0008:  call       ""CustomHandler..ctor(int, int, int)""
+  IL_000d:  ldloca.s   V_1
+  IL_000f:  ldstr      "" ""
+  IL_0014:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_0019:  ldloc.1
+  IL_001a:  call       ""void Program.<<Main>$>g__M|0_0(int, CustomHandler)""
+  IL_001f:  ret
 }
 ");
         }
@@ -13801,7 +13728,7 @@ partial struct CustomHandler
 }
 ";
 
-            var verifier = CompileAndVerify(new[] { code, InterpolatedStringHandlerArgumentAttribute, GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: false) }, expectedOutput: @"i:1");
+            var verifier = CompileAndVerify(new[] { code, InterpolatedStringHandlerArgumentAttribute, GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: false) }, expectedOutput: @"i:1literal: ");
             verifier.VerifyDiagnostics();
 
             verifier.VerifyIL("<top-level-statements-entry-point>", @"
@@ -14200,21 +14127,27 @@ partial struct CustomHandler
             verifier.VerifyDiagnostics();
             verifier.VerifyIL("<top-level-statements-entry-point>", @"
 {
-  // Code size       25 (0x19)
+  // Code size       39 (0x27)
   .maxstack  4
   .locals init (S1 V_0, //s
-                S1& V_1)
+                S1& V_1,
+                CustomHandler V_2)
   IL_0000:  ldloca.s   V_0
   IL_0002:  call       ""S1..ctor()""
   IL_0007:  ldloca.s   V_0
   IL_0009:  stloc.1
   IL_000a:  ldloc.1
-  IL_000b:  ldc.i4.0
+  IL_000b:  ldc.i4.1
   IL_000c:  ldc.i4.0
   IL_000d:  ldloc.1
   IL_000e:  newobj     ""CustomHandler..ctor(int, int, in S1)""
-  IL_0013:  call       ""void S1Ext.M(in S1, CustomHandler)""
-  IL_0018:  ret
+  IL_0013:  stloc.2
+  IL_0014:  ldloca.s   V_2
+  IL_0016:  ldstr      "" ""
+  IL_001b:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_0020:  ldloc.2
+  IL_0021:  call       ""void S1Ext.M(in S1, CustomHandler)""
+  IL_0026:  ret
 }
 ");
         }
