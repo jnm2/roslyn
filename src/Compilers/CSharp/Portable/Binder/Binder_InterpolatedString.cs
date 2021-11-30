@@ -18,7 +18,7 @@ namespace Microsoft.CodeAnalysis.CSharp
     {
         private BoundExpression BindInterpolatedString(InterpolatedStringExpressionSyntax node, BindingDiagnosticBag diagnostics)
         {
-            if (!CheckFeatureAvailability(node, MessageID.IDS_FeatureInterpolatedStrings, diagnostics))
+            if (CheckFeatureAvailability(node, MessageID.IDS_FeatureInterpolatedStrings, diagnostics))
             {
                 // Only bother reporting an issue for raw string literals if we didn't already report above that
                 // interpolated strings are not allowed.

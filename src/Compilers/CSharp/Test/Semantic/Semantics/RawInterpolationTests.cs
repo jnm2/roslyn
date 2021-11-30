@@ -8415,68 +8415,6 @@ literal:literal
         }
 
         [Theory]
-        [InlineData(@"$"""""" literal""""""")]
-        [InlineData(@"$"""""" """""" + $""""""literal""""""")]
-        public void InterpolatedStringHandlerArgumentAttribute_OnConstructor(string expression)
-        {
-
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-
-_ = new C(5, " + expression + @");
-
-public class C
-{
-    public int Prop { get; }
-    public C(int i, [InterpolatedStringHandlerArgumentAttribute(""i"")]CustomHandler c) => Console.WriteLine(c.ToString());
-}
-
-public partial struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, int i) : this(literalLength, formattedCount)
-    {
-        _builder.AppendLine(""i:"" + i.ToString());
-    }
-}
-";
-
-            var handler = GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: true);
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, handler });
-            var verifier = CompileAndVerify(comp, expectedOutput: @"i:5
-literal: 
-literal:literal
-");
-            verifier.VerifyDiagnostics();
-
-            verifier.VerifyIL("<top-level-statements-entry-point>", @"
-{
-  // Code size       34 (0x22)
-  .maxstack  5
-  .locals init (int V_0,
-                CustomHandler V_1)
-  IL_0000:  ldc.i4.5
-  IL_0001:  stloc.0
-  IL_0002:  ldloc.0
-  IL_0003:  ldloca.s   V_1
-  IL_0005:  ldc.i4.7
-  IL_0006:  ldc.i4.0
-  IL_0007:  ldloc.0
-  IL_0008:  call       ""CustomHandler..ctor(int, int, int)""
-  IL_000d:  ldloca.s   V_1
-  IL_000f:  ldstr      ""literal""
-  IL_0014:  call       ""bool CustomHandler.AppendLiteral(string)""
-  IL_0019:  pop
-  IL_001a:  ldloc.1
-  IL_001b:  newobj     ""C..ctor(int, CustomHandler)""
-  IL_0020:  pop
-  IL_0021:  ret
-}
-");
-        }
-
-        [Theory]
         [CombinatorialData]
         public void RefReturningMethodAsReceiver_RefParameter([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
             [CombinatorialValues(@"$""""""literal""""""", @"$""""""literal"""""" + $"""""" """"""")] string expression, [CombinatorialValues("class", "struct")] string receiverType)
@@ -11925,7 +11863,7 @@ value:1
 
         [Theory, WorkItem(54703, "https://github.com/dotnet/roslyn/issues/54703")]
         [InlineData(@"$$""""""{ {{i}} }""""""")]
-        [InlineData(@"$""""""{ """""" + $""""""{i}"""""" + $"""""" }""""""")]
+        [InlineData(@"$$""""""{ """""" + $""""""{i}"""""" + $$"""""" }""""""")]
         public void BracesAreEscaped_02(string expression)
         {
             var code = @"
@@ -12127,10 +12065,9 @@ catch (NullReferenceException)
   IL_004c:  ret
 }
 ").VerifyDiagnostics(
-    // (9,36): warning CS8602: Dereference of a possibly null reference.
-    //     Console.WriteLine($"{s = null}{s.Length}" + $"");
-    Diagnostic(ErrorCode.WRN_NullReferenceReceiver, "s").WithLocation(9, 36)
-    );
+                    // (9,38): warning CS8602: Dereference of a possibly null reference.
+                    //     Console.WriteLine($"""{s = null}{s.Length}""" + $""" """);
+                    Diagnostic(ErrorCode.WRN_NullReferenceReceiver, "s").WithLocation(9, 38));
         }
 
         [Fact]
