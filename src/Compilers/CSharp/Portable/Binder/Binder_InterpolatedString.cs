@@ -18,11 +18,14 @@ namespace Microsoft.CodeAnalysis.CSharp
     {
         private BoundExpression BindInterpolatedString(InterpolatedStringExpressionSyntax node, BindingDiagnosticBag diagnostics)
         {
-            CheckFeatureAvailability(node, MessageID.IDS_FeatureInterpolatedStrings, diagnostics);
-
-            if (node.StringStartToken.Kind() is SyntaxKind.SingleLineRawInterpolatedStringStartToken or SyntaxKind.MultiLineRawInterpolatedStringStartToken)
+            if (!CheckFeatureAvailability(node, MessageID.IDS_FeatureInterpolatedStrings, diagnostics))
             {
-                CheckFeatureAvailability(node, MessageID.IDS_FeatureRawStringLiterals, diagnostics);
+                // Only bother reporting an issue for raw string literals if we didn't already report above that
+                // interpolated strings are not allowed.
+                if (node.StringStartToken.Kind() is SyntaxKind.SingleLineRawInterpolatedStringStartToken or SyntaxKind.MultiLineRawInterpolatedStringStartToken)
+                {
+                    CheckFeatureAvailability(node, MessageID.IDS_FeatureRawStringLiterals, diagnostics);
+                }
             }
 
             var startText = node.StringStartToken.Text;
