@@ -238,7 +238,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         /// <summary>
-        /// Take the given text and treat it as the contents of a string literal, returning a token for that.
+        /// Interpret the given raw text from source as an InterpolatedStringTextToken.
         /// </summary>
         /// <param name="text">The text for the full string literal, including the quotes and contents</param>
         /// <param name="kind">The kind of the interpolated string we were processing</param>
