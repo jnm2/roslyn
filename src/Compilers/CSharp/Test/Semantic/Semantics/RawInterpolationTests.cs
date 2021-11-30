@@ -2848,6 +2848,7 @@ CustomHandler c = $"""""" """""";
 struct CustomHandler
 {
     public CustomHandler(object literalLength, object formattedCount) {}
+    public void AppendLiteral(string value) { }
 }
 ";
 
@@ -2856,15 +2857,19 @@ struct CustomHandler
 
             verifier.VerifyIL("<top-level-statements-entry-point>", @"
 {
-  // Code size       19 (0x13)
-  .maxstack  2
-  IL_0000:  ldc.i4.0
-  IL_0001:  box        ""int""
-  IL_0006:  ldc.i4.0
-  IL_0007:  box        ""int""
-  IL_000c:  newobj     ""CustomHandler..ctor(object, object)""
-  IL_0011:  pop
-  IL_0012:  ret
+  // Code size       32 (0x20)
+  .maxstack  3
+  .locals init (CustomHandler V_0)
+  IL_0000:  ldloca.s   V_0
+  IL_0002:  ldc.i4.1
+  IL_0003:  box        ""int""
+  IL_0008:  ldc.i4.0
+  IL_0009:  box        ""int""
+  IL_000e:  call       ""CustomHandler..ctor(object, object)""
+  IL_0013:  ldloca.s   V_0
+  IL_0015:  ldstr      "" ""
+  IL_001a:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_001f:  ret
 }
 ");
         }
@@ -7620,140 +7625,6 @@ literal:2");
 
         [Theory]
         [CombinatorialData]
-        public void InterpolatedStringHandlerArgumentAttribute_MultipleArgs([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
-            [CombinatorialValues(@"$""""""literal """"""", @"$""""""literal"""""" + $"""""" """"""")] string expression)
-        {
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-public class C
-{
-    public static void M(int i, string s, [InterpolatedStringHandlerArgumentAttribute(""i"", ""s"")] CustomHandler c) => Console.WriteLine(c.ToString());
-}
-
-public partial struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, int i, string s" + extraConstructorArg + @") : this(literalLength, formattedCount)
-    {
-        _builder.AppendLine(""i:"" + i.ToString());
-        _builder.AppendLine(""s:"" + s);
-" + (extraConstructorArg != "" ? "success = true;" : "") + @"
-    }
-}
-";
-
-            var executableCode = @"
-int i = 10;
-string s = ""arg"";
-C.M(i, s, " + expression + @");
-";
-
-            var handler = GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: true);
-
-            var comp = CreateCompilation(new[] { code, executableCode, InterpolatedStringHandlerArgumentAttribute, handler });
-            string expectedOutput = @"
-i:10
-s:arg
-literal:literal
-";
-            var verifier = base.CompileAndVerify((Compilation)comp, sourceSymbolValidator: validator, symbolValidator: validator, expectedOutput: expectedOutput);
-
-            verifier.VerifyDiagnostics();
-            verifyIL(extraConstructorArg, verifier);
-
-            var dependency = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, handler });
-
-            foreach (var d in new[] { dependency.EmitToImageReference(), dependency.ToMetadataReference() })
-            {
-                verifier = CompileAndVerify(executableCode, new[] { d }, expectedOutput: expectedOutput);
-                verifier.VerifyDiagnostics();
-                verifyIL(extraConstructorArg, verifier);
-            }
-
-            static void validator(ModuleSymbol verifier)
-            {
-                var cParam = verifier.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(2).Single();
-                AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
-                               cParam.GetAttributes().Single().AttributeClass.ToTestDisplayString());
-                Assert.Equal(new[] { 0, 1 }, cParam.InterpolatedStringHandlerArgumentIndexes);
-            }
-
-            static void verifyIL(string extraConstructorArg, CompilationVerifier verifier)
-            {
-                verifier.VerifyIL("<top-level-statements-entry-point>", (extraConstructorArg == "")
-                    ? @"
-{
-  // Code size       44 (0x2c)
-  .maxstack  7
-  .locals init (string V_0, //s
-                int V_1,
-                string V_2,
-                CustomHandler V_3)
-  IL_0000:  ldc.i4.s   10
-  IL_0002:  ldstr      ""arg""
-  IL_0007:  stloc.0
-  IL_0008:  stloc.1
-  IL_0009:  ldloc.1
-  IL_000a:  ldloc.0
-  IL_000b:  stloc.2
-  IL_000c:  ldloc.2
-  IL_000d:  ldloca.s   V_3
-  IL_000f:  ldc.i4.7
-  IL_0010:  ldc.i4.0
-  IL_0011:  ldloc.1
-  IL_0012:  ldloc.2
-  IL_0013:  call       ""CustomHandler..ctor(int, int, int, string)""
-  IL_0018:  ldloca.s   V_3
-  IL_001a:  ldstr      ""literal""
-  IL_001f:  call       ""bool CustomHandler.AppendLiteral(string)""
-  IL_0024:  pop
-  IL_0025:  ldloc.3
-  IL_0026:  call       ""void C.M(int, string, CustomHandler)""
-  IL_002b:  ret
-}
-"
-                    : @"
-{
-  // Code size       52 (0x34)
-  .maxstack  7
-  .locals init (string V_0, //s
-                int V_1,
-                string V_2,
-                CustomHandler V_3,
-                bool V_4)
-  IL_0000:  ldc.i4.s   10
-  IL_0002:  ldstr      ""arg""
-  IL_0007:  stloc.0
-  IL_0008:  stloc.1
-  IL_0009:  ldloc.1
-  IL_000a:  ldloc.0
-  IL_000b:  stloc.2
-  IL_000c:  ldloc.2
-  IL_000d:  ldc.i4.7
-  IL_000e:  ldc.i4.0
-  IL_000f:  ldloc.1
-  IL_0010:  ldloc.2
-  IL_0011:  ldloca.s   V_4
-  IL_0013:  newobj     ""CustomHandler..ctor(int, int, int, string, out bool)""
-  IL_0018:  stloc.3
-  IL_0019:  ldloc.s    V_4
-  IL_001b:  brfalse.s  IL_002b
-  IL_001d:  ldloca.s   V_3
-  IL_001f:  ldstr      ""literal""
-  IL_0024:  call       ""bool CustomHandler.AppendLiteral(string)""
-  IL_0029:  br.s       IL_002c
-  IL_002b:  ldc.i4.0
-  IL_002c:  pop
-  IL_002d:  ldloc.3
-  IL_002e:  call       ""void C.M(int, string, CustomHandler)""
-  IL_0033:  ret
-}
-");
-            }
-        }
-
-        [Theory]
-        [CombinatorialData]
         public void InterpolatedStringHandlerArgumentAttribute_RefKindsMatch([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
             [CombinatorialValues(@"$""""""literal """"""", @"$""""""literal"""""" + $"""""" """"""")] string expression)
         {
@@ -8187,240 +8058,6 @@ literal:literal
 
         [Theory]
         [CombinatorialData]
-        public void InterpolatedStringHandlerArgumentAttribute_Duplicated([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
-            [CombinatorialValues(@"$""""""literal """"""", @"$""""""literal"""""" + $"""""" """"""")] string expression)
-        {
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-
-C.M(GetInt(), """", " + expression + @");
-
-int GetInt()
-{
-    Console.WriteLine(""GetInt"");
-    return 10;
-}
-
-public class C
-{
-    public static void M(int i, string s, [InterpolatedStringHandlerArgumentAttribute(""i"", ""i"")] CustomHandler c) => Console.WriteLine(c.ToString());
-}
-
-public partial struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, int i1, int i2" + extraConstructorArg + @") : this(literalLength, formattedCount)
-    {
-        _builder.AppendLine(""i1:"" + i1.ToString());
-        _builder.AppendLine(""i2:"" + i2.ToString());
-" + (extraConstructorArg != "" ? "success = true;" : "") + @"
-    }
-}
-";
-
-            var handler = GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: true);
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, handler });
-            var verifier = CompileAndVerify(comp, sourceSymbolValidator: validator, symbolValidator: validator, expectedOutput: @"
-GetInt
-i1:10
-i2:10
-literal:literal
-");
-            verifier.VerifyDiagnostics();
-
-            verifier.VerifyIL("<top-level-statements-entry-point>", (extraConstructorArg == "")
-                ? @"
-{
-  // Code size       43 (0x2b)
-  .maxstack  7
-  .locals init (int V_0,
-                CustomHandler V_1)
-  IL_0000:  call       ""int Program.<<Main>$>g__GetInt|0_0()""
-  IL_0005:  stloc.0
-  IL_0006:  ldloc.0
-  IL_0007:  ldstr      """"
-  IL_000c:  ldloca.s   V_1
-  IL_000e:  ldc.i4.7
-  IL_000f:  ldc.i4.0
-  IL_0010:  ldloc.0
-  IL_0011:  ldloc.0
-  IL_0012:  call       ""CustomHandler..ctor(int, int, int, int)""
-  IL_0017:  ldloca.s   V_1
-  IL_0019:  ldstr      ""literal""
-  IL_001e:  call       ""bool CustomHandler.AppendLiteral(string)""
-  IL_0023:  pop
-  IL_0024:  ldloc.1
-  IL_0025:  call       ""void C.M(int, string, CustomHandler)""
-  IL_002a:  ret
-}
-"
-                : @"
-{
-  // Code size       50 (0x32)
-  .maxstack  7
-  .locals init (int V_0,
-                CustomHandler V_1,
-                bool V_2)
-  IL_0000:  call       ""int Program.<<Main>$>g__GetInt|0_0()""
-  IL_0005:  stloc.0
-  IL_0006:  ldloc.0
-  IL_0007:  ldstr      """"
-  IL_000c:  ldc.i4.7
-  IL_000d:  ldc.i4.0
-  IL_000e:  ldloc.0
-  IL_000f:  ldloc.0
-  IL_0010:  ldloca.s   V_2
-  IL_0012:  newobj     ""CustomHandler..ctor(int, int, int, int, out bool)""
-  IL_0017:  stloc.1
-  IL_0018:  ldloc.2
-  IL_0019:  brfalse.s  IL_0029
-  IL_001b:  ldloca.s   V_1
-  IL_001d:  ldstr      ""literal""
-  IL_0022:  call       ""bool CustomHandler.AppendLiteral(string)""
-  IL_0027:  br.s       IL_002a
-  IL_0029:  ldc.i4.0
-  IL_002a:  pop
-  IL_002b:  ldloc.1
-  IL_002c:  call       ""void C.M(int, string, CustomHandler)""
-  IL_0031:  ret
-}
-");
-
-            static void validator(ModuleSymbol module)
-            {
-                var cParam = module.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(2).Single();
-                AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
-                               cParam.GetAttributes().Single().AttributeClass.ToTestDisplayString());
-                Assert.Equal(new[] { 0, 0 }, cParam.InterpolatedStringHandlerArgumentIndexes);
-            }
-        }
-
-        [Theory]
-        [CombinatorialData]
-        public void InterpolatedStringHandlerArgumentAttribute_EmptyWithMatchingConstructor([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
-            [CombinatorialValues(@"$""""""  """"""", @"$"""""" """""" + $"""""" """"""")] string expression)
-        {
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-
-C.M(1, """", " + expression + @");
-
-public class C
-{
-    public static void M(int i, string s, [InterpolatedStringHandlerArgumentAttribute()] CustomHandler c) => Console.WriteLine(c.ToString());
-}
-[InterpolatedStringHandler]
-public struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount" + extraConstructorArg + @")
-    {
-" + (extraConstructorArg != "" ? "success = true;" : "") + @"
-    }
-}
-";
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, InterpolatedStringHandlerAttribute });
-            var verifier = CompileAndVerify(comp, sourceSymbolValidator: validator, symbolValidator: validator, expectedOutput: "CustomHandler").VerifyDiagnostics();
-
-            verifier.VerifyIL("<top-level-statements-entry-point>", (extraConstructorArg == "")
-                ? @"
-{
-  // Code size       19 (0x13)
-  .maxstack  4
-  IL_0000:  ldc.i4.1
-  IL_0001:  ldstr      """"
-  IL_0006:  ldc.i4.0
-  IL_0007:  ldc.i4.0
-  IL_0008:  newobj     ""CustomHandler..ctor(int, int)""
-  IL_000d:  call       ""void C.M(int, string, CustomHandler)""
-  IL_0012:  ret
-}
-"
-                : @"
-{
-  // Code size       21 (0x15)
-  .maxstack  5
-  .locals init (bool V_0)
-  IL_0000:  ldc.i4.1
-  IL_0001:  ldstr      """"
-  IL_0006:  ldc.i4.0
-  IL_0007:  ldc.i4.0
-  IL_0008:  ldloca.s   V_0
-  IL_000a:  newobj     ""CustomHandler..ctor(int, int, out bool)""
-  IL_000f:  call       ""void C.M(int, string, CustomHandler)""
-  IL_0014:  ret
-}
-");
-
-            static void validator(ModuleSymbol module)
-            {
-                var cParam = module.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(2).Single();
-                AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
-                               cParam.GetAttributes().Single().AttributeClass.ToTestDisplayString());
-                Assert.Empty(cParam.InterpolatedStringHandlerArgumentIndexes);
-            }
-        }
-
-        [Theory]
-        [CombinatorialData]
-        public void InterpolatedStringHandlerArgumentAttribute_EmptyWithoutMatchingConstructor([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
-            [CombinatorialValues(@"$""""""  """"""", @"$"""""" """""" + $"""""" """"""")] string expression)
-        {
-            var code = @"
-using System.Runtime.CompilerServices;
-public class C
-{
-    public static void M(int i, string s, [InterpolatedStringHandlerArgumentAttribute()] CustomHandler c) { }
-}
-[InterpolatedStringHandler]
-public struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, int i" + extraConstructorArg + @")
-    {
-" + (extraConstructorArg != "" ? "success = true;" : "") + @"
-    }
-}
-";
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, InterpolatedStringHandlerAttribute });
-            // https://github.com/dotnet/roslyn/issues/53981 tracks warning here in the future, with user feedback.
-            CompileAndVerify(comp, symbolValidator: validate, sourceSymbolValidator: validate).VerifyDiagnostics();
-
-            CreateCompilation(@"C.M(1, """", " + expression + @");", new[] { comp.EmitToImageReference() }).VerifyDiagnostics(
-                (extraConstructorArg == "")
-                ? new[]
-                {
-                    // (1,12): error CS7036: There is no argument given that corresponds to the required formal parameter 'i' of 'CustomHandler.CustomHandler(int, int, int)'
-                    // C.M(1, "", $"");
-                    Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, expression).WithArguments("i", "CustomHandler.CustomHandler(int, int, int)").WithLocation(1, 12),
-                    // (1,12): error CS1615: Argument 3 may not be passed with the 'out' keyword
-                    // C.M(1, "", $"");
-                    Diagnostic(ErrorCode.ERR_BadArgExtraRef, expression).WithArguments("3", "out").WithLocation(1, 12)
-                }
-                : new[]
-                {
-                    // (1,12): error CS7036: There is no argument given that corresponds to the required formal parameter 'i' of 'CustomHandler.CustomHandler(int, int, int, out bool)'
-                    // C.M(1, "", $"");
-                    Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, expression).WithArguments("i", "CustomHandler.CustomHandler(int, int, int, out bool)").WithLocation(1, 12),
-                    // (1,12): error CS7036: There is no argument given that corresponds to the required formal parameter 'success' of 'CustomHandler.CustomHandler(int, int, int, out bool)'
-                    // C.M(1, "", $"");
-                    Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, expression).WithArguments("success", "CustomHandler.CustomHandler(int, int, int, out bool)").WithLocation(1, 12)
-                }
-            );
-
-            static void validate(ModuleSymbol module)
-            {
-                var cParam = module.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(2).Single();
-                AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
-                               cParam.GetAttributes().Single().AttributeClass.ToTestDisplayString());
-                Assert.Empty(cParam.InterpolatedStringHandlerArgumentIndexes);
-            }
-        }
-
-        [Theory]
-        [CombinatorialData]
         public void InterpolatedStringHandlerArgumentAttribute_OnIndexerRvalue([CombinatorialValues("", ", out bool success")] string extraConstructorArg,
             [CombinatorialValues(@"$""""""literal """"""", @"$""""""literal"""""" + $"""""" """"""")] string expression)
         {
@@ -8807,8 +8444,8 @@ public partial struct CustomHandler
             var handler = GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: true);
 
             var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, handler });
-            var verifier = CompileAndVerify(comp, expectedOutput: @"
-i:5
+            var verifier = CompileAndVerify(comp, expectedOutput: @"i:5
+literal: 
 literal:literal
 ");
             verifier.VerifyDiagnostics();
@@ -12243,7 +11880,7 @@ public ref struct S1
 
         [Theory, WorkItem(54703, "https://github.com/dotnet/roslyn/issues/54703")]
         [InlineData(@"$$""""""{ {{i}} }""""""")]
-        [InlineData(@"$$""""""{ """""" + $""""""{i}"""""" + $"""""" }""""""")]
+        [InlineData(@"$$""""""{ """""" + $""""""{i}"""""" + $$"""""" }""""""")]
         public void BracesAreEscaped_01(string expression)
         {
             var code = @"
@@ -13683,6 +13320,8 @@ Public Delegate Sub M(<InterpolatedStringHandlerArgument("""")> c As CustomHandl
 
 <InterpolatedStringHandler>
 Public Structure CustomHandler
+    public sub AppendLiteral(value as string)
+    end sub
 End Structure
 ";
 
@@ -13731,11 +13370,11 @@ partial struct CustomHandler
             var verifier = CompileAndVerify(new[] { code, InterpolatedStringHandlerArgumentAttribute, GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: false) }, expectedOutput: @"i:1literal: ");
             verifier.VerifyDiagnostics();
 
-            verifier.VerifyIL("<top-level-statements-entry-point>", @"
-{
-  // Code size       48 (0x30)
-  .maxstack  5
-  .locals init (int V_0)
+            verifier.VerifyIL("<top-level-statements-entry-point>", @"{
+  // Code size       63 (0x3f)
+  .maxstack  6
+  .locals init (int V_0,
+                CustomHandler V_1)
   IL_0000:  ldsfld     ""M Program.<>c.<>9__0_0""
   IL_0005:  dup
   IL_0006:  brtrue.s   IL_001f
@@ -13748,12 +13387,17 @@ partial struct CustomHandler
   IL_001f:  ldc.i4.1
   IL_0020:  stloc.0
   IL_0021:  ldloc.0
-  IL_0022:  ldc.i4.0
-  IL_0023:  ldc.i4.0
-  IL_0024:  ldloc.0
-  IL_0025:  newobj     ""CustomHandler..ctor(int, int, int)""
-  IL_002a:  callvirt   ""void M.Invoke(int, CustomHandler)""
-  IL_002f:  ret
+  IL_0022:  ldloca.s   V_1
+  IL_0024:  ldc.i4.1
+  IL_0025:  ldc.i4.0
+  IL_0026:  ldloc.0
+  IL_0027:  call       ""CustomHandler..ctor(int, int, int)""
+  IL_002c:  ldloca.s   V_1
+  IL_002e:  ldstr      "" ""
+  IL_0033:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_0038:  ldloc.1
+  IL_0039:  callvirt   ""void M.Invoke(int, CustomHandler)""
+  IL_003e:  ret
 }
 ");
         }
@@ -13778,6 +13422,7 @@ partial struct CustomHandler
     private int _i = 0;
     public CustomHandler(int literalLength, int formattedCount, int i = 1) => _i = i;
     public override string ToString() => _i.ToString();
+    public void AppendLiteral(string value) { }
 }
 ";
 
@@ -13786,14 +13431,20 @@ partial struct CustomHandler
 
             verifier.VerifyIL("<top-level-statements-entry-point>", @"
 {
-  // Code size       14 (0xe)
-  .maxstack  3
-  IL_0000:  ldc.i4.0
-  IL_0001:  ldc.i4.0
+  // Code size       29 (0x1d)
+  .maxstack  4
+  .locals init (CustomHandler V_0)
+  IL_0000:  ldloca.s   V_0
   IL_0002:  ldc.i4.1
-  IL_0003:  newobj     ""CustomHandler..ctor(int, int, int)""
-  IL_0008:  call       ""void C.M(CustomHandler)""
-  IL_000d:  ret
+  IL_0003:  ldc.i4.0
+  IL_0004:  ldc.i4.1
+  IL_0005:  call       ""CustomHandler..ctor(int, int, int)""
+  IL_000a:  ldloca.s   V_0
+  IL_000c:  ldstr      "" ""
+  IL_0011:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_0016:  ldloc.0
+  IL_0017:  call       ""void C.M(CustomHandler)""
+  IL_001c:  ret
 }
 ");
         }
