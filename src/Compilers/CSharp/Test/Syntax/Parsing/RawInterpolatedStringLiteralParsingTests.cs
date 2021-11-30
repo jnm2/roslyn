@@ -306,7 +306,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithNormalStringInside()
+        public void SingleLineInterpolationContainingNormalString()
         {
             var text = @"
 class C
@@ -321,7 +321,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithVerbatimStringInside1()
+        public void SingleLineInterpolationContainingVerbatimString1()
         {
             var text = @"
 class C
@@ -336,7 +336,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithVerbatimStringInside2()
+        public void SingleLineInterpolationContainingVerbatimString2()
         {
             var text = @"
 class C
@@ -352,7 +352,7 @@ a""}"""""";
         }
 
         [Fact]
-        public void SingleLineInterpolationWithInterpolatedStringInside1()
+        public void SingleLineInterpolationContainingInterpolatedString1()
         {
             var text = @"
 class C
@@ -367,7 +367,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithInterpolatedStringInside2()
+        public void SingleLineInterpolationContainingInterpolatedString2()
         {
             var text = @"
 class C
@@ -382,7 +382,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithVerbatimInterpolatedStringInside1()
+        public void SingleLineInterpolationContainingVerbatimInterpolatedString1()
         {
             var text = @"
 class C
@@ -397,7 +397,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithVerbatimInterpolatedStringInside2()
+        public void SingleLineInterpolationContainingVerbatimInterpolatedString2()
         {
             var text = @"
 class C
@@ -412,7 +412,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithVerbatimInterpolatedStringInside3()
+        public void SingleLineInterpolationContainingVerbatimInterpolatedString3()
         {
             var text = @"
 class C
@@ -428,7 +428,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithVerbatimInterpolatedStringInside4()
+        public void SingleLineInterpolationContainingVerbatimInterpolatedString4()
         {
             var text = @"
 class C
@@ -445,7 +445,7 @@ $@""{
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawStringLiteralInside1()
+        public void SingleLineInterpolationContainingRawStringLiteral1()
         {
             var text = @"
 class C
@@ -460,7 +460,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawStringLiteralInside2()
+        public void SingleLineInterpolationContainingRawStringLiteral2()
         {
             var text = @"
 class C
@@ -477,7 +477,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawStringLiteralInside3()
+        public void SingleLineInterpolationContainingRawStringLiteral3()
         {
             var text = @"
 class C
@@ -497,7 +497,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside1()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral1()
         {
             var text = @"
 class C
@@ -512,7 +512,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside2()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral2()
         {
             var text = @"
 class C
@@ -527,7 +527,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside3()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral3()
         {
             var text = @"
 class C
@@ -542,7 +542,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside4()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral4()
         {
             var text = @"
 class C
@@ -558,7 +558,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside5()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral5()
         {
             var text = @"
 class C
@@ -575,7 +575,7 @@ $""""""{
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside6()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral6()
         {
             var text = @"
 class C
@@ -590,7 +590,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside7()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral7()
         {
             var text = @"
 class C
@@ -605,7 +605,7 @@ class C
         }
 
         [Fact]
-        public void SingleLineInterpolationWithRawInterpolatedStringLiteralInside8()
+        public void SingleLineInterpolationContainingRawInterpolatedStringLiteral8()
         {
             var text = @"
 class C
