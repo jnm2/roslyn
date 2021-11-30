@@ -37,12 +37,12 @@ class Program {
     }
 }";
             string expectedOutput =
-@"Jenny don't change your number 8675309.
-Jenny don't change your number 8675309     .
-Jenny don't change your number      8675309.
-Jenny don't change your number 867-5309.
-Jenny don't change your number 867-5309    .
-Jenny don't change your number     867-5309.
+@"Jenny don\'t change your number 8675309.
+Jenny don\'t change your number 8675309     .
+Jenny don\'t change your number      8675309.
+Jenny don\'t change your number 867-5309.
+Jenny don\'t change your number 867-5309    .
+Jenny don\'t change your number     867-5309.
 8675309";
             CompileAndVerify(source, expectedOutput: expectedOutput);
         }
@@ -308,8 +308,8 @@ class Program
 {
     static void Main(string[] args)
     {
-        var hello = $""""""Hello"""""";
-        var world = $""""""world"""""" ;
+        var hello = ""Hello"";
+        var world = ""world"";
         Console.WriteLine( $""""""
                             {
                                     hello
@@ -454,11 +454,10 @@ class Program
     }
 }";
             CreateCompilationWithMscorlib45(source).VerifyDiagnostics(
-    // (6,33): error CS8088: A format specifier may not contain trailing whitespace.
-    //         Console.WriteLine( $@"{3:d
-    Diagnostic(ErrorCode.ERR_TrailingWhitespaceInFormatSpecifier, @":d
-").WithLocation(6, 33)
-                );
+                // (6,34): error CS8088: A format specifier may not contain trailing whitespace.
+                //         Console.WriteLine( $"""{3:d
+                Diagnostic(ErrorCode.ERR_TrailingWhitespaceInFormatSpecifier, @":d
+").WithLocation(6, 34));
         }
 
         [Fact]
@@ -1809,9 +1808,12 @@ Console.WriteLine($""""""{span}"""""");";
 
             var comp = CreateCompilation(new[] { source, GetInterpolatedStringHandlerDefinition(includeSpanOverloads: true, useDefaultParameters: false, useBoolReturns: false) }, parseOptions: TestOptions.Regular9, targetFramework: TargetFramework.NetCoreApp);
             comp.VerifyDiagnostics(
-                    // (4,24): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                    // Console.WriteLine($"""{span}""");
-                    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "span").WithArguments("interpolated string handlers", "10.0").WithLocation(4, 24));
+                // (4,19): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                // Console.WriteLine($"""{span}""");
+                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""{span}""""""").WithArguments("raw string literals").WithLocation(4, 19),
+                // (4,24): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
+                // Console.WriteLine($"""{span}""");
+                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "span").WithArguments("interpolated string handlers", "10.0").WithLocation(4, 24));
         }
 
         [Theory]
@@ -2906,7 +2908,6 @@ value:");
         }
 
         [Theory]
-        [InlineData(@"$""""""{(null, default)}{new()}""""""")]
         [InlineData(@"$""""""{(null, default)}"""""" + $""""""{new()}""""""")]
         public void TargetTypedInterpolationHoles_Errors(string expression)
         {
@@ -6378,110 +6379,6 @@ End Structure
             Assert.True(cParam.HasInterpolatedStringHandlerArgumentError);
         }
 
-        [Fact]
-        public void InterpolatedStringHandlerArgumentAttributeWarn_ParameterAfterHandler_FromMetadata()
-        {
-            var vbCode = @"
-Imports System.Runtime.CompilerServices
-Public Class C
-    Public Shared Sub M(<InterpolatedStringHandlerArgument(""""""i"""""")> c As CustomHandler, i As Integer)
-    End Sub
-End Class
-<InterpolatedStringHandler>
-Public Structure CustomHandler
-    public sub AppendLiteral(value as string)
-    end sub
-End Structure
-";
-
-            var vbComp = CreateVisualBasicCompilation(new[] { vbCode, InterpolatedStringHandlerAttributesVB });
-            vbComp.VerifyDiagnostics();
-
-            var comp = CreateCompilation("", references: new[] { vbComp.EmitToImageReference() });
-            comp.VerifyEmitDiagnostics();
-
-            var customHandler = comp.GetTypeByMetadataName("CustomHandler");
-            Assert.True(customHandler.IsInterpolatedStringHandlerType);
-
-            var cParam = comp.GetTypeByMetadataName("C").GetMethod("M").Parameters.First();
-            AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
-                           cParam.GetAttributes().Single().AttributeClass.ToTestDisplayString());
-            Assert.Equal(1, cParam.InterpolatedStringHandlerArgumentIndexes.Single());
-            Assert.False(cParam.HasInterpolatedStringHandlerArgumentError);
-        }
-
-        [Theory]
-        [InlineData(@"$""""""  """"""")]
-        [InlineData(@"$"""""" """""" + $"""""" """"""")]
-        public void InterpolatedStringHandlerArgumentAttributeError_OptionalNotSpecifiedAtCallsite(string expression)
-        {
-            var code = @"
-using System.Runtime.CompilerServices;
-
-C.M(" + expression + @");
-
-public class C
-{
-    public static void M([InterpolatedStringHandlerArgumentAttribute(""""""i"""""")] CustomHandler c, int i = 0) { }
-}
-
-public partial struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, int i) : this(literalLength, formattedCount) 
-    {
-    }
-}
-";
-
-            var customHandler = GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: true);
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, customHandler });
-            comp.VerifyDiagnostics(
-                    // (4,5): error CS8951: Parameter 'i' is not explicitly provided, but is used as an argument to the interpolated string handler conversion on parameter 'c'. Specify the value of 'i' before 'c'.
-                    // C.M($""" """ + $""" """);
-                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentOptionalNotSpecified, @"$"""""" """""" + $"""""" """"""").WithArguments("i", "c").WithLocation(4, 5),
-                    // (8,27): warning CS8947: Parameter 'i' occurs after 'c' in the parameter list, but is used as an argument for interpolated string handler conversions. This will require the caller to reorder parameters with named arguments at the call site. Consider putting the interpolated string handler parameter after all arguments involved.
-                    //     public static void M([InterpolatedStringHandlerArgumentAttribute("""i""")] CustomHandler c, int i = 0) { }
-                    Diagnostic(ErrorCode.WRN_ParameterOccursAfterInterpolatedStringHandlerParameter, @"InterpolatedStringHandlerArgumentAttribute(""""""i"""""")").WithArguments("i", "c").WithLocation(8, 27));
-        }
-
-        [Theory]
-        [InlineData(@"$""""""  """"""")]
-        [InlineData(@"$"""""" """""" + $"""""" """"""")]
-        public void InterpolatedStringHandlerArgumentAttributeError_ParamsNotSpecifiedAtCallsite(string expression)
-        {
-            var code = @"
-using System.Runtime.CompilerServices;
-
-C.M(" + expression + @");
-
-public class C
-{
-    public static void M([InterpolatedStringHandlerArgumentAttribute(""""""i"""""")] CustomHandler c, params int[] i) { }
-}
-
-public partial struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, int[] i) : this(literalLength, formattedCount) 
-    {
-    }
-}
-";
-
-            var customHandler = GetInterpolatedStringCustomHandlerType("CustomHandler", "partial struct", useBoolReturns: true);
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerArgumentAttribute, customHandler });
-            comp.VerifyDiagnostics(
-                // (4,5): error CS8951: Parameter 'i' is not explicitly provided, but is used as an argument to the interpolated string handler conversion on parameter 'c'. Specify the value of 'i' before 'c'.
-                // C.M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentOptionalNotSpecified, expression).WithArguments("i", "c").WithLocation(4, 5),
-                // (8,27): warning CS8947: Parameter 'i' occurs after 'c' in the parameter list, but is used as an argument for interpolated string handler conversions. This will require the caller to reorder
-                //         parameters with named arguments at the call site. Consider putting the interpolated string handler parameter after all arguments involved.
-                //     public static void M([InterpolatedStringHandlerArgumentAttribute("i")] CustomHandler c, params int[] i) { }
-                Diagnostic(ErrorCode.WRN_ParameterOccursAfterInterpolatedStringHandlerParameter, @"InterpolatedStringHandlerArgumentAttribute(""i"")").WithArguments("i", "c").WithLocation(8, 27)
-            );
-        }
-
         [Theory]
         [InlineData(@"$"""""" """"""")]
         [InlineData(@"$"""""" """""" + $"""""" """"""")]
@@ -6885,7 +6782,6 @@ public partial struct CustomHandler
 
         [Theory]
         [InlineData(@"$""""""  """"""")]
-        [InlineData(@"$"""""" """""" + $"""""" """"""")]
         public void StructReceiver_Rvalue(string expression)
         {
             var code = @"
@@ -6929,11 +6825,12 @@ s2.I:2");
 
             verifier.VerifyIL("<top-level-statements-entry-point>", @"
 {
-  // Code size       56 (0x38)
-  .maxstack  6
+  // Code size       71 (0x47)
+  .maxstack  7
   .locals init (S V_0, //s2
                 S V_1,
-                S V_2)
+                S V_2,
+                CustomHandler V_3)
   IL_0000:  ldloca.s   V_1
   IL_0002:  initobj    ""S""
   IL_0008:  ldloca.s   V_1
@@ -6952,13 +6849,18 @@ s2.I:2");
   IL_0026:  ldloc.0
   IL_0027:  stloc.2
   IL_0028:  ldloc.2
-  IL_0029:  ldc.i4.0
-  IL_002a:  ldc.i4.0
-  IL_002b:  ldloc.1
-  IL_002c:  ldloc.2
-  IL_002d:  newobj     ""CustomHandler..ctor(int, int, S, S)""
-  IL_0032:  call       ""void S.M(S, CustomHandler)""
-  IL_0037:  ret
+  IL_0029:  ldloca.s   V_3
+  IL_002b:  ldc.i4.2
+  IL_002c:  ldc.i4.0
+  IL_002d:  ldloc.1
+  IL_002e:  ldloc.2
+  IL_002f:  call       ""CustomHandler..ctor(int, int, S, S)""
+  IL_0034:  ldloca.s   V_3
+  IL_0036:  ldstr      ""  ""
+  IL_003b:  call       ""void CustomHandler.AppendLiteral(string)""
+  IL_0040:  ldloc.3
+  IL_0041:  call       ""void S.M(S, CustomHandler)""
+  IL_0046:  ret
 }
 ");
         }
@@ -8979,52 +8881,6 @@ public ref struct CustomHandler
         }
 
         [Theory]
-        [InlineData(@"$""""""{s} """"""")]
-        [InlineData(@"$""""""{s}"""""" + $"""""" """"""")]
-        public void RefEscape_04(string expression)
-        {
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-
-[InterpolatedStringHandler]
-public ref struct CustomHandler
-{
-    S1 s1;
-
-    public CustomHandler(int literalLength, int formattedCount, ref S1 s1) : this() { this.s1 = s1; }
-
-    public void AppendFormatted(Span<char> s) => this.s1.s = s;
-    public void AppendLiteral(string value)
-    {
-    }
-
-    public static void M(ref S1 s1)
-    {
-        Span<char> s = stackalloc char[10];
-        M2(ref s1, " + expression + @");
-    }
-
-    public static void M2(ref S1 s1, [InterpolatedStringHandlerArgument(""s1"")] ref CustomHandler handler) {}
-}
-
-public ref struct S1
-{
-    public Span<char> s;
-}
-";
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerAttribute, InterpolatedStringHandlerArgumentAttribute }, targetFramework: TargetFramework.NetCoreApp);
-            comp.VerifyDiagnostics(
-                // (20,9): error CS8350: This combination of arguments to 'CustomHandler.M2(ref S1, ref CustomHandler)' is disallowed because it may expose variables referenced by parameter 'handler' outside of their declaration scope
-                //         M2(ref s1, $"""{s} """);
-                Diagnostic(ErrorCode.ERR_CallArgMixing, @"M2(ref s1, $""""""{s} """""")").WithArguments("CustomHandler.M2(ref S1, ref CustomHandler)", "handler").WithLocation(20, 9),
-                // (20,25): error CS8352: Cannot use local 's' in this context because it may expose referenced variables outside of their declaration scope
-                //         M2(ref s1, $"""{s} """);
-                Diagnostic(ErrorCode.ERR_EscapeLocal, "s").WithArguments("s").WithLocation(20, 25));
-        }
-
-        [Theory]
         [InlineData(@"$""""""{s1} """"""")]
         [InlineData(@"$""""""{s1}"""""" + $"""""" """"""")]
         public void RefEscape_05(string expression)
@@ -9057,74 +8913,6 @@ public ref struct CustomHandler
 public ref struct S1
 {
     public Span<char> s;
-}
-";
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerAttribute, InterpolatedStringHandlerArgumentAttribute }, targetFramework: TargetFramework.NetCoreApp);
-            comp.VerifyDiagnostics();
-        }
-
-        [Theory]
-        [InlineData(@"$""""""{s2} """"""")]
-        [InlineData(@"$""""""{s2}"""""" + $"""""" """"""")]
-        public void RefEscape_06(string expression)
-        {
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-
-Span<char> s = stackalloc char[5];
-Span<char> s2 = stackalloc char[10];
-s.TryWrite(" + expression + @");
-
-public static class MemoryExtensions
-{
-    public static bool TryWrite(this Span<char> span, [InterpolatedStringHandlerArgument(""span"")] CustomHandler builder) => true;
-}
-
-[InterpolatedStringHandler]
-public ref struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, Span<char> s) : this() { }
-
-    public bool AppendFormatted(Span<char> s) => true;
-    public void AppendLiteral(Span<char> value)
-    {
-    }
-}
-";
-
-            var comp = CreateCompilation(new[] { code, InterpolatedStringHandlerAttribute, InterpolatedStringHandlerArgumentAttribute }, targetFramework: TargetFramework.NetCoreApp);
-            comp.VerifyDiagnostics();
-        }
-
-        [Theory]
-        [InlineData(@"$""""""{s2} """"""")]
-        [InlineData(@"$""""""{s2}"""""" + $"""""" """"""")]
-        public void RefEscape_07(string expression)
-        {
-            var code = @"
-using System;
-using System.Runtime.CompilerServices;
-
-Span<char> s = stackalloc char[5];
-Span<char> s2 = stackalloc char[10];
-s.TryWrite(" + expression + @");
-
-public static class MemoryExtensions
-{
-    public static bool TryWrite(this Span<char> span, [InterpolatedStringHandlerArgument(""span"")] ref CustomHandler builder) => true;
-}
-
-[InterpolatedStringHandler]
-public ref struct CustomHandler
-{
-    public CustomHandler(int literalLength, int formattedCount, Span<char> s) : this() { }
-
-    public bool AppendFormatted(Span<char> s) => true;
-    public void AppendLiteral(Span<char> s)
-    {
-    }
 }
 ";
 

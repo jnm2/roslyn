@@ -653,7 +653,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         _lexer.ConsumeWhitespace(builder: null);
                         var closeQuoteCount = _lexer.ConsumeQuoteSequence();
 
-                        if (closeQuoteCount > _startingQuoteCount)
+                        if (closeQuoteCount >= _startingQuoteCount)
                         {
                             // Found the end of the string.  reset our position so that ScanInterpolatedStringLiteralEnd
                             // can consume it.
@@ -927,7 +927,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         // end of interpolation
                         return;
                     }
-                    else if (IsAtEnd())
+                    else if (IsAtEnd(allowNewline: true))
                     {
                         return; // premature end; let caller complain
                     }
