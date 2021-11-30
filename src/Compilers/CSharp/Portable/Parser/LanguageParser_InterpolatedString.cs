@@ -86,6 +86,52 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getContent()
             {
+                if (kind is Lexer.InterpolatedStringKind.MultiLineRaw)
+                {
+                    // For a multi-line raw interpolated string, we have to remove indentation whitespace as appropriate.
+                    return getMultiLineRawContent();
+                }
+
+                var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
+
+                if (interpolations.Count == 0)
+                {
+                    // In the special case when there are no interpolations, we just construct a format string
+                    // with no inserts. We must still use String.Format to get its handling of escapes such as {{,
+                    // so we still treat it as a composite format string.
+                    var text = originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)];
+                    if (text.Length > 0)
+                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
+                }
+                else
+                {
+                    for (int i = 0; i < interpolations.Count; i++)
+                    {
+                        var interpolation = interpolations[i];
+
+                        // Add a token for text preceding the interpolation
+                        var text = originalText[new Range(
+                            i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
+                            interpolation.OpenBraceRange.Start)];
+                        if (text.Length > 0)
+                            builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
+
+                        builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
+                    }
+
+                    // Add a token for text following the last interpolation
+                    var lastText = originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)];
+                    if (lastText.Length > 0)
+                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(lastText, kind)));
+                }
+
+                CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
+                _pool.Free(builder);
+                return result;
+            }
+
+            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContent()
+            {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
                 if (interpolations.Count == 0)
