@@ -425,11 +425,27 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         // There were multiple @'s but we were missing $'s or "'s.  We can't do anything with this (as
                         // we must have some amount of curlies or dollars to look for while processing the rest of this
                         // string).
-                        Debug.Assert(totalAtCount >= 2);
-                        TrySetUnrecoverableError(_lexer.MakeError(
-                            start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
-                        kind = InterpolatedStringKind.SingleLineRaw;
-                        return;
+
+                        if (startingDollarSignCount == 0 && startingQuoteCount == 0)
+                        {
+                            // just multiple @'s in a row.  Give a general message about how @ signs work.
+
+                            Debug.Assert(totalAtCount >= 2);
+                            TrySetUnrecoverableError(_lexer.MakeError(
+                                start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
+                            kind = InterpolatedStringKind.SingleLineRaw;
+                            return;
+                        }
+                        else
+                        {
+                            // @'s followed by curlies/quotes (but not both).  The user is clearly trying to do
+                            // something with verbatim + raw literals.  Give an error that the @ is illegal to mix. But
+                            // bail out since there's nothing we can do at this point.
+                            TrySetUnrecoverableError(_lexer.MakeError(
+                                start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
+                            kind = InterpolatedStringKind.SingleLineRaw;
+                            return;
+                        }
                     }
 
                     // we had an @ sign, but we also had $'s and "'s.  Give an error that the @ is illegal.  But we can
