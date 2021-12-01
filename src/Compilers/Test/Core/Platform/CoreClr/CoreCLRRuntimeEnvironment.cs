@@ -77,15 +77,24 @@ namespace Roslyn.Test.Utilities.CoreClr
             }
         }
 
-        public int Execute(string moduleName, string[] args, string expectedOutput)
+        public int Execute(string moduleName, string[] args, string expectedOutput, bool trimOutput = true)
         {
             var emitData = GetEmitData();
             emitData.RuntimeData.ExecuteRequested = true;
             var (ExitCode, Output) = emitData.LoadContext.Execute(GetMainImage(), args, expectedOutput?.Length);
 
-            if (expectedOutput != null && expectedOutput.Trim() != Output.Trim())
+            if (expectedOutput != null)
             {
-                throw new ExecutionException(expectedOutput, Output, moduleName);
+                if (trimOutput)
+                {
+                    if (expectedOutput.Trim() != Output.Trim())
+                        throw new ExecutionException(expectedOutput, Output, moduleName);
+                }
+                else
+                {
+                    if (expectedOutput != Output)
+                        throw new ExecutionException(expectedOutput, Output, moduleName);
+                }
             }
 
             return ExitCode;

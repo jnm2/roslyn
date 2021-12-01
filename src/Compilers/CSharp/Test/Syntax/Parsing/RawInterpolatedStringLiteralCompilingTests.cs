@@ -17,7 +17,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 
         private void RenderAndVerify(string markup, string expectedOutput)
         {
-            CompileAndVerify(Render(markup), expectedOutput: expectedOutput);
+            CompileAndVerify(Render(markup), expectedOutput: expectedOutput, trimOutput: false);
         }
 
         private static void RenderAndVerify(string markup, params DiagnosticDescription[] expected)
