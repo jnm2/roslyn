@@ -3,12 +3,28 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Test.Utilities;
 using Xunit;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 {
     public class RawInterpolatedStringLiteralCompilingTests : CompilingTestBase
     {
+        private static string Render(string markup)
+        {
+            return markup.Replace('␠', ' ');
+        }
+
+        private void RenderAndVerify(string markup, string expectedOutput)
+        {
+            CompileAndVerify(Render(markup), expectedOutput: expectedOutput);
+        }
+
+        private static void RenderAndVerify(string markup, params DiagnosticDescription[] expected)
+        {
+            CreateCompilation(Render(markup)).VerifyDiagnostics(expected);
+        }
+
         [Fact]
         public void TestDownlevel()
         {
@@ -469,6 +485,301 @@ class C
         """""");
     }
 }".Replace("\r\n", "\n"), expectedOutput: "    abc\"\n    def");
+        }
+
+        [Fact]
+        public void MultiLineCase01()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $"""""");",
+                // (3,6): error CS9101: Unterminated raw string literal
+                //     $""");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, @"""").WithLocation(3, 6),
+                // (3,11): error CS1026: ) expected
+                //     $""");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(3, 11),
+                // (3,11): error CS1002: ; expected
+                //     $""");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(3, 11));
+        }
+
+        [Fact]
+        public void MultiLineCase02()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""
+    "");",
+                // (4,3): error CS9101: Unterminated raw string literal
+                //     ");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 3),
+                // (4,8): error CS1026: ) expected
+                //     ");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 8),
+                // (4,8): error CS1002: ; expected
+                //     ");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 8));
+        }
+
+        [Fact]
+        public void MultiLineCase03()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""
+    """");",
+                // (4,4): error CS9101: Unterminated raw string literal
+                //     "");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 4),
+                // (4,9): error CS1026: ) expected
+                //     "");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 9),
+                // (4,9): error CS1002: ; expected
+                //     "");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 9));
+        }
+
+        [Fact]
+        public void MultiLineCase04()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""
+    """""");",
+                // (4,1): error CS9104: Raw string literal delimiter must be on its own line
+                //     """
+                Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, "   ").WithLocation(4, 1));
+        }
+
+        [Fact]
+        public void MultiLineCase05()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""
+
+    """""");", expectedOutput: "");
+        }
+
+        [Fact]
+        public void MultiLineCase06()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠
+    "");",
+                // (4,3): error CS9101: Unterminated raw string literal
+                //     ");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 3),
+                // (4,8): error CS1026: ) expected
+                //     ");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 8),
+                // (4,8): error CS1002: ; expected
+                //     ");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 8));
+        }
+
+        [Fact]
+        public void MultiLineCase07()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠
+    """");",
+                // (4,4): error CS9101: Unterminated raw string literal
+                //     "");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 4),
+                // (4,9): error CS1026: ) expected
+                //     "");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 9),
+                // (4,9): error CS1002: ; expected
+                //     "");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 9));
+        }
+
+        [Fact]
+        public void MultiLineCase08()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠
+    """""");",
+                // (4,1): error CS9104: Raw string literal delimiter must be on its own line
+                //     """
+                Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, "   ").WithLocation(4, 1));
+        }
+
+        [Fact]
+        public void MultiLineCase09()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠
+
+    """""");", expectedOutput: "");
+        }
+
+        [Fact]
+        public void MultiLineCase10()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+    "");",
+                // (4,3): error CS9101: Unterminated raw string literal
+                //     ");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 3),
+                // (4,8): error CS1026: ) expected
+                //     ");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 8),
+                // (4,8): error CS1002: ; expected
+                //     ");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 8));
+        }
+
+        [Fact]
+        public void MultiLineCase11()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+    """");",
+                // (4,4): error CS9101: Unterminated raw string literal
+                //     "");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 4),
+                // (4,9): error CS1026: ) expected
+                //     "");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 9),
+                // (4,9): error CS1002: ; expected
+                //     "");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 9));
+        }
+
+        [Fact]
+        public void MultiLineCase12()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+    """""");",
+                // (4,1): error CS9104: Raw string literal delimiter must be on its own line
+                //     """
+                Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, "   ").WithLocation(4, 1));
+        }
+
+        [Fact]
+        public void MultiLineCase13()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+
+    """""");", expectedOutput: "");
+        }
+
+        [Fact]
+        public void MultiLineCase14()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""
+    ␠"");",
+                // (4,4): error CS9101: Unterminated raw string literal
+                //      ");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 4),
+                // (4,9): error CS1026: ) expected
+                //      ");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 9),
+                // (4,9): error CS1002: ; expected
+                //      ");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 9));
+        }
+
+        [Fact]
+        public void MultiLineCase15()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""
+    ␠"""");",
+                // (4,5): error CS9101: Unterminated raw string literal
+                //      "");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 5),
+                // (4,10): error CS1026: ) expected
+                //      "");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 10),
+                // (4,10): error CS1002: ; expected
+                //      "");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 10));
+        }
+
+        [Fact]
+        public void MultiLineCase16()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠
+    ␠"""");",
+                // (4,4): error CS9101: Unterminated raw string literal
+                //      ");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 4),
+                // (4,9): error CS1026: ) expected
+                //      ");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 9),
+                // (4,9): error CS1002: ; expected
+                //      ");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 9));
+        }
+
+        [Fact]
+        public void MultiLineCase17()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+    ␠␠"""");",
+                // (4,6): error CS9101: Unterminated raw string literal
+                //       "");
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 6),
+                // (4,11): error CS1026: ) expected
+                //       "");
+                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 11),
+                // (4,11): error CS1002: ; expected
+                //       "");
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 11));
+        }
+
+        [Fact]
+        public void MultiLineCase18()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+    ␠␠"""""");",
+                // (4,3): error CS9104: Raw string literal delimiter must be on its own line
+                //       """);
+                Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, "   ").WithLocation(4, 3));
+        }
+
+        [Fact]
+        public void MultiLineCase19()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+
+    ␠␠"""""");", expectedOutput: "");
+        }
+
+        [Fact]
+        public void MultiLineCase20()
+        {
+            RenderAndVerify(@"
+System.Console.WriteLine(
+    $""""""␠␠
+    a""
+    """""");", expectedOutput: "a\"");
         }
     }
 }
