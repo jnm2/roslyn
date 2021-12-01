@@ -194,7 +194,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     // No interpolations.  Just grab the whole chunk of text and split it as appropriate.
                     var text = originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)];
-                    builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, builder, text, first: true));
+                    builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, text, first: true));
                 }
                 else
                 {
@@ -207,7 +207,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
                             interpolation.OpenBraceRange.Start)];
                         if (text.Length > 0)
-                            builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
+                            builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, text, first: i == 0));
 
                         builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
                     }
@@ -215,7 +215,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // Add a token for text following the last interpolation
                     var lastText = originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)];
                     if (lastText.Length > 0)
-                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(lastText, kind)));
+                        builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, lastText, first: false));
                 }
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
@@ -286,8 +286,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ConsumeRemainingContentOnLine(content, text, ref currentIndex);
                 }
 
-                return SyntaxFactory.InterpolatedStringText(
-                    SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, value: content.ToString(), trailing: null);
+                var result = SyntaxFactory.InterpolatedStringText(
+                    SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, value: content.ToString(), trailing: null));
+                if (error != null)
+                    result = result.WithDiagnosticsGreen(new[] { error });
+
+                return result;
             }
 
             SyntaxToken getCloseQuote()
