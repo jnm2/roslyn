@@ -1601,7 +1601,9 @@ Console.WriteLine(" + expression + @");
             var code = @"
 using System.Runtime.CompilerServices;
 
-CustomHandler c = $"""";
+CustomHandler c = $""""""
+
+"""""";
 
 [InterpolatedStringHandler]
 struct CustomHandler
@@ -2022,7 +2024,7 @@ ref struct S
                 Diagnostic(ErrorCode.ERR_BadTypeArgument, "{i}").WithArguments("int*").WithLocation(6, 13),
                 // (6,14): error CS0306: The type 'S' may not be used as a type argument
                 //     _ = $"{i}{s}";
-                Diagnostic(ErrorCode.ERR_BadTypeArgument, "{s}").WithArguments("S").WithLocation(6, 7 + expression.Length));
+                Diagnostic(ErrorCode.ERR_BadTypeArgument, "{s}").WithArguments("S").WithLocation(6, 11 + expression.Length));
         }
 
         [Theory]
@@ -2596,10 +2598,10 @@ namespace System.Runtime.CompilerServices
             comp.VerifyDiagnostics(
                 // (4,21): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' is malformed. It does not return 'void' or 'bool'.
                 // Console.WriteLine($"Text{1}");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)").WithLocation(4, 21),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)").WithLocation(4, 23),
                 // (4,25): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' is malformed. It does not return 'void' or 'bool'.
                 // Console.WriteLine($"Text{1}");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)").WithLocation(4, 15 + expression.Length));
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)").WithLocation(4, 17 + expression.Length));
         }
 
         [Fact]
@@ -3074,97 +3076,6 @@ literal:Literal");
   IL_001f:  callvirt   ""void CustomHandler.AppendLiteral(string)""
   IL_0024:  call       ""void System.Console.WriteLine(object)""
   IL_0029:  ret
-}
-");
-        }
-
-        [Theory, WorkItem(55345, "https://github.com/dotnet/roslyn/issues/55345")]
-        [InlineData(@"$""""""{1,2:f}Literal""""""")]
-        [InlineData(@"$""""""{1,2:f}"""""" + $""""""Literal""""""")]
-        public void HandlerConversionPreferredOverStringForNonConstant(string expression)
-        {
-            var code = @"
-CultureInfoNormalizer.Normalize();
-C.M(" + expression + @");
-class C
-{
-    public static void M(CustomHandler b)
-    {
-        System.Console.WriteLine(b.ToString());
-    }
-    public static void M(string s)
-    {
-        System.Console.WriteLine(s);
-    }
-}
-";
-
-            var comp = CreateCompilation(new[] { code, GetInterpolatedStringCustomHandlerType("CustomHandler", "class", useBoolReturns: true) }, parseOptions: TestOptions.RegularPreview);
-            VerifyInterpolatedStringExpression(comp);
-            var verifier = CompileAndVerify(comp, expectedOutput: @"
-value:1
-alignment:2
-format:f
-literal:Literal");
-
-            verifier.VerifyIL(@"<top-level-statements-entry-point>", @"
-{
-  // Code size       55 (0x37)
-  .maxstack  4
-  .locals init (CustomHandler V_0)
-  IL_0000:  call       ""void CultureInfoNormalizer.Normalize()""
-  IL_0005:  ldc.i4.7
-  IL_0006:  ldc.i4.1
-  IL_0007:  newobj     ""CustomHandler..ctor(int, int)""
-  IL_000c:  stloc.0
-  IL_000d:  ldloc.0
-  IL_000e:  ldc.i4.1
-  IL_000f:  box        ""int""
-  IL_0014:  ldc.i4.2
-  IL_0015:  ldstr      ""f""
-  IL_001a:  callvirt   ""bool CustomHandler.AppendFormatted(object, int, string)""
-  IL_001f:  brfalse.s  IL_002e
-  IL_0021:  ldloc.0
-  IL_0022:  ldstr      ""Literal""
-  IL_0027:  callvirt   ""bool CustomHandler.AppendLiteral(string)""
-  IL_002c:  br.s       IL_002f
-  IL_002e:  ldc.i4.0
-  IL_002f:  pop
-  IL_0030:  ldloc.0
-  IL_0031:  call       ""void C.M(CustomHandler)""
-  IL_0036:  ret
-}
-");
-
-            comp = CreateCompilation(new[] { code, GetInterpolatedStringCustomHandlerType("CustomHandler", "class", useBoolReturns: true) }, parseOptions: TestOptions.Regular9);
-            verifier = CompileAndVerify(comp, expectedOutput: @"1.00Literal");
-
-            verifier.VerifyIL(@"<top-level-statements-entry-point>", expression.Contains('+') ? @"
-{
-  // Code size       37 (0x25)
-  .maxstack  2
-  IL_0000:  call       ""void CultureInfoNormalizer.Normalize()""
-  IL_0005:  ldstr      ""{0,2:f}""
-  IL_000a:  ldc.i4.1
-  IL_000b:  box        ""int""
-  IL_0010:  call       ""string string.Format(string, object)""
-  IL_0015:  ldstr      ""Literal""
-  IL_001a:  call       ""string string.Concat(string, string)""
-  IL_001f:  call       ""void C.M(string)""
-  IL_0024:  ret
-}
-"
-: @"
-{
-  // Code size       27 (0x1b)
-  .maxstack  2
-  IL_0000:  call       ""void CultureInfoNormalizer.Normalize()""
-  IL_0005:  ldstr      ""{0,2:f}Literal""
-  IL_000a:  ldc.i4.1
-  IL_000b:  box        ""int""
-  IL_0010:  call       ""string string.Format(string, object)""
-  IL_0015:  call       ""void C.M(string)""
-  IL_001a:  ret
 }
 ");
         }
@@ -5031,7 +4942,7 @@ class C
             comp.VerifyDiagnostics(
                 // (8,27): error CS8946: 'string' is not an interpolated string handler type.
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute] string s) {}
-                Diagnostic(ErrorCode.ERR_TypeIsNotAnInterpolatedStringHandlerType, "InterpolatedStringHandlerArgumentAttribute").WithArguments("string").WithLocation(12, 27));
+                Diagnostic(ErrorCode.ERR_TypeIsNotAnInterpolatedStringHandlerType, "InterpolatedStringHandlerArgumentAttribute").WithArguments("string").WithLocation(expression.Contains('+') ? 12 : 10, 27));
 
             var sParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5096,7 +5007,7 @@ class C
             comp.VerifyDiagnostics(
                 // (8,70): error CS1503: Argument 1: cannot convert from 'int' to 'string'
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute(1)] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_BadArgType, "1").WithArguments("1", "int", "string").WithLocation(12, 70));
+                Diagnostic(ErrorCode.ERR_BadArgType, "1").WithArguments("1", "int", "string").WithLocation(expression.Contains('+') ? 12 : 10, 70));
 
             var cParam = comp.GetTypeByMetadataName("C").GetMethod("M").Parameters.Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5136,7 +5047,7 @@ class C
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 5),
                 // (8,27): error CS8945: 'NonExistant' is not a valid parameter name from 'C.M(CustomHandler)'.
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute("NonExistant")] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_InvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute(""NonExistant"")").WithArguments("NonExistant", "C.M(CustomHandler)").WithLocation(12, 27));
+                Diagnostic(ErrorCode.ERR_InvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute(""NonExistant"")").WithArguments("NonExistant", "C.M(CustomHandler)").WithLocation(expression.Contains('+') ? 12 : 10, 27));
 
             var cParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5223,7 +5134,7 @@ class C
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 8),
                 // (8,34): error CS8945: 'NonExistant' is not a valid parameter name from 'C.M(int, CustomHandler)'.
                 //     public static void M(int i, [InterpolatedStringHandlerArgumentAttribute("i", "NonExistant")] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_InvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute(""i"", ""NonExistant"")").WithArguments("NonExistant", "C.M(int, CustomHandler)").WithLocation(12, 34));
+                Diagnostic(ErrorCode.ERR_InvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute(""i"", ""NonExistant"")").WithArguments("NonExistant", "C.M(int, CustomHandler)").WithLocation(expression.Contains('+') ? 12 : 10, 34));
 
             var cParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(1).Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5400,7 +5311,7 @@ class C
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 8),
                 // (8,34): error CS8948: InterpolatedStringHandlerArgumentAttribute arguments cannot refer to the parameter the attribute is used on.
                 //     public static void M(int i, [InterpolatedStringHandlerArgumentAttribute("c")] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_CannotUseSelfAsInterpolatedStringHandlerArgument, @"InterpolatedStringHandlerArgumentAttribute(""c"")").WithLocation(12, 34));
+                Diagnostic(ErrorCode.ERR_CannotUseSelfAsInterpolatedStringHandlerArgument, @"InterpolatedStringHandlerArgumentAttribute(""c"")").WithLocation(expression.Contains('+') ? 12 : 10, 34));
 
             var cParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(1).Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5487,7 +5398,7 @@ class C
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 8),
                 // (8,34): error CS8943: null is not a valid parameter name. To get access to the receiver of an instance method, use the empty string as the parameter name.
                 //     public static void M(int i, [InterpolatedStringHandlerArgumentAttribute(new string[] { null })] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_NullInvalidInterpolatedStringHandlerArgumentName, "InterpolatedStringHandlerArgumentAttribute(new string[] { null })").WithLocation(12, 34));
+                Diagnostic(ErrorCode.ERR_NullInvalidInterpolatedStringHandlerArgumentName, "InterpolatedStringHandlerArgumentAttribute(new string[] { null })").WithLocation(expression.Contains('+') ? 12 : 10, 34));
 
             var cParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Skip(1).Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5668,7 +5579,7 @@ class C
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 5),
                 // (8,27): error CS8944: 'C.M(CustomHandler)' is not an instance method, the receiver cannot be an interpolated string handler argument.
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute("")] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute("""")").WithArguments("C.M(CustomHandler)").WithLocation(12, 27));
+                Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute("""")").WithArguments("C.M(CustomHandler)").WithLocation(expression.Contains('+') ? 12 : 10, 27));
 
             var cParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod("M").Parameters.Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5757,7 +5668,7 @@ class C
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 11),
                 // (8,15): error CS8944: 'C.C(CustomHandler)' is not an instance method, the receiver cannot be an interpolated string handler argument.
                 //     public C([InterpolatedStringHandlerArgumentAttribute("")] CustomHandler c) {}
-                Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute("""")").WithArguments("C.C(CustomHandler)").WithLocation(12, 15));
+                Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgumentAttribute("""")").WithArguments("C.C(CustomHandler)").WithLocation(expression.Contains('+') ? 12 : 10, 15));
 
             var cParam = comp.SourceModule.GlobalNamespace.GetTypeMember("C").GetMethod(".ctor").Parameters.Single();
             AssertEx.Equal("System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute",
@@ -5846,7 +5757,7 @@ public class C<T>
                 Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, expression).WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 20),
                 // (8,27): error CS8946: 'T' is not an interpolated string handler type.
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute] T t) { }
-                Diagnostic(ErrorCode.ERR_TypeIsNotAnInterpolatedStringHandlerType, "InterpolatedStringHandlerArgumentAttribute").WithArguments("T").WithLocation(12, 27));
+                Diagnostic(ErrorCode.ERR_TypeIsNotAnInterpolatedStringHandlerType, "InterpolatedStringHandlerArgumentAttribute").WithArguments("T").WithLocation(expression.Contains('+') ? 12 : 10, 27));
 
             var c = comp.SourceModule.GlobalNamespace.GetTypeMember("C");
             var handler = comp.SourceModule.GlobalNamespace.GetTypeMember("CustomHandler");
@@ -6109,9 +6020,7 @@ public partial struct CustomHandler
                 // (8,27): warning CS8947: Parameter 'i' occurs after 'c' in the parameter list, but is used as an argument for interpolated string handler conversions. This will require the caller to reorder
                 //         parameters with named arguments at the call site. Consider putting the interpolated string handler parameter after all arguments involved.
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute("i")] CustomHandler c, int i = 0) { }
-                Diagnostic(ErrorCode.WRN_ParameterOccursAfterInterpolatedStringHandlerParameter, @"InterpolatedStringHandlerArgumentAttribute(""i"")").WithArguments("i", "c").WithLocation(12, 27)
-
-            );
+                Diagnostic(ErrorCode.WRN_ParameterOccursAfterInterpolatedStringHandlerParameter, @"InterpolatedStringHandlerArgumentAttribute(""i"")").WithArguments("i", "c").WithLocation(expression.Contains('+') ? 12 : 10, 27));
         }
 
         [Theory]
@@ -6153,7 +6062,7 @@ public partial struct CustomHandler
                 // (8,27): warning CS8947: Parameter 'i' occurs after 'c' in the parameter list, but is used as an argument for interpolated string handler conversions. This will require the caller to reorder
                 //         parameters with named arguments at the call site. Consider putting the interpolated string handler parameter after all arguments involved.
                 //     public static void M([InterpolatedStringHandlerArgumentAttribute("i")] CustomHandler c, params int[] i) { }
-                Diagnostic(ErrorCode.WRN_ParameterOccursAfterInterpolatedStringHandlerParameter, @"InterpolatedStringHandlerArgumentAttribute(""i"")").WithArguments("i", "c").WithLocation(12, 27));
+                Diagnostic(ErrorCode.WRN_ParameterOccursAfterInterpolatedStringHandlerParameter, @"InterpolatedStringHandlerArgumentAttribute(""i"")").WithArguments("i", "c").WithLocation(expression.Contains('+') ? 12 : 10, 27));
         }
 
         [Theory]
@@ -11334,7 +11243,7 @@ public ref struct CustomHandler
             comp.VerifyDiagnostics(
                 // (16,16): error CS8352: Cannot use local 'c' in this context because it may expose referenced variables outside of their declaration scope
                 //         return c;
-                Diagnostic(ErrorCode.ERR_EscapeLocal, "c").WithArguments("c").WithLocation(16, 16));
+                Diagnostic(ErrorCode.ERR_EscapeLocal, "c").WithArguments("c").WithLocation(18, 16));
         }
 
         [Fact]
@@ -13372,7 +13281,9 @@ partial struct CustomHandler
             var code = @"
 using System.Runtime.CompilerServices;
 
-CustomHandler c = $"""";
+CustomHandler c = $""""""
+
+"""""";
 
 [InterpolatedStringHandler]
 struct CustomHandler
