@@ -6,6 +6,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Text;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
@@ -88,10 +89,18 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 if (kind is Lexer.InterpolatedStringKind.MultiLineRaw)
                 {
-                    // For a multi-line raw interpolated string, we have to remove indentation whitespace as appropriate.
+                    // For a multi-line raw interpolated string, we have to remove indentation whitespace as
+                    // appropriate.  So this gets a highly specialized processing path.
                     return getMultiLineRawContent();
                 }
+                else
+                {
+                    return getNormalContent();
+                }
+            }
 
+            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getNormalContent()
+            {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
                 if (interpolations.Count == 0)
@@ -132,16 +141,60 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContent()
             {
+                // If we have any errors in the multi-line literal, then don't bother to try to do fancy dedentation.
+                // There's no need as it's quite possible we don't even know what the dedent would be.
+                if (error != null)
+                    return getNormalContent();
+
+                // The indentation-whitespace computed from the very last line of the raw string literal
+                var indentationWhitespace = PooledStringBuilder.GetInstance();
+
+                // The leading whitespace of whatever line we are currently on.
+                var currentLineWhitespace = PooledStringBuilder.GetInstance();
+
+                // The content we want to create text token out of.  Effectively, what is in the text sections
+                // minus leading whitespace.
+                var content = PooledStringBuilder.GetInstance();
+                try
+                {
+                    var closeQuoteText = originalText[closeQuoteRange];
+
+                    // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and the quotes.
+                    Debug.Assert(SyntaxFacts.IsNewLine(closeQuoteText[0]));
+
+                    var currentIndex = GetNewLineLength(closeQuoteText, index: 0);
+
+                    while (currentIndex < closeQuoteText.Length &&
+                        SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
+                    {
+                        indentationWhitespace.Builder.Append(closeQuoteText[currentIndex]);
+                        currentIndex++;
+                    }
+
+                    Debug.Assert(closeQuoteText[currentIndex] == '"');
+
+                    return getMultiLineRawContentWorker(indentationWhitespace, currentLineWhitespace, content);
+                }
+                finally
+                {
+                    indentationWhitespace.Free();
+                    currentLineWhitespace.Free();
+                    content.Free();
+                }
+            }
+
+            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContentWorker(
+                StringBuilder indentationWhitespace,
+                StringBuilder currentLineWhitespace,
+                StringBuilder content)
+            {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
                 if (interpolations.Count == 0)
                 {
-                    // In the special case when there are no interpolations, we just construct a format string
-                    // with no inserts. We must still use String.Format to get its handling of escapes such as {{,
-                    // so we still treat it as a composite format string.
+                    // No interpolations.  Just grab the whole chunk of text and split it as appropriate.
                     var text = originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)];
-                    if (text.Length > 0)
-                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
+                    builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, builder, text, first: true));
                 }
                 else
                 {
@@ -170,6 +223,73 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 return result;
             }
 
+            InterpolatedStringContentSyntax splitContent(
+                StringBuilder indentationWhitespace,
+                StringBuilder currentLineWhitespace,
+                StringBuilder content,
+                string text,
+                bool first)
+            {
+                content.Clear();
+                var currentIndex = 0;
+
+                // If we're not the first content chunk, then we came after an interpolation.  In that case, we need to
+                // consume up through the next newline as content that is not subject to dedentation.
+                if (!first)
+                    ConsumeRemainingContentOnLine(content, text, ref currentIndex);
+
+                // We're either the first item, or we consumed up through a newline from the previous line. We're
+                // definitely at the start of a newline (or at the end).  Regardless, we want to consume each successive
+                // line, making sure it's indentation is correct.
+
+                SyntaxDiagnosticInfo error = null;
+                while (currentIndex < text.Length)
+                {
+                    currentLineWhitespace.Clear();
+                    var lineStartPosition = currentIndex;
+                    while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
+                    {
+                        currentLineWhitespace.Append(text[currentIndex]);
+                        currentIndex++;
+                    }
+
+                    // Only bother reporting a single error on a text chunk.
+                    if (error == null)
+                    {
+                        if (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]))
+                        {
+                            // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
+                            // or vice versa.  It is an error otherwise.
+                            if (!Lexer.StartsWith(indentationWhitespace, currentLineWhitespace) &&
+                                !Lexer.StartsWith(currentLineWhitespace, indentationWhitespace))
+                            {
+                                error = MakeError(
+                                    lineStartPosition,
+                                    width: currentIndex - lineStartPosition,
+                                    ErrorCode.ERR_LineDoesNotStartWithSameWhitespace);
+                            }
+                        }
+                        else
+                        {
+                            // a content line with non-whitespace.  The indentation whitespace must be a prefix of the current line
+                            // whitespace.  It is an error otherwise.
+                            if (!Lexer.StartsWith(currentLineWhitespace, indentationWhitespace))
+                            {
+                                error ??= MakeError(
+                                    lineStartPosition,
+                                    width: currentIndex - lineStartPosition,
+                                    ErrorCode.ERR_LineDoesNotStartWithSameWhitespace);
+                            }
+                        }
+                    }
+
+                    ConsumeRemainingContentOnLine(content, text, ref currentIndex);
+                }
+
+                return SyntaxFactory.InterpolatedStringText(
+                    SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, value: content.ToString(), trailing: null);
+            }
+
             SyntaxToken getCloseQuote()
             {
                 // Make a token for the close quote " (even if it was missing)
@@ -186,6 +306,38 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ? SyntaxFactory.MissingToken(leading: null, syntaxKind, originalToken.GetTrailingTrivia())
                     : SyntaxFactory.Token(leading: null, syntaxKind, closeQuoteText, closeQuoteText, originalToken.GetTrailingTrivia());
             }
+        }
+
+        private static void ConsumeRemainingContentOnLine(StringBuilder content, string text, ref int currentIndex)
+        {
+            while (currentIndex < text.Length && !SyntaxFacts.IsNewLine(text[currentIndex]))
+            {
+                content.Append(text[currentIndex]);
+                currentIndex++;
+            }
+
+            if (currentIndex < text.Length)
+            {
+                // we must have hit a newline.  Consume it and then move to the core loop.
+                ConsumeNewLine(text, ref currentIndex, content);
+            }
+        }
+
+        private static void ConsumeNewLine(string text, ref int currentIndex, StringBuilder content)
+        {
+            var newLineLength = GetNewLineLength(text, currentIndex);
+            content.Append(text[currentIndex]);
+
+            if (newLineLength == 2)
+                content.Append(text[currentIndex + 1]);
+
+            currentIndex += newLineLength;
+        }
+
+        private static int GetNewLineLength(string text, int index)
+        {
+            Debug.Assert(SyntaxFacts.IsNewLine(text[index]));
+            return text[index] == '\r' && text[index + 1] == '\n' ? 2 : 1;
         }
 
         private static InterpolationSyntax ParseInterpolation(
@@ -293,9 +445,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
             if (kind is Lexer.InterpolatedStringKind.SingleLineRaw or Lexer.InterpolatedStringKind.MultiLineRaw)
             {
-                // with a raw string, we don't do any interpretation of the content, except to remove the indentation
-                // whitespace.
-                // PROTOTYPE: remove the indentation whitespace.
+                // with a raw string, we don't do any interpretation of the content.  Note: removal of indentation is
+                // handled already in splitContent
                 return SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, text, trailing: null);
             }
             else
