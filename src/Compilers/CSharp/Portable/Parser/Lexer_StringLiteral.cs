@@ -163,17 +163,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return ch;
         }
 
-        /// <summary>
-        /// Returns an appropriate error code if scanning this verbatim literal ran into an error.
-        /// </summary>
-        private ErrorCode? ScanVerbatimStringLiteral(ref TokenInfo info)
+        private void ScanVerbatimStringLiteral(ref TokenInfo info)
         {
             _builder.Length = 0;
 
             Debug.Assert(TextWindow.PeekChar() == '@' && TextWindow.PeekChar(1) == '"');
             TextWindow.AdvanceChar(2);
 
-            ErrorCode? error = null;
             while (true)
             {
                 var ch = TextWindow.PeekChar();
@@ -196,7 +192,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     // Reached the end of the source without finding the end-quote.  Give an error back at the
                     // starting point. And finish lexing this string.
-                    error ??= ErrorCode.ERR_UnterminatedStringLit;
+                    this.AddError(ErrorCode.ERR_UnterminatedStringLit);
                     break;
                 }
 
@@ -207,15 +203,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             info.Kind = SyntaxKind.StringLiteralToken;
             info.Text = TextWindow.GetText(intern: false);
             info.StringValue = _builder.ToString();
-
-            return error;
         }
 
         private void ScanInterpolatedStringLiteral(ref TokenInfo info)
         {
-            // We have a string of the form
+            // We have a string of one of the forms
             //                $" ... "
-            // or, if isVerbatim is true, of possible forms
             //                $@" ... "
             //                @$" ... "
             // Where the contents contains zero or more sequences
@@ -473,6 +466,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     Debug.Assert(_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw);
                     ScanRawInterpolatedStringLiteralEnd();
                 }
+
                 closeQuoteRange = new Range(closeQuotePosition, _lexer.TextWindow.Position);
             }
 
@@ -1064,7 +1058,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 Debug.Assert(start == _lexer.TextWindow.PeekChar());
                 _lexer.TextWindow.AdvanceChar();
-                ScanInterpolatedStringLiteralHoleBalancedText(end, isHole: false, out _);
+                ScanInterpolatedStringLiteralHoleBalancedText(end, isHole: false, colonRange: out _);
                 if (_lexer.TextWindow.PeekChar() == end)
                 {
                     _lexer.TextWindow.AdvanceChar();
