@@ -193,9 +193,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 if (interpolations.Count == 0)
                 {
                     // No interpolations.  Just grab the whole chunk of text and split it as appropriate.
-                    var text = originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)];
-                    if (text.Length > 0)
-                        builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, text, first: true));
+                    addContent(
+                        indentationWhitespace, currentLineWhitespace, content, builder, first: true,
+                        originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)]);
                 }
                 else
                 {
@@ -204,19 +204,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         var interpolation = interpolations[i];
 
                         // Add a token for text preceding the interpolation
-                        var text = originalText[new Range(
-                            i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
-                            interpolation.OpenBraceRange.Start)];
-                        if (text.Length > 0)
-                            builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, text, first: i == 0));
+                        addContent(
+                            indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0,
+                            originalText[new Range(
+                                i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
+                                interpolation.OpenBraceRange.Start)]);
 
                         builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
                     }
 
                     // Add a token for text following the last interpolation
-                    var lastText = originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)];
-                    if (lastText.Length > 0)
-                        builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, lastText, first: false));
+                    addContent(
+                        indentationWhitespace, currentLineWhitespace, content, builder, first: false,
+                        originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)]);
                 }
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
@@ -224,13 +224,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 return result;
             }
 
-            InterpolatedStringContentSyntax splitContent(
+            void addContent(
                 StringBuilder indentationWhitespace,
                 StringBuilder currentLineWhitespace,
                 StringBuilder content,
-                string text,
-                bool first)
+                CodeAnalysis.Syntax.InternalSyntax.SyntaxListBuilder<InterpolatedStringContentSyntax> result,
+                bool first,
+                string text)
             {
+                if (text.Length == 0)
+                    return;
+
                 content.Clear();
                 var currentIndex = 0;
 
@@ -294,12 +298,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 // if we ran into any errors, don't give this item any special value.  It just has the value of our actual text.
                 var value = error == null ? content.ToString() : text;
-                var result = SyntaxFactory.InterpolatedStringText(
+                var node = SyntaxFactory.InterpolatedStringText(
                     SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, value, trailing: null));
                 if (error != null)
-                    result = result.WithDiagnosticsGreen(new[] { error });
+                    node = node.WithDiagnosticsGreen(new[] { error });
 
-                return result;
+                result.Add(node);
             }
 
             SyntaxToken getCloseQuote()
