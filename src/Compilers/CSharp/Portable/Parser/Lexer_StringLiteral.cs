@@ -270,19 +270,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// <summary>
             /// Normal interpolated string that just starts with $"
             /// </summary>
-            Normal,
+            Normal = 1,
             /// <summary>
             /// Verbatim interpolated string that starts with $@" or @$"
             /// </summary>
-            Verbatim,
+            Verbatim = 2,
             /// <summary>
             /// Single-line raw interpolated string that starts with some number of $ and at least three """.
             /// </summary>
-            SingleLineRaw,
+            SingleLineRaw = 3,
             /// <summary>
             /// Multi-line raw interpolated string that starts with some number of $ and at least three """.
             /// </summary>
-            MultiLineRaw,
+            MultiLineRaw = 4,
         }
 
         [NonCopyable]
@@ -290,19 +290,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
             private readonly Lexer _lexer;
 
-            private readonly InterpolatedStringKind _kind;
+            private InterpolatedStringKind _kind = default;
 
             /// <summary>
             /// Number of '$' characters this interpolated string started with.  We'll need to see that many '{' in a
             /// row to start an interpolation.  Any less and we'll treat that as just text.  Note if this count is '1'
             /// then this is a normal (non-raw) interpolation and `{{` is treated as an escape.
             /// </summary>
-            private readonly int _startingDollarSignCount;
+            private int _startingDollarSignCount = -1;
 
             /// <summary>
             /// Number of '"' characters this interpolated string started with.  Will 
             /// </summary>
-            private readonly int _startingQuoteCount;
+            private int _startingQuoteCount = -1;
 
             /// <summary>
             /// There are two types of errors we can encounter when trying to scan out an interpolated string (and its
@@ -318,49 +318,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             public InterpolatedStringScanner(Lexer lexer)
             {
                 _lexer = lexer;
-                (_kind, _startingDollarSignCount, _startingQuoteCount) = DetermineStringInfo(lexer);
-
-#if DEBUG
-                if (_kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
-                {
-                    Debug.Assert(_startingDollarSignCount == 1);
-                    Debug.Assert(_startingQuoteCount == 1);
-                }
-
-                if (_kind is InterpolatedStringKind.SingleLineRaw or InterpolatedStringKind.MultiLineRaw)
-                {
-                    Debug.Assert(_startingDollarSignCount >= 1);
-                    Debug.Assert(_startingQuoteCount >= 3);
-                }
-#endif
-            }
-
-            private static (InterpolatedStringKind _kind, int startingDollarSignCount, int startingQuoteCount) DetermineStringInfo(Lexer lexer)
-            {
-                if ((lexer.TextWindow.PeekChar(0) == '$' && lexer.TextWindow.PeekChar(1) == '@') ||
-                    (lexer.TextWindow.PeekChar(0) == '@' && lexer.TextWindow.PeekChar(1) == '$'))
-                {
-                    return (InterpolatedStringKind.Verbatim, startingDollarSignCount: 1, startingQuoteCount: 1);
-                }
-
-                Debug.Assert(lexer.TextWindow.PeekChar(0) == '$');
-                if (lexer.TextWindow.PeekChar(1) == '$' ||
-                    (lexer.TextWindow.PeekChar(1) == '"' &&
-                     lexer.TextWindow.PeekChar(2) == '"' &&
-                     lexer.TextWindow.PeekChar(3) == '"'))
-                {
-                    var start = lexer.TextWindow.Position;
-                    var startingDollarSignCount = lexer.ConsumeDollarSignSequence();
-                    var startingQuoteCount = lexer.ConsumeQuoteSequence();
-                    lexer.ConsumeWhitespace(builder: null);
-                    var isMultiLine = SyntaxFacts.IsNewLine(lexer.TextWindow.PeekChar());
-
-                    lexer.TextWindow.Reset(start);
-                    return (isMultiLine ? InterpolatedStringKind.MultiLineRaw : InterpolatedStringKind.SingleLineRaw, startingDollarSignCount, startingQuoteCount);
-                }
-
-                Debug.Assert(lexer.TextWindow.PeekChar(1) == '"');
-                return (InterpolatedStringKind.Normal, startingDollarSignCount: 1, startingQuoteCount: 1);
             }
 
             private bool IsAtEnd()
@@ -401,45 +358,128 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 ArrayBuilder<Interpolation>? interpolations,
                 out Range closeQuoteRange)
             {
+                var start = _lexer.TextWindow.Position;
+                DetermineLiteralInfo(_lexer, out var kind, out var startingDollarSignCount, out var startingQuoteCount);
+                Debug.Assert(_lexer.TextWindow.Position != start);
+
+                openQuoteRange = new Range(start, _lexer.TextWindow.Position);
+                Debug.Assert(_kind != default);
                 kind = _kind;
-                ScanInterpolatedStringLiteralStart(out openQuoteRange);
+
+                if (this.EncounteredUnrecoverableError)
+                {
+                    // Processing the start of this literal didn't give us enough information to proceed.  Stop now,
+                    // terminating the string to the furthest point we reached.
+                    closeQuoteRange = new Range(_lexer.TextWindow.Position, _lexer.TextWindow.Position);
+                    return;
+                }
+
                 ScanInterpolatedStringLiteralContents(interpolations);
                 ScanInterpolatedStringLiteralEnd(out closeQuoteRange);
             }
 
-            private void ScanInterpolatedStringLiteralStart(out Range openQuoteRange)
+            private static void DetermineLiteralInfo(
+                Lexer lexer,
+                out InterpolatedStringKind kind,
+                out int startingDollarSignCount,
+                out int startingQuoteCount)
             {
                 // Handles reading the start of the interpolated string literal (up to where the content begins)
-                var start = _lexer.TextWindow.Position;
+                var window = lexer.TextWindow;
+                var start = window.Position;
 
-                if (_kind == InterpolatedStringKind.Normal)
+                if ((window.PeekChar(0), window.PeekChar(1), window.PeekChar(2)) is ('$', '@', '"') or ('@', '$', '"'))
                 {
-                    // skip past $"
-                    _lexer.TextWindow.AdvanceChar(2);
+                    // $@" or @$"
+                    kind = InterpolatedStringKind.Verbatim;
+                    startingDollarSignCount = 1;
+                    startingQuoteCount = 1;
+                    window.AdvanceChar(3);
+                    return;
                 }
-                else if (_kind == InterpolatedStringKind.Verbatim)
+
+                if ((window.PeekChar(0), window.PeekChar(1), window.PeekChar(2), window.PeekChar(3)) is
+                        ('$', '"', not '"', _) or ('$', '"', '"', not '"'))
                 {
-                    // skip past @$" or $!"
-                    _lexer.TextWindow.AdvanceChar(3);
+                    // $"...
+                    // $""
+                    // not $"""
+                    kind = InterpolatedStringKind.Normal;
+                    startingDollarSignCount = 1;
+                    startingQuoteCount = 1;
+                    window.AdvanceChar(2);
+                    return;
                 }
-                else if (_kind == InterpolatedStringKind.SingleLineRaw)
+
+                // From this point we have a raw literal of some sort.
+                var prefixAtCount = lexer.ConsumeAtSignSequence();
+                startingDollarSignCount = lexer.ConsumeDollarSignSequence();
+                var suffixAtCount = lexer.ConsumeAtSignSequence();
+                startingQuoteCount = lexer.ConsumeQuoteSequence();
+
+                var totalAtCount = prefixAtCount + suffixAtCount;
+
+                // We should only have gotten here if we had at least two characters that made us think we had an interpolated string.
+                Debug.Assert(totalAtCount + startingDollarSignCount + startingQuoteCount >= 2);
+
+                if (totalAtCount > 0)
                 {
-                    // skip past the initial $$""" piece
-                    _lexer.ConsumeDollarSignSequence();
-                    _lexer.ConsumeQuoteSequence();
+                    if (startingDollarSignCount == 0 || startingQuoteCount == 0)
+                    {
+                        // There were multiple @'s but we were missing $'s or "'s.  We can't do anything with this (as
+                        // we must have some amount of curlies or dollars to look for while processing the rest of this
+                        // string).
+                        Debug.Assert(totalAtCount >= 2);
+                        TrySetUnrecoverableError(lexer.MakeError(
+                            start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
+                        kind = InterpolatedStringKind.SingleLineRaw;
+                        return;
+                    }
+
+                    // we had an @ sign, but we also had $'s and "'s.  Give an error that the @ is illegal.  But we can
+                    // still proceed using the normal logic for this string.
+                    TrySetRecoverableError(lexer.MakeError(
+                        start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
+                }
+
+                if (startingQuoteCount == 0)
+                {
+                    // We have no quotes at all.  We can't proceed at all.
+                    TrySetUnrecoverableError(lexer.MakeError(
+                        start, width: window.Position - start, ErrorCode.ERR_NotEnoughQuotesForRawString));
+                    kind = InterpolatedStringKind.SingleLineRaw;
+                    return;
+                }
+
+                // Ad this point, we have some sort of reasonable string to work with that we can process the inside of
+                // and search for the end of.
+                Debug.Assert(startingDollarSignCount > 0 && startingQuoteCount > 0);
+
+                if (startingQuoteCount < 3)
+                {
+                    // 1-2 quotes present.  Not legal.  But we can give a good error message and still proceed.
+                    TrySetRecoverableError(lexer.MakeError(
+                        window.Position - startingQuoteCount, width: startingQuoteCount, ErrorCode.ERR_NotEnoughQuotesForRawString));
+                }
+
+                // Now see if this was a single-line or multi-line raw literal.
+
+                var afterQuotePosition = window.Position;
+                lexer.ConsumeWhitespace(builder: null);
+                if (SyntaxFacts.IsNewLine(window.PeekChar()))
+                {
+                    // We had whitespace followed by a newline.  That section is considered the open-quote section of
+                    // the literal.
+                    window.AdvanceChar(lexer.GetNewLineWidth(window.PeekChar()));
+                    kind = InterpolatedStringKind.MultiLineRaw;
                 }
                 else
                 {
-                    Debug.Assert(_kind == InterpolatedStringKind.MultiLineRaw);
-
-                    // skip past the initial $$"""<whitespace><newline> piece
-                    _lexer.ConsumeDollarSignSequence();
-                    _lexer.ConsumeQuoteSequence();
-                    _lexer.ConsumeWhitespace(builder: null);
-                    _lexer.TextWindow.AdvanceChar(_lexer.GetNewLineWidth(_lexer.TextWindow.PeekChar()));
+                    // wasn't multi-line, jump back to right after the quotes as what follows is content and not
+                    // considered part of the open quote.
+                    window.Reset(afterQuotePosition);
+                    kind = InterpolatedStringKind.SingleLineRaw;
                 }
-
-                openQuoteRange = new Range(start, _lexer.TextWindow.Position);
             }
 
             private void ScanInterpolatedStringLiteralEnd(out Range closeQuoteRange)
