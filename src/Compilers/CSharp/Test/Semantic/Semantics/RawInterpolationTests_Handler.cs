@@ -2025,22 +2025,22 @@ ref struct S
             if (expression.Contains('+'))
             {
                 comp.VerifyDiagnostics(
-                    // (6,11): error CS0306: The type 'int*' may not be used as a type argument
-                    //     _ = $"{i}{s}";
-                    Diagnostic(ErrorCode.ERR_BadTypeArgument, "{i}").WithArguments("int*").WithLocation(6, 13),
-                    // (6,14): error CS0306: The type 'S' may not be used as a type argument
-                    //     _ = $"{i}{s}";
-                    Diagnostic(ErrorCode.ERR_BadTypeArgument, "{s}").WithArguments("S").WithLocation(6, 11 + expression.Length));
+                // (6,13): error CS0306: The type 'int*' may not be used as a type argument
+                //     _ = $"""{i}""" + $"""{s}""";
+                Diagnostic(ErrorCode.ERR_BadTypeArgument, "{i}").WithArguments("int*").WithLocation(6, 13),
+                // (6,26): error CS0306: The type 'S' may not be used as a type argument
+                //     _ = $"""{i}""" + $"""{s}""";
+                Diagnostic(ErrorCode.ERR_BadTypeArgument, "{s}").WithArguments("S").WithLocation(6, 26));
             }
             else
             {
                 comp.VerifyDiagnostics(
-                    // (6,11): error CS0306: The type 'int*' may not be used as a type argument
-                    //     _ = $"{i}{s}";
-                    Diagnostic(ErrorCode.ERR_BadTypeArgument, "{i}").WithArguments("int*").WithLocation(6, 13),
-                    // (6,14): error CS0306: The type 'S' may not be used as a type argument
-                    //     _ = $"{i}{s}";
-                    Diagnostic(ErrorCode.ERR_BadTypeArgument, "{s}").WithArguments("S").WithLocation(6, 11 + expression.Length));
+                // (6,13): error CS0306: The type 'int*' may not be used as a type argument
+                //     _ = $"""{i}{s}""";
+                Diagnostic(ErrorCode.ERR_BadTypeArgument, "{i}").WithArguments("int*").WithLocation(6, 13),
+                // (6,16): error CS0306: The type 'S' may not be used as a type argument
+                //     _ = $"""{i}{s}""";
+                Diagnostic(ErrorCode.ERR_BadTypeArgument, "{s}").WithArguments("S").WithLocation(6, 16));
             }
         }
 
@@ -2120,28 +2120,37 @@ value:");
             if (expression.Contains('+'))
             {
                 comp.VerifyDiagnostics(
-                    // (1,29): error CS1503: Argument 1: cannot convert from '(<null>, default)' to 'object'
-                    // System.Console.WriteLine($"{(null, default)}{new()}");
-                    Diagnostic(ErrorCode.ERR_BadArgType, "(null, default)").WithArguments("1", "(<null>, default)", "object").WithLocation(1, 29),
-                    // (1,29): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                    // System.Console.WriteLine($"{(null, default)}{new()}");
-                    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "(null, default)").WithArguments("interpolated string handlers", "10.0").WithLocation(1, 29),
-                    // (1,46): error CS1729: 'string' does not contain a constructor that takes 0 arguments
-                    // System.Console.WriteLine($"{(null, default)}{new()}");
-                    Diagnostic(ErrorCode.ERR_BadCtorArgCount, "new()").WithArguments("string", "0").WithLocation(1, 19 + expression.Length));
+                // (1,26): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""{(null, default)}""""""").WithArguments("raw string literals").WithLocation(1, 26),
+                // (1,31): error CS1503: Argument 1: cannot convert from '(<null>, default)' to 'object'
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_BadArgType, "(null, default)").WithArguments("1", "(<null>, default)", "object").WithLocation(1, 31),
+                // (1,31): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "(null, default)").WithArguments("interpolated string handlers", "10.0").WithLocation(1, 31),
+                // (1,53): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""{new()}""""""").WithArguments("raw string literals").WithLocation(1, 53),
+                // (1,58): error CS1729: 'string' does not contain a constructor that takes 0 arguments
+                // System.Console.WriteLine($"""{(null, default)}""" + $"""{new()}""");
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, "new()").WithArguments("string", "0").WithLocation(1, 58));
             }
             else
             {
                 comp.VerifyDiagnostics(
-                    // (1,29): error CS1503: Argument 1: cannot convert from '(<null>, default)' to 'object'
-                    // System.Console.WriteLine($"{(null, default)}{new()}");
-                    Diagnostic(ErrorCode.ERR_BadArgType, "(null, default)").WithArguments("1", "(<null>, default)", "object").WithLocation(1, 29),
-                    // (1,29): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                    // System.Console.WriteLine($"{(null, default)}{new()}");
-                    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "(null, default)").WithArguments("interpolated string handlers", "10.0").WithLocation(1, 29),
-                    // (1,46): error CS1729: 'string' does not contain a constructor that takes 0 arguments
-                    // System.Console.WriteLine($"{(null, default)}{new()}");
-                    Diagnostic(ErrorCode.ERR_BadCtorArgCount, "new()").WithArguments("string", "0").WithLocation(1, 19 + expression.Length));
+                // (1,26): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                // System.Console.WriteLine($"""{(null, default)}{new()}""");
+                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""{(null, default)}{new()}""""""").WithArguments("raw string literals").WithLocation(1, 26),
+                // (1,31): error CS1503: Argument 1: cannot convert from '(<null>, default)' to 'object'
+                // System.Console.WriteLine($"""{(null, default)}{new()}""");
+                Diagnostic(ErrorCode.ERR_BadArgType, "(null, default)").WithArguments("1", "(<null>, default)", "object").WithLocation(1, 31),
+                // (1,31): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
+                // System.Console.WriteLine($"""{(null, default)}{new()}""");
+                Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, "(null, default)").WithArguments("interpolated string handlers", "10.0").WithLocation(1, 31),
+                // (1,48): error CS1729: 'string' does not contain a constructor that takes 0 arguments
+                // System.Console.WriteLine($"""{(null, default)}{new()}""");
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, "new()").WithArguments("string", "0").WithLocation(1, 48));
             }
         }
 
@@ -2629,13 +2638,27 @@ namespace System.Runtime.CompilerServices
 }";
 
             var comp = CreateCompilation(source);
-            comp.VerifyDiagnostics(
-                // (4,21): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' is malformed. It does not return 'void' or 'bool'.
-                // Console.WriteLine($"Text{1}");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)").WithLocation(4, 23),
-                // (4,25): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' is malformed. It does not return 'void' or 'bool'.
-                // Console.WriteLine($"Text{1}");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)").WithLocation(4, 21 + expression.Length));
+
+            if (expression.Contains('+'))
+            {
+                comp.VerifyDiagnostics(
+                    // (4,21): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' is malformed. It does not return 'void' or 'bool'.
+                    // Console.WriteLine($"Text{1}");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)").WithLocation(4, 23),
+                    // (4,25): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' is malformed. It does not return 'void' or 'bool'.
+                    // Console.WriteLine($"Text{1}");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)").WithLocation(4, 21 + expression.Length));
+            }
+            else
+            {
+                comp.VerifyDiagnostics(
+                    // (4,21): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' is malformed. It does not return 'void' or 'bool'.
+                    // Console.WriteLine($"Text{1}");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)").WithLocation(4, 23),
+                    // (4,25): error CS8941: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' is malformed. It does not return 'void' or 'bool'.
+                    // Console.WriteLine($"Text{1}");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnMalformed, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)").WithLocation(4, 21 + expression.Length));
+            }
         }
 
         [Fact]
