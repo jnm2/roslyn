@@ -29,10 +29,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 @"class C
 {
     string s = $"""""" """"""; 
-}").VerifyDiagnostics(
-                // (3,12): warning CS0414: The field 'C.s' is assigned but its value is never used
-                //     string s = """ """; 
-                Diagnostic(ErrorCode.WRN_UnreferencedFieldAssg, "s").WithArguments("C.s").WithLocation(3, 12));
+}").VerifyDiagnostics();
         }
 
         [Fact]
@@ -279,7 +276,10 @@ $""""""
     {
         var v = $""{$""""""}""""""}"";
     }
-}").VerifyDiagnostics();
+}").VerifyDiagnostics(
+                    // (5,24): error CS9123: Too many closing braces for raw string literal
+                    //         var v = $"{$"""}"""}";
+                    Diagnostic(ErrorCode.ERR_TooManyCloseBracesForRawString, "}").WithLocation(5, 24));
         }
 
         [Fact]
@@ -296,9 +296,9 @@ class C
         var v = await $"""""" """""";
     }
 }").VerifyDiagnostics(
-                // (8,17): error CS1061: 'string' does not contain a definition for 'GetAwaiter' and no accessible extension method 'GetAwaiter' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?)
-                //         var v = await """ """;
-                Diagnostic(ErrorCode.ERR_NoSuchMemberOrExtension, @"await """""" """"""").WithArguments("string", "GetAwaiter").WithLocation(8, 17));
+                    // (8,17): error CS1061: 'string' does not contain a definition for 'GetAwaiter' and no accessible extension method 'GetAwaiter' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?)
+                    //         var v = await $""" """;
+                    Diagnostic(ErrorCode.ERR_NoSuchMemberOrExtension, @"await $"""""" """"""").WithArguments("string", "GetAwaiter").WithLocation(8, 17));
         }
 
         [Fact]
@@ -378,7 +378,7 @@ class C
 }").VerifyDiagnostics(
                 // (6,9): error CS0201: Only assignment, call, increment, decrement, await, and new object expressions can be used as a statement
                 //         """ """;
-                Diagnostic(ErrorCode.ERR_IllegalStatement, @""""""" """"""").WithLocation(6, 9));
+                Diagnostic(ErrorCode.ERR_IllegalStatement, @"$"""""" """"""").WithLocation(6, 9));
         }
 
         [Fact]
