@@ -225,14 +225,14 @@ class C
 """"""}"";
     }
 }", parseOptions: TestOptions.Regular9).VerifyDiagnostics(
-                // (5,20): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
-                //         var v = $"{"""
-                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"""""""
+                    // (5,20): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                    //         var v = $"{$"""
+                    Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""
 
 """"""").WithArguments("raw string literals").WithLocation(5, 20),
-                // (7,4): error CS8967: Newlines inside a non-verbatim interpolated string are not supported in C# 9.0. Please use language version preview or greater.
-                // """}";
-                Diagnostic(ErrorCode.ERR_NewlinesAreNotAllowedInsideANonVerbatimInterpolatedString, "}").WithArguments("9.0", "preview").WithLocation(7, 4));
+                    // (7,4): error CS8967: Newlines inside a non-verbatim interpolated string are not supported in C# 9.0. Please use language version preview or greater.
+                    // """}";
+                    Diagnostic(ErrorCode.ERR_NewlinesAreNotAllowedInsideANonVerbatimInterpolatedString, "}").WithArguments("9.0", "preview").WithLocation(7, 4));
         }
 
         [Fact]
@@ -721,15 +721,15 @@ System.Console.WriteLine(
 System.Console.WriteLine(
     $""""""␠
     ␠"""");",
-                // (4,4): error CS9101: Unterminated raw string literal
-                //      ");
-                Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 4),
-                // (4,9): error CS1026: ) expected
-                //      ");
-                Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 9),
-                // (4,9): error CS1002: ; expected
-                //      ");
-                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 9));
+                    // (4,5): error CS9101: Unterminated raw string literal
+                    //      "");
+                    Diagnostic(ErrorCode.ERR_UnterminatedRawString, " ").WithLocation(4, 5),
+                    // (4,10): error CS1026: ) expected
+                    //      "");
+                    Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(4, 10),
+                    // (4,10): error CS1002: ; expected
+                    //      "");
+                    Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(4, 10));
         }
 
         [Fact]
