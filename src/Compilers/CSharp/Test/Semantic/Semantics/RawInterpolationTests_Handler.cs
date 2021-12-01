@@ -10585,7 +10585,7 @@ _ = i.ToString();
                 comp.VerifyDiagnostics(
                     // (5,5): error CS0165: Use of unassigned local variable 'i'
                     // _ = i.ToString();
-                    Diagnostic(ErrorCode.ERR_UseDefViolation, "i").WithArguments("i").WithLocation(5, 5)
+                    Diagnostic(ErrorCode.ERR_UseDefViolation, "i").WithArguments("i")
                 );
             }
             else
