@@ -383,6 +383,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 if ((window.PeekChar(0), window.PeekChar(1), window.PeekChar(2)) is ('$', '@', '"') or ('@', '$', '"'))
                 {
                     // $@" or @$"
+                    //
+                    // Note: we do not consider $@""" as the start of raw-string (in error conditions) as that's a legal
+                    // verbatim string beginning already.
+
                     kind = InterpolatedStringKind.Verbatim;
                     startingDollarSignCount = 1;
                     startingQuoteCount = 1;
