@@ -624,14 +624,14 @@ value:1,alignment:2:format:Y";
 
             string expectedIl = getIl();
 
-            var verifier = CompileAndVerify(new[] { source, interpolatedStringBuilder }, expectedOutput: expectedOutput, targetFramework: TargetFramework.NetCoreApp, parseOptions: TestOptions.Regular10);
+            var verifier = CompileAndVerify(new[] { source, interpolatedStringBuilder }, expectedOutput: expectedOutput, targetFramework: TargetFramework.NetCoreApp, parseOptions: TestOptions.RegularPreview);
             verifier.VerifyIL("<top-level-statements-entry-point>", expectedIl);
 
             var comp1 = CreateCompilation(interpolatedStringBuilder, targetFramework: TargetFramework.NetCoreApp);
 
             foreach (var reference in new[] { comp1.EmitToImageReference(), comp1.ToMetadataReference() })
             {
-                var comp2 = CreateCompilation(source, new[] { reference }, targetFramework: TargetFramework.NetCoreApp, parseOptions: TestOptions.Regular10);
+                var comp2 = CreateCompilation(source, new[] { reference }, targetFramework: TargetFramework.NetCoreApp, parseOptions: TestOptions.RegularPreview);
                 verifier = CompileAndVerify(comp2, expectedOutput: expectedOutput);
                 verifier.VerifyIL("<top-level-statements-entry-point>", expectedIl);
             }
