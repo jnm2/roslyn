@@ -2812,22 +2812,22 @@ namespace System.Runtime.CompilerServices
             if (expression1.Contains('+'))
             {
                 comp.VerifyDiagnostics(
-                    // (4,25): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' has inconsistent return type. Expected to return 'void'.
-                    // Console.WriteLine($"Text{1}");
-                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)", "void").WithLocation(4, 17 + expression1.Length),
-                    // (5,24): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' has inconsistent return type. Expected to return 'bool'.
-                    // Console.WriteLine($"{1}Text");
-                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)", "bool").WithLocation(5, 16 + expression2.Length));
+                    // (4,37): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' has inconsistent return type. Expected to return 'void'.
+                    // Console.WriteLine($"""Text""" + $"""{1}""");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)", "void").WithLocation(4, 37),
+                    // (5,36): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' has inconsistent return type. Expected to return 'bool'.
+                    // Console.WriteLine($"""{1}""" + $"""Text""");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)", "bool").WithLocation(5, 36));
             }
             else
             {
                 comp.VerifyDiagnostics(
-                    // (4,25): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' has inconsistent return type. Expected to return 'void'.
-                    // Console.WriteLine($"Text{1}");
-                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)", "void").WithLocation(4, 17 + expression1.Length),
-                    // (5,24): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' has inconsistent return type. Expected to return 'bool'.
-                    // Console.WriteLine($"{1}Text");
-                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)", "bool").WithLocation(5, 16 + expression2.Length));
+                    // (4,27): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendFormatted(object)' has inconsistent return type. Expected to return 'void'.
+                    // Console.WriteLine($"""Text{1}""");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "{1}").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendFormatted(object)", "void").WithLocation(4, 27),
+                    // (5,26): error CS8942: Interpolated string handler method 'DefaultInterpolatedStringHandler.AppendLiteral(string)' has inconsistent return type. Expected to return 'bool'.
+                    // Console.WriteLine($"""{1}Text""");
+                    Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerMethodReturnInconsistent, "Text").WithArguments("System.Runtime.CompilerServices.DefaultInterpolatedStringHandler.AppendLiteral(string)", "bool").WithLocation(5, 26));
             }
         }
 
@@ -3773,12 +3773,27 @@ namespace System.Runtime.CompilerServices
             if (expression.Contains('+'))
             {
                 comp.VerifyDiagnostics(
-                    // (3,11): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                    // C.M(() => $"{new S { Field = "Field" }}");
-                    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, expression).WithArguments("interpolated string handlers", "10.0").WithLocation(3, 11),
-                    // (3,14): error CS8773: Feature 'interpolated string handlers' is not available in C# 9.0. Please use language version 10.0 or greater.
-                    // C.M(() => $"{new S { Field = "Field" }}");
-                    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion9, @"new S { Field = ""Field"" }").WithArguments("interpolated string handlers", "10.0").WithLocation(3, 14));
+                    // (3,11): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                    // C.M(() => $"""{new S { Field = """Field""" }}""" + $"""
+                    Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""{new S { Field = """"""Field"""""" }}""""""").WithArguments("raw string literals").WithLocation(3, 11),
+                    // (3,32): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                    // C.M(() => $"""{new S { Field = """Field""" }}""" + $"""
+                    Diagnostic(ErrorCode.ERR_FeatureInPreview, @"""""""Field""""""").WithArguments("raw string literals").WithLocation(3, 32),
+                    // (3,52): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                    // C.M(() => $"""{new S { Field = """Field""" }}""" + $"""
+                    Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""
+
+""""""").WithArguments("raw string literals").WithLocation(3, 52));
+            }
+            else
+            {
+                comp.VerifyDiagnostics(
+                // (3,11): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                // C.M(() => $"""{new S { Field = """Field""" }}""");
+                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"$""""""{new S { Field = """"""Field"""""" }}""""""").WithArguments("raw string literals").WithLocation(3, 11),
+                // (3,32): error CS8652: The feature 'raw string literals' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+                // C.M(() => $"""{new S { Field = """Field""" }}""");
+                Diagnostic(ErrorCode.ERR_FeatureInPreview, @"""""""Field""""""").WithArguments("raw string literals").WithLocation(3, 32));
             }
 
             comp = CreateCompilation(source, parseOptions: TestOptions.RegularPreview, targetFramework: TargetFramework.NetCoreApp);
