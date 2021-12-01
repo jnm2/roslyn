@@ -619,6 +619,66 @@ class C
             CreateCompilation(text).VerifyDiagnostics();
         }
 
+        [Fact]
+        public void SingleLineInterpolationContainingClosingBraceAsCharacterLiteral()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{'}'}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationContainingClosingBraceAsRegularStringLiteral()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{""}""}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationContainingClosingBraceAsVerbatimStringLiteral()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{@""}""}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void SingleLineInterpolationContainingClosingBraceAsRawStringLiteral()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $""""""{""""""}""""""}"""""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
         #endregion
     }
 }
