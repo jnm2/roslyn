@@ -5203,13 +5203,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,5): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 5),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 5),
                 // (1,5): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 5),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 5),
                 // (1,5): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 5)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 5)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5286,13 +5292,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,8): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5372,13 +5384,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,8): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5455,13 +5473,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,5): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 5),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 5),
                 // (1,5): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 5),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 5),
                 // (1,5): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 5)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 5)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5538,13 +5562,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,8): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5580,13 +5610,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,8): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5622,13 +5658,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,8): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 8),
                 // (1,8): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M(1, $"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 8)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5707,13 +5749,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,5): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 5),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 5),
                 // (1,5): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 5),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 5),
                 // (1,5): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 5)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 5)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5792,13 +5840,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,11): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // _ = new C($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 11),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 11),
                 // (1,11): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // _ = new C($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 11),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 11),
                 // (1,11): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // _ = new C($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 11)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 11)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -5881,13 +5935,19 @@ End Structure
             comp.VerifyEmitDiagnostics(
                 // (1,20): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // C<CustomHandler>.M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 20),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(1, 20),
                 // (1,20): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // C<CustomHandler>.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(1, 20),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(1, 20),
                 // (1,20): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // C<CustomHandler>.M($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(1, 20)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(1, 20)
             );
 
             var customHandler = comp.GetTypeByMetadataName("CustomHandler");
@@ -12682,7 +12742,9 @@ M($""""""
             comp.VerifyDiagnostics(
                 // (4,3): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 3),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 3),
                 // (6,10): error CS8944: 'M(CustomHandler)' is not an instance method, the receiver cannot be an interpolated string handler argument.
                 //  void M([InterpolatedStringHandlerArgument("")] CustomHandler c) { }
                 Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgument("""")").WithArguments("M(CustomHandler)").WithLocation(6, 10 + mod.Length)
@@ -12827,10 +12889,12 @@ delegate void M([InterpolatedStringHandlerArgument("""")] CustomHandler c);
             comp.VerifyDiagnostics(
                 // (6,3): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // m($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(6, 3),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(6, 3),
                 // (8,18): error CS8944: 'M.Invoke(CustomHandler)' is not an instance method, the receiver cannot be an interpolated string handler argument.
                 // delegate void M([InterpolatedStringHandlerArgument("")] CustomHandler c);
-                Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgument("""")").WithArguments("M.Invoke(CustomHandler)").WithLocation(8, 18)
+                Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgument("""")").WithArguments("M.Invoke(CustomHandler)").WithLocation(10, 18)
             );
         }
 
@@ -12861,13 +12925,19 @@ m($""""""
             comp.VerifyDiagnostics(
                 // (4,3): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // m($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 3),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(4, 3),
                 // (4,3): error CS1729: 'CustomHandler' does not contain a constructor that takes 2 arguments
                 // m($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "2").WithLocation(4, 3),
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "2").WithLocation(4, 3),
                 // (4,3): error CS1729: 'CustomHandler' does not contain a constructor that takes 3 arguments
                 // m($"");
-                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""").WithArguments("CustomHandler", "3").WithLocation(4, 3)
+                Diagnostic(ErrorCode.ERR_BadCtorArgCount, @"$""""""
+
+""""""").WithArguments("CustomHandler", "3").WithLocation(4, 3)
             );
         }
 
@@ -13170,7 +13240,9 @@ partial struct CustomHandler
             comp.VerifyDiagnostics(
                 // (5,5): error CS8949: The InterpolatedStringHandlerArgumentAttribute applied to parameter 'CustomHandler' is malformed and cannot be interpreted. Construct an instance of 'CustomHandler' manually.
                 // s.M($"");
-                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(5, 5),
+                Diagnostic(ErrorCode.ERR_InterpolatedStringHandlerArgumentAttributeMalformed, @"$""""""
+
+""""""").WithArguments("CustomHandler", "CustomHandler").WithLocation(5, 5),
                 // (14,38): error CS8944: 'S1Ext.M(S1, CustomHandler)' is not an instance method, the receiver cannot be an interpolated string handler argument.
                 //     public static void M(this S1 s, [InterpolatedStringHandlerArgument("")] CustomHandler c) => throw null;
                 Diagnostic(ErrorCode.ERR_NotInstanceInvalidInterpolatedStringHandlerArgumentName, @"InterpolatedStringHandlerArgument("""")").WithArguments("S1Ext.M(S1, CustomHandler)").WithLocation(14, 38)
@@ -13401,10 +13473,14 @@ struct CustomHandler
             comp.VerifyDiagnostics(
                 // (4,19): error CS7036: There is no argument given that corresponds to the required formal parameter 's' of 'CustomHandler.CustomHandler(int, int, string)'
                 // CustomHandler c = $"";
-                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, @"$""""").WithArguments("s", "CustomHandler.CustomHandler(int, int, string)").WithLocation(4, 19),
+                Diagnostic(ErrorCode.ERR_NoCorrespondingArgument, @"$""""""
+
+""""""").WithArguments("s", "CustomHandler.CustomHandler(int, int, string)").WithLocation(4, 19),
                 // (4,19): error CS1615: Argument 3 may not be passed with the 'out' keyword
                 // CustomHandler c = $"";
-                Diagnostic(ErrorCode.ERR_BadArgExtraRef, @"$""""").WithArguments("3", "out").WithLocation(4, 19)
+                Diagnostic(ErrorCode.ERR_BadArgExtraRef, @"$""""""
+
+""""""").WithArguments("3", "out").WithLocation(4, 19)
             );
         }
 

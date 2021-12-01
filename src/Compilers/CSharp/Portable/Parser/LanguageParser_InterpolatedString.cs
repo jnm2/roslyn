@@ -194,7 +194,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     // No interpolations.  Just grab the whole chunk of text and split it as appropriate.
                     var text = originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)];
-                    builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, text, first: true));
+                    if (text.Length > 0)
+                        builder.Add(splitContent(indentationWhitespace, currentLineWhitespace, content, text, first: true));
                 }
                 else
                 {
