@@ -26,6 +26,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         private int ConsumeDollarSignSequence()
             => ConsumeCharSequence('$');
 
+        private int ConsumeAtSignSequence()
+            => ConsumeCharSequence('@');
+
         private int ConsumeOpenBraceSequence()
             => ConsumeCharSequence('{');
 

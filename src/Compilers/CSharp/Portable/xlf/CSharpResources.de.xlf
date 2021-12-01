@@ -242,6 +242,11 @@
         <target state="translated">Der Delegattyp konnte nicht abgeleitet werden.</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_CannotMixVerbatimAndRawStrings">
+        <source>Cannot mix verbatim and raw strings</source>
+        <target state="new">Cannot mix verbatim and raw strings</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ERR_CannotSpecifyManagedWithUnmanagedSpecifiers">
         <source>'managed' calling convention cannot be combined with unmanaged calling convention specifiers.</source>
         <target state="translated">Die Aufrufkonvention "managed" kann nicht mit Spezifizierern für nicht verwaltete Aufrufkonventionen kombiniert werden.</target>

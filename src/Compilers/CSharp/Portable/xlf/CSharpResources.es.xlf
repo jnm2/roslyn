@@ -242,6 +242,11 @@
         <target state="translated">El tipo de delegado no se puede deducir.</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_CannotMixVerbatimAndRawStrings">
+        <source>Cannot mix verbatim and raw strings</source>
+        <target state="new">Cannot mix verbatim and raw strings</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ERR_CannotSpecifyManagedWithUnmanagedSpecifiers">
         <source>'managed' calling convention cannot be combined with unmanaged calling convention specifiers.</source>
         <target state="translated">La convención de llamada "managed" no se puede combinar con especificadores de convención de llamada no administrados.</target>

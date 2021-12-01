@@ -933,12 +933,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             if (TextWindow.PeekChar(1) == '"')
             {
+                // @"
                 this.ScanVerbatimStringLiteral(ref info);
                 return true;
             }
             else if (TextWindow.PeekChar(1) == '$' && TextWindow.PeekChar(2) == '"')
             {
+                // @$"
                 this.ScanInterpolatedStringLiteral(ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '$' && TextWindow.PeekChar(2) == '$')
+            {
+                // @$$ - Error case.  Detect if user is trying to user verbatim and raw interpolations together.
+                this.ScanRawInterpolatedStringLiteral(ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '@')
+            {
+                // @@ - Error case.  Detect if user is trying to user verbatim and raw interpolations together.
+                this.ScanRawInterpolatedStringLiteral(ref info);
                 return true;
             }
 
@@ -949,7 +963,27 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
             Debug.Assert(TextWindow.PeekChar() == '$');
 
-            if (TextWindow.PeekChar(1) == '"')
+            if (TextWindow.PeekChar(1) == '"' &&
+                TextWindow.PeekChar(2) == '"' &&
+                TextWindow.PeekChar(3) == '"')
+            {
+                // $""" - definitely starts a raw interpolated string.
+                ScanRawInterpolatedStringLiteral(ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '$')
+            {
+                // $$ - definitely starts a raw interpolated string.
+                this.ScanRawInterpolatedStringLiteral(ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '@' && TextWindow.PeekChar(2) == '@')
+            {
+                // $@@ - Error case.  Detect if user is trying to user verbatim and raw interpolations together.
+                this.ScanRawInterpolatedStringLiteral(ref info);
+                return true;
+            }
+            else if (TextWindow.PeekChar(1) == '"')
             {
                 this.ScanInterpolatedStringLiteral(ref info);
                 return true;
@@ -957,12 +991,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             else if (TextWindow.PeekChar(1) == '@' && TextWindow.PeekChar(2) == '"')
             {
                 this.ScanInterpolatedStringLiteral(ref info);
-                return true;
-            }
-            else if (TextWindow.PeekChar(1) == '$')
-            {
-                // $$ must start a raw string literal.  Note $""" will be handled by ScanInterpolatedStringLiteral above.
-                this.ScanRawInterpolatedStringLiteral(ref info);
                 return true;
             }
 

@@ -222,15 +222,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // /**/ comments, ' characters quotes, () parens
             // [] brackets, and "" strings, including interpolated holes in the latter.
 
-            if (TextWindow.PeekChar(0) == '$' &&
-                TextWindow.PeekChar(1) == '"' &&
-                TextWindow.PeekChar(2) == '"' &&
-                TextWindow.PeekChar(3) == '"')
-            {
-                ScanRawInterpolatedStringLiteral(ref info);
-                return;
-            }
-
             ScanInterpolatedStringLiteralTop(
                 ref info,
                 out var error,

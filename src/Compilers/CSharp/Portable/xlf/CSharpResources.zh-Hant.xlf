@@ -242,6 +242,11 @@
         <target state="translated">無法推斷委派類型。</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_CannotMixVerbatimAndRawStrings">
+        <source>Cannot mix verbatim and raw strings</source>
+        <target state="new">Cannot mix verbatim and raw strings</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ERR_CannotSpecifyManagedWithUnmanagedSpecifiers">
         <source>'managed' calling convention cannot be combined with unmanaged calling convention specifiers.</source>
         <target state="translated">'managed' 呼叫慣例不得與未受控的呼叫慣例指定名稱並用。</target>

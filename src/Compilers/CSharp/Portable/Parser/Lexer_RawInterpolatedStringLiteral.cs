@@ -17,24 +17,44 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // RawInterpolatedStringLiteralExpression node created with appropriate contents.
             info.Kind = SyntaxKind.InterpolatedStringToken;
 
-            var beforeDollarSignPosition = this.TextWindow.Position;
-            var startingDollarSignCount = ConsumeDollarSignSequence();
-            Debug.Assert(startingDollarSignCount >= 1);
+            var start = this.TextWindow.Position;
 
-            var startingQuoteCount = ConsumeQuoteSequence();
-            if (startingQuoteCount < 3)
+            var prefixAtCount = ConsumeAtSignSequence();
+            var dollarSignCount = ConsumeDollarSignSequence();
+            var suffixAtCount = ConsumeAtSignSequence();
+            var quoteCount = ConsumeQuoteSequence();
+
+            var totalAtCount = prefixAtCount + suffixAtCount;
+
+            if (totalAtCount > 0)
+            {
+                if (dollarSignCount > 0 || quoteCount > 0)
+                {
+                    // user had @'s mixed with $'s or "'s.  They're definitely trying to make some sort of weird
+                    // verbatim/raw hybrid.  Give an explicit error that this is not ok.
+                    this.AddError(start, width: this.TextWindow.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings);
+                    return;
+                }
+                else
+                {
+                    // There were multiple @'s but no $'s or "'s.  
+                    Debug.Assert(totalAtCount >= 2);
+                    this.AddError(start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral);
+                    return;
+                }
+            }
+
+            Debug.Assert(dollarSignCount > 0);
+
+            if (quoteCount < 3)
             {
                 // Note: 0-2 quotes are possible as we can enter ScanRawInterpolatedStringLiteral after only seeing
                 // two or more $$ chars and nothing else.
-                Debug.Assert(startingDollarSignCount >= 2);
-                this.AddError(beforeDollarSignPosition, width: this.TextWindow.Position - beforeDollarSignPosition, ErrorCode.ERR_NotEnoughQuotesForRawString);
+                this.AddError(start, width: this.TextWindow.Position - start, ErrorCode.ERR_NotEnoughQuotesForRawString);
                 return;
             }
 
-            // TODO: We could consider looking for mistakes like the user using `@` here to provide them with a special
-            // clarifying diagnostic message.
-
-            this.TextWindow.Reset(beforeDollarSignPosition);
+            this.TextWindow.Reset(start);
             ScanInterpolatedStringLiteralTop(
                 ref info,
                 out var error,

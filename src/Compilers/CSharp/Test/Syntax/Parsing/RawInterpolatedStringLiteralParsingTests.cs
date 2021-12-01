@@ -679,6 +679,276 @@ class C
             CreateCompilation(text).VerifyDiagnostics();
         }
 
+        [Fact]
+        public void MultipleAtSigns1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void MultipleAtSigns2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void MultipleAtSigns3()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@"""""" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void MultipleAtSigns4()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@@;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void MultipleAtSigns5()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@@"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void MultipleAtSigns6()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@@"""""" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void DollarThenAt1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $@@;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void DollarThenAt2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $@@"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void DollarThenAt3()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $@@"""""" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void DollarThenAt4()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $@@@;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void DollarThenAt5()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $@@@"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void DollarThenAt6()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $@@@"""""" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AtThenDollar1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@$;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AtThenDollar2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@$"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AtThenDollar3()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@$"""""" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AtThenDollar4()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@$$;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AtThenDollar5()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@$$"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AtThenDollar6()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = @@$$"""""" """""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics();
+        }
+
         #endregion
     }
 }
