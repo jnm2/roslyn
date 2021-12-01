@@ -432,7 +432,7 @@ class C
 {
     static void Main()
     {
-        Console.WriteLine($""""""abc""def"""""");
+        Console.Write($""""""abc""def"""""");
     }
 }", expectedOutput: @"abc""def");
         }
@@ -444,7 +444,7 @@ class C
 @"
 using System;
 
-Console.WriteLine($""""""abc""def"""""");
+Console.Write($""""""abc""def"""""");
 ", expectedOutput: @"abc""def");
         }
 
@@ -459,7 +459,7 @@ class C
 {
     static void Main()
     {
-        Console.WriteLine($""""""
+        Console.Write($""""""
                           abc""
                           def
                           """""");
@@ -478,7 +478,7 @@ class C
 {
     static void Main()
     {
-        Console.WriteLine(
+        Console.Write(
             $""""""
             abc""
             def
@@ -491,7 +491,7 @@ class C
         public void MultiLineCase01()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $"""""");",
                 // (3,6): error CS9101: Unterminated raw string literal
                 //     $""");
@@ -508,7 +508,7 @@ System.Console.WriteLine(
         public void MultiLineCase02()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""
     "");",
                 // (4,3): error CS9101: Unterminated raw string literal
@@ -526,7 +526,7 @@ System.Console.WriteLine(
         public void MultiLineCase03()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""
     """");",
                 // (4,4): error CS9101: Unterminated raw string literal
@@ -544,7 +544,7 @@ System.Console.WriteLine(
         public void MultiLineCase04()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""
     """""");",
                 // (4,1): error CS9104: Raw string literal delimiter must be on its own line
@@ -556,7 +556,7 @@ System.Console.WriteLine(
         public void MultiLineCase05()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""
 
     """""");", expectedOutput: "");
@@ -566,7 +566,7 @@ System.Console.WriteLine(
         public void MultiLineCase06()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠
     "");",
                 // (4,3): error CS9101: Unterminated raw string literal
@@ -584,7 +584,7 @@ System.Console.WriteLine(
         public void MultiLineCase07()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠
     """");",
                 // (4,4): error CS9101: Unterminated raw string literal
@@ -602,7 +602,7 @@ System.Console.WriteLine(
         public void MultiLineCase08()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠
     """""");",
                 // (4,1): error CS9104: Raw string literal delimiter must be on its own line
@@ -614,7 +614,7 @@ System.Console.WriteLine(
         public void MultiLineCase09()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠
 
     """""");", expectedOutput: "");
@@ -624,7 +624,7 @@ System.Console.WriteLine(
         public void MultiLineCase10()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
     "");",
                 // (4,3): error CS9101: Unterminated raw string literal
@@ -642,7 +642,7 @@ System.Console.WriteLine(
         public void MultiLineCase11()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
     """");",
                 // (4,4): error CS9101: Unterminated raw string literal
@@ -660,7 +660,7 @@ System.Console.WriteLine(
         public void MultiLineCase12()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
     """""");",
                 // (4,1): error CS9104: Raw string literal delimiter must be on its own line
@@ -672,7 +672,7 @@ System.Console.WriteLine(
         public void MultiLineCase13()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
 
     """""");", expectedOutput: "");
@@ -682,7 +682,7 @@ System.Console.WriteLine(
         public void MultiLineCase14()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""
     ␠"");",
                 // (4,4): error CS9101: Unterminated raw string literal
@@ -700,7 +700,7 @@ System.Console.WriteLine(
         public void MultiLineCase15()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""
     ␠"""");",
                 // (4,5): error CS9101: Unterminated raw string literal
@@ -718,7 +718,7 @@ System.Console.WriteLine(
         public void MultiLineCase16()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠
     ␠"""");",
                     // (4,5): error CS9101: Unterminated raw string literal
@@ -736,7 +736,7 @@ System.Console.WriteLine(
         public void MultiLineCase17()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
     ␠␠"""");",
                 // (4,6): error CS9101: Unterminated raw string literal
@@ -754,7 +754,7 @@ System.Console.WriteLine(
         public void MultiLineCase18()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
     ␠␠"""""");",
                 // (4,3): error CS9104: Raw string literal delimiter must be on its own line
@@ -766,7 +766,7 @@ System.Console.WriteLine(
         public void MultiLineCase19()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
 
     ␠␠"""""");", expectedOutput: "");
@@ -776,7 +776,7 @@ System.Console.WriteLine(
         public void MultiLineCase20()
         {
             RenderAndVerify(@"
-System.Console.WriteLine(
+System.Console.Write(
     $""""""␠␠
     a""
     """""");", expectedOutput: "a\"");
