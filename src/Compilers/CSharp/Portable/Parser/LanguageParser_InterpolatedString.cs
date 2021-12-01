@@ -283,11 +283,18 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         }
                     }
 
+                    // Skip the leading whitespace that matches the terminator line and add any whitespace past that to the
+                    // string value.
+                    for (var i = indentationWhitespace.Length; i < currentLineWhitespace.Length; i++)
+                        content.Append(currentLineWhitespace[i]);
+
                     ConsumeRemainingContentOnLine(content, text, ref currentIndex);
                 }
 
+                // if we ran into any errors, don't give this item any special value.  It just has the value of our actual text.
+                var value = error == null ? content.ToString() : text;
                 var result = SyntaxFactory.InterpolatedStringText(
-                    SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, value: content.ToString(), trailing: null));
+                    SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, value, trailing: null));
                 if (error != null)
                     result = result.WithDiagnosticsGreen(new[] { error });
 
