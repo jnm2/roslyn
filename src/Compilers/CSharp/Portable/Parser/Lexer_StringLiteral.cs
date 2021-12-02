@@ -299,7 +299,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// things worse.
             /// </summary>
             public SyntaxDiagnosticInfo? Error = null;
-            private bool EncounteredUnrecoverableError = false;
 
             public InterpolatedStringScanner(Lexer lexer)
             {
@@ -319,23 +318,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     (ch == SlidingTextWindow.InvalidCharacter && _lexer.TextWindow.IsReallyAtEnd());
             }
 
-            private void TrySetUnrecoverableError(SyntaxDiagnosticInfo error)
+            private void TrySetError(SyntaxDiagnosticInfo error)
             {
                 // only need to record the first error we hit
                 Error ??= error;
-
-                // No matter what, ensure that we know we hit an error we can't recover from.
-                EncounteredUnrecoverableError = true;
-            }
-
-            private void TrySetRecoverableError(SyntaxDiagnosticInfo error)
-            {
-                // only need to record the first error we hit
-                Error ??= error;
-
-                // Do not touch 'EncounteredUnrecoverableError'.  If we already encountered something unrecoverable,
-                // that doesn't change.  And if we haven't hit something unrecoverable then we stay in that mode as this
-                // is a recoverable error.
             }
 
             internal void ScanInterpolatedStringLiteralTop(
@@ -347,13 +333,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // Scan through the open-quote portion of this literal, determining important information the rest of
                 // the scanning needs.
                 var start = _lexer.TextWindow.Position;
-                ScanOpenQuote(out kind, out var startingDollarSignCount, out var startingQuoteCount);
+                var succeeded = ScanOpenQuote(out kind, out var startingDollarSignCount, out var startingQuoteCount);
                 Debug.Assert(_lexer.TextWindow.Position != start);
 
                 openQuoteRange = new Range(start, _lexer.TextWindow.Position);
                 Debug.Assert(kind != default);
 
-                if (this.EncounteredUnrecoverableError)
+                if (!succeeded)
                 {
                     // Processing the start of this literal didn't give us enough information to proceed.  Stop now,
                     // terminating the string to the furthest point we reached.
@@ -371,7 +357,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// then this is a normal (non-raw) interpolation and `{{` is treated as an escape.
             /// </param>
             /// <param name="startingQuoteCount">Number of '"' characters this interpolated string started with.</param>
-            private void ScanOpenQuote(
+            /// <returns><see langword="true"/> if we successfully processed the open quote range and can proceed to the
+            /// rest of the literal. <see langword="false"/> if we were not successful and should stop
+            /// processing.</returns>
+            private bool ScanOpenQuote(
                 out InterpolatedStringKind kind,
                 out int startingDollarSignCount,
                 out int startingQuoteCount)
@@ -391,7 +380,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     startingDollarSignCount = 1;
                     startingQuoteCount = 1;
                     window.AdvanceChar(3);
-                    return;
+                    return true;
                 }
 
                 if ((window.PeekChar(0), window.PeekChar(1), window.PeekChar(2), window.PeekChar(3)) is
@@ -404,7 +393,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     startingDollarSignCount = 1;
                     startingQuoteCount = 1;
                     window.AdvanceChar(2);
-                    return;
+                    return true;
                 }
 
                 // From this point we have a raw literal of some sort.
@@ -431,36 +420,36 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             // just multiple @'s in a row.  Give a general message about how @ signs work.
 
                             Debug.Assert(totalAtCount >= 2);
-                            TrySetUnrecoverableError(_lexer.MakeError(
+                            TrySetError(_lexer.MakeError(
                                 start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
-                            kind = InterpolatedStringKind.SingleLineRaw;
-                            return;
                         }
                         else
                         {
                             // @'s followed by curlies/quotes (but not both).  The user is clearly trying to do
                             // something with verbatim + raw literals.  Give an error that the @ is illegal to mix. But
                             // bail out since there's nothing we can do at this point.
-                            TrySetUnrecoverableError(_lexer.MakeError(
+                            TrySetError(_lexer.MakeError(
                                 start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
-                            kind = InterpolatedStringKind.SingleLineRaw;
-                            return;
                         }
+
+                        // can't proceed here at all since we need at least one curly and one quote.
+                        kind = InterpolatedStringKind.SingleLineRaw;
+                        return false;
                     }
 
                     // we had an @ sign, but we also had $'s and "'s.  Give an error that the @ is illegal.  But we can
                     // still proceed using the normal logic for this string.
-                    TrySetRecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
                 }
 
                 if (startingQuoteCount == 0)
                 {
                     // We have no quotes at all.  We can't proceed at all.
-                    TrySetUnrecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         start, width: window.Position - start, ErrorCode.ERR_NotEnoughQuotesForRawString));
                     kind = InterpolatedStringKind.SingleLineRaw;
-                    return;
+                    return false;
                 }
 
                 // Ad this point, we have some sort of reasonable string to work with that we can process the inside of
@@ -470,7 +459,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 if (startingQuoteCount < 3)
                 {
                     // 1-2 quotes present.  Not legal.  But we can give a good error message and still proceed.
-                    TrySetRecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         window.Position - startingQuoteCount, width: startingQuoteCount, ErrorCode.ERR_NotEnoughQuotesForRawString));
                 }
 
@@ -492,6 +481,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     window.Reset(afterQuotePosition);
                     kind = InterpolatedStringKind.SingleLineRaw;
                 }
+
+                return true;
             }
 
             private void ScanInterpolatedStringLiteralEnd(InterpolatedStringKind kind, int startingQuoteCount, out Range closeQuoteRange)
@@ -523,7 +514,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // file in the normal/verbatim case.
                     Debug.Assert(IsAtEnd(kind));
 
-                    TrySetUnrecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         IsAtEnd(allowNewline: true) ? _lexer.TextWindow.Position - 1 : _lexer.TextWindow.Position,
                         width: 1, ErrorCode.ERR_UnterminatedStringLit));
                 }
@@ -546,7 +537,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         // file in the normal/verbatim case.
                         Debug.Assert(IsAtEnd(kind));
 
-                        TrySetUnrecoverableError(_lexer.MakeError(
+                        TrySetError(_lexer.MakeError(
                             IsAtEnd(allowNewline: true) ? _lexer.TextWindow.Position - 1 : _lexer.TextWindow.Position,
                             width: 1, ErrorCode.ERR_UnterminatedRawString));
                     }
@@ -564,7 +555,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         if (closeQuoteCount > startingQuoteCount)
                         {
                             var excessQuoteCount = closeQuoteCount - startingQuoteCount;
-                            TrySetUnrecoverableError(_lexer.MakeError(
+                            TrySetError(_lexer.MakeError(
                                 position: _lexer.TextWindow.Position - excessQuoteCount,
                                 width: excessQuoteCount,
                                 ErrorCode.ERR_TooManyQuotesForRawString));
@@ -581,7 +572,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                     if (IsAtEnd(kind))
                     {
-                        TrySetUnrecoverableError(_lexer.MakeError(
+                        TrySetError(_lexer.MakeError(
                             _lexer.TextWindow.Position - 1, width: 1, ErrorCode.ERR_UnterminatedRawString));
                     }
                     else if (_lexer.TextWindow.PeekChar() == '"')
@@ -592,7 +583,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         // We must have too many close quotes.  If we had less, they would have just been consumed as content.
                         Debug.Assert(closeQuoteCount >= startingQuoteCount);
 
-                        TrySetUnrecoverableError(_lexer.MakeError(
+                        TrySetError(_lexer.MakeError(
                             position: _lexer.TextWindow.Position - closeQuoteCount,
                             width: closeQuoteCount,
                             ErrorCode.ERR_RawStringDelimiterOnOwnLine));
@@ -612,7 +603,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         if (closeQuoteCount > startingQuoteCount)
                         {
                             var excessQuoteCount = closeQuoteCount - startingQuoteCount;
-                            TrySetUnrecoverableError(_lexer.MakeError(
+                            TrySetError(_lexer.MakeError(
                                 position: _lexer.TextWindow.Position - excessQuoteCount,
                                 width: excessQuoteCount,
                                 ErrorCode.ERR_TooManyQuotesForRawString));
@@ -660,7 +651,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                                 char ch = _lexer.ScanEscapeSequence(surrogateCharacter: out _);
                                 if (ch == '{' || ch == '}')
                                 {
-                                    TrySetUnrecoverableError(_lexer.MakeError(escapeStart, _lexer.TextWindow.Position - escapeStart, ErrorCode.ERR_EscapedCurly, ch));
+                                    TrySetError(_lexer.MakeError(escapeStart, _lexer.TextWindow.Position - escapeStart, ErrorCode.ERR_EscapedCurly, ch));
                                 }
                             }
                             else
@@ -774,7 +765,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else
                     {
-                        TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "}"));
+                        TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "}"));
                     }
                 }
                 else
@@ -789,11 +780,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     var closeBraceCount = _lexer.ConsumeCloseBraceSequence();
                     if (closeBraceCount >= startingDollarSignCount)
                     {
-                        TrySetRecoverableError(
-                            _lexer.MakeError(
-                                position: _lexer.TextWindow.Position - closeBraceCount,
-                                width: closeBraceCount,
-                                ErrorCode.ERR_TooManyCloseBracesForRawString));
+                        TrySetError(_lexer.MakeError(
+                            position: _lexer.TextWindow.Position - closeBraceCount,
+                            width: closeBraceCount,
+                            ErrorCode.ERR_TooManyCloseBracesForRawString));
                     }
                 }
             }
@@ -829,7 +819,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else
                     {
-                        TrySetUnrecoverableError(_lexer.MakeError(openBracePosition - 1, 2, ErrorCode.ERR_UnclosedExpressionHole));
+                        TrySetError(_lexer.MakeError(openBracePosition - 1, 2, ErrorCode.ERR_UnclosedExpressionHole));
                     }
 
                     interpolations?.Add(new Interpolation(
@@ -861,7 +851,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     // Too many open braces.  Report an error on the portion up before the section that counts as the
                     // start of the interpolation.
-                    TrySetUnrecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         beforeOpenBracesPosition,
                         width: openBraceCount - startingDollarSignCount,
                         ErrorCode.ERR_TooManyOpenBracesForRawString));
@@ -876,7 +866,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 if (closeBraceCount == 0)
                 {
                     // Didn't find any close braces.  Report a particular error on the open curlies that they are unclosed.
-                    TrySetUnrecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         position: afterOpenBracePosition - startingDollarSignCount,
                         width: startingDollarSignCount,
                         ErrorCode.ERR_UnclosedExpressionHole));
@@ -884,7 +874,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 else if (closeBraceCount < startingDollarSignCount)
                 {
                     // not enough close braces to end the interpolation.  Report here.
-                    TrySetUnrecoverableError(_lexer.MakeError(
+                    TrySetError(_lexer.MakeError(
                         beforeOpenBracesPosition,
                         width: openBraceCount - startingDollarSignCount,
                         ErrorCode.ERR_NotEnoughCloseBracesForRawString));
@@ -916,7 +906,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         ch = _lexer.ScanEscapeSequence(surrogateCharacter: out _);
                         if (ch == '{' || ch == '}')
                         {
-                            TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_EscapedCurly, ch));
+                            TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_EscapedCurly, ch));
                         }
                     }
                     else if (ch == '"')
@@ -943,12 +933,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             }
                             else
                             {
-                                TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "{"));
+                                TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "{"));
                             }
                         }
                         else
                         {
-                            TrySetUnrecoverableError(_lexer.MakeError(pos, 1, ErrorCode.ERR_OpenBraceInRawStringFormatClause));
+                            TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_OpenBraceInRawStringFormatClause));
                         }
                     }
                     else if (ch == '}')
@@ -998,7 +988,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     {
                         case '#':
                             // preprocessor directives not allowed.
-                            TrySetUnrecoverableError(_lexer.MakeError(_lexer.TextWindow.Position, 1, ErrorCode.ERR_SyntaxError, endingChar.ToString()));
+                            TrySetError(_lexer.MakeError(_lexer.TextWindow.Position, 1, ErrorCode.ERR_SyntaxError, endingChar.ToString()));
                             _lexer.TextWindow.AdvanceChar();
                             continue;
                         case '$':
@@ -1030,7 +1020,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                                 return;
                             }
 
-                            TrySetUnrecoverableError(_lexer.MakeError(_lexer.TextWindow.Position, 1, ErrorCode.ERR_SyntaxError, endingChar.ToString()));
+                            TrySetError(_lexer.MakeError(_lexer.TextWindow.Position, 1, ErrorCode.ERR_SyntaxError, endingChar.ToString()));
                             goto default;
                         case '"' when RecoveringFromRunawayLexing():
                             // When recovering from mismatched delimiters, we consume the next
@@ -1090,7 +1080,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// for when we are attempting to recover from that situation.  Note that just running into new lines will
             /// not make us think we're in runaway lexing.
             /// </summary>
-            private bool RecoveringFromRunawayLexing() => this.EncounteredUnrecoverableError;
+            private bool RecoveringFromRunawayLexing() => this.Error != null;
 
             private void ScanInterpolatedStringLiteralNestedString()
             {
