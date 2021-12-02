@@ -912,7 +912,7 @@ System.Console.Write(
     """""""""""");",
                 // (5,4): error CS9102: Too many closing quotes for raw string literal
                 //     """""");
-                Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @" """"").WithLocation(5, 4));
+                Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @"""""""").WithLocation(5, 8));
         }
     }
 }
