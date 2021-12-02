@@ -4,9 +4,7 @@
 
 using System;
 using System.Diagnostics;
-using System.Net;
 using Microsoft.CodeAnalysis.PooledObjects;
-using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
@@ -16,7 +14,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         private void ScanStringLiteral(ref TokenInfo info, bool inDirective)
         {
             var quoteCharacter = TextWindow.PeekChar();
-            Debug.Assert(quoteCharacter == '\'' || quoteCharacter == '"');
+            Debug.Assert(quoteCharacter is '\'' or '"');
 
             if (TextWindow.PeekChar() == '"' &&
                 TextWindow.PeekChar(1) == '"' &&
@@ -605,13 +603,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 //  """
                 //
                 // And give the special message that a content line is required in the literal.
-                if (IsAtEndOfMultiLineRawLiteral(kind, startingQuoteCount, isAtNewLine: false))
-                {
-                    TrySetError(_lexer.MakeError(
-                        position: _lexer.TextWindow.Position - startingQuoteCount,
-                        width: startingQuoteCount,
-                        ErrorCode.ERR_RawStringMustContainContent));
-                }
+                if (CheckForIllegalEmptyMultiLineRawStringLiteral(kind, startingQuoteCount))
+                    return;
 
                 while (true)
                 {
@@ -622,7 +615,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         return;
                     }
 
-                    if (IsAtEndOfMultiLineRawLiteral(kind, startingQuoteCount, isAtNewLine: true))
+                    if (IsAtEndOfMultiLineRawLiteral(kind, startingQuoteCount))
                         return;
 
                     switch (_lexer.TextWindow.PeekChar())
@@ -667,14 +660,36 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
             }
 
-            private bool IsAtEndOfMultiLineRawLiteral(InterpolatedStringKind kind, int startingQuoteCount, bool isAtNewLine)
+            private bool CheckForIllegalEmptyMultiLineRawStringLiteral(InterpolatedStringKind kind, int startingQuoteCount)
+            {
+                if (kind == InterpolatedStringKind.MultiLineRaw)
+                {
+                    _lexer.ConsumeWhitespace(builder: null);
+                    var beforeQuotesPosition = _lexer.TextWindow.Position;
+                    var closeQuoteCount = _lexer.ConsumeQuoteSequence();
+
+                    if (closeQuoteCount >= startingQuoteCount)
+                    {
+                        // Found the end of the string.  reset our position so that ScanInterpolatedStringLiteralEnd
+                        // can consume it.
+                        this.TrySetError(_lexer.MakeError(
+                            _lexer.TextWindow.Position - closeQuoteCount, closeQuoteCount, ErrorCode.ERR_RawStringMustContainContent));
+                        _lexer.TextWindow.Reset(beforeQuotesPosition);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            private bool IsAtEndOfMultiLineRawLiteral(InterpolatedStringKind kind, int startingQuoteCount)
             {
                 if (kind == InterpolatedStringKind.MultiLineRaw)
                 {
                     // A multiline string ends with a newline, whitespace and at least as many quotes as we started with.
 
                     var startPosition = _lexer.TextWindow.Position;
-                    if (isAtNewLine == SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()))
+                    if (SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()))
                     {
                         _lexer.TextWindow.AdvanceChar(_lexer.GetNewLineWidth(_lexer.TextWindow.PeekChar()));
                         _lexer.ConsumeWhitespace(builder: null);

@@ -547,9 +547,9 @@ System.Console.Write(
 System.Console.Write(
     $""""""
     """""");",
-                    // (4,5): error CS9104: Raw string literal delimiter must be on its own line
+                    // (4,5): error CS9106: Multi-line raw string literals must contain at least one line of content
                     //     """);
-                    Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, @"""""""").WithLocation(4, 5));
+                    Diagnostic(ErrorCode.ERR_RawStringMustContainContent, @"""""""").WithLocation(4, 5));
         }
 
         [Fact]
@@ -605,9 +605,9 @@ System.Console.Write(
 System.Console.Write(
     $""""""␠
     """""");",
-                    // (4,5): error CS9104: Raw string literal delimiter must be on its own line
+                    // (4,5): error CS9106: Multi-line raw string literals must contain at least one line of content
                     //     """);
-                    Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, @"""""""").WithLocation(4, 5));
+                    Diagnostic(ErrorCode.ERR_RawStringMustContainContent, @"""""""").WithLocation(4, 5));
         }
 
         [Fact]
@@ -663,9 +663,9 @@ System.Console.Write(
 System.Console.Write(
     $""""""␠␠
     """""");",
-                    // (4,5): error CS9104: Raw string literal delimiter must be on its own line
+                    // (4,5): error CS9106: Multi-line raw string literals must contain at least one line of content
                     //     """);
-                    Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, @"""""""").WithLocation(4, 5));
+                    Diagnostic(ErrorCode.ERR_RawStringMustContainContent, @"""""""").WithLocation(4, 5));
         }
 
         [Fact]
@@ -757,9 +757,9 @@ System.Console.Write(
 System.Console.Write(
     $""""""␠␠
     ␠␠"""""");",
-                    // (4,7): error CS9104: Raw string literal delimiter must be on its own line
+                    // (4,7): error CS9106: Multi-line raw string literals must contain at least one line of content
                     //       """);
-                    Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, @"""""""").WithLocation(4, 7));
+                    Diagnostic(ErrorCode.ERR_RawStringMustContainContent, @"""""""").WithLocation(4, 7));
         }
 
         [Fact]
