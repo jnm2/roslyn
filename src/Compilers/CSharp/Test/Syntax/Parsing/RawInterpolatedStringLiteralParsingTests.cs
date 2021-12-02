@@ -1279,6 +1279,143 @@ class C
                 Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@$$@""""""").WithLocation(6, 17));
         }
 
+        [Fact]
+        public void DollarsWithoutQuotes1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$;
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, "$$").WithLocation(6, 17));
+        }
+
+        [Fact]
+        public void DollarsWithoutQuotes2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$$;
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$$;
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, "$$$").WithLocation(6, 17));
+        }
+
+        [Fact]
+        public void DollarsWithQuotes1()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,19): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$";
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, @"""").WithLocation(6, 19),
+                // (6,21): error CS1002: ; expected
+                //         var v = $$";
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(6, 21));
+        }
+
+        [Fact]
+        public void DollarsWithQuotes2()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$"" "";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,19): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$" ";
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, @"""").WithLocation(6, 19));
+        }
+
+        [Fact]
+        public void DollarsWithQuotes3()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$"""" """";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,19): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$"" "";
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, @"""""").WithLocation(6, 19));
+        }
+
+        #endregion
+
+        #region Multi Line
+
+        [Fact]
+        public void DollarsWithQuotes2_MultiLine()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$""
+
+"";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,19): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$"
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, @"""").WithLocation(6, 19));
+        }
+
+        [Fact]
+        public void DollarsWithQuotes3_MultiLine()
+        {
+            var text = @"
+class C
+{
+    void M()
+    {
+        var v = $$""""
+
+"""";
+    }
+}";
+
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,19): error CS9120: Not enough quotes for raw string literal
+                //         var v = $$""
+                Diagnostic(ErrorCode.ERR_NotEnoughQuotesForRawString, @"""""").WithLocation(6, 19));
+        }
+
         #endregion
     }
 }
