@@ -781,5 +781,138 @@ System.Console.Write(
     a""
     """""");", expectedOutput: "a\"");
         }
+
+        [Fact]
+        public void MultiLineCase21()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a""""
+    """""");", expectedOutput: "a\"\"");
+        }
+
+        [Fact]
+        public void MultiLineCase22()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    ""a
+    """""");", expectedOutput: "\"a");
+        }
+
+        [Fact]
+        public void MultiLineCase23()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    """"a
+    """""");", expectedOutput: "\"\"a");
+        }
+
+        [Fact]
+        public void MultiLineCase24()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a"""""");",
+                // (4,2): error CS9104: Raw string literal delimiter must be on its own line
+                //     a""");
+                Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, "   ").WithLocation(4, 2));
+        }
+
+        [Fact]
+        public void MultiLineCase25()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a"""""""");",
+                // (4,2): error CS9104: Raw string literal delimiter must be on its own line
+                //     a"""");
+                Diagnostic(ErrorCode.ERR_RawStringDelimiterOnOwnLine, "   a").WithLocation(4, 2));
+        }
+
+        [Fact]
+        public void MultiLineCase26()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a
+    """""");", expectedOutput: "a");
+        }
+
+        [Fact]
+        public void MultiLineCase27()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    ␠a
+    """""");", expectedOutput: " a");
+        }
+
+        [Fact]
+        public void MultiLineCase28()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a␠
+    """""");", expectedOutput: "a ");
+        }
+
+        [Fact]
+        public void MultiLineCase29()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    ␠a␠
+    """""");", expectedOutput: " a ");
+        }
+
+        [Fact]
+        public void MultiLineCase30()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a
+    """""""");",
+                // (5,4): error CS9102: Too many closing quotes for raw string literal
+                //     """");
+                Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, " ").WithLocation(5, 4));
+        }
+
+        [Fact]
+        public void MultiLineCase31()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a
+    """""""""");",
+                // (5,4): error CS9102: Too many closing quotes for raw string literal
+                //     """"");
+                Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @" """).WithLocation(5, 4));
+        }
+
+        [Fact]
+        public void MultiLineCase32()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""␠␠
+    a
+    """""""""""");",
+                // (5,4): error CS9102: Too many closing quotes for raw string literal
+                //     """""");
+                Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @" """"").WithLocation(5, 4));
+        }
     }
 }
