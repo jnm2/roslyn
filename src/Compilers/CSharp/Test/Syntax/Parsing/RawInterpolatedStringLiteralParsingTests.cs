@@ -712,7 +712,10 @@ class C
             CreateCompilation(text).VerifyDiagnostics(
                 // (6,17): error CS9125: Cannot mix verbatim and raw strings
                 //         var v = @@";
-                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@""").WithLocation(6, 17));
+                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@""").WithLocation(6, 17),
+                // (6,21): error CS1002: ; expected
+                //         var v = @@";
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(6, 21));
         }
 
         [Fact]
@@ -727,7 +730,10 @@ class C
     }
 }";
 
-            CreateCompilation(text).VerifyDiagnostics();
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9125: Cannot mix verbatim and raw strings
+                //         var v = @@" ";
+                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@""").WithLocation(6, 17));
         }
 
         [Fact]
@@ -742,7 +748,10 @@ class C
     }
 }";
 
-            CreateCompilation(text).VerifyDiagnostics();
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9125: Cannot mix verbatim and raw strings
+                //         var v = @@""" """;
+                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@""""""").WithLocation(6, 17));
         }
 
         [Fact]
@@ -757,7 +766,10 @@ class C
     }
 }";
 
-            CreateCompilation(text).VerifyDiagnostics();
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS1646: Keyword, identifier, or string expected after verbatim specifier: @
+                //         var v = @@@;
+                Diagnostic(ErrorCode.ERR_ExpectedVerbatimLiteral, "@").WithLocation(6, 17));
         }
 
         [Fact]
@@ -772,7 +784,13 @@ class C
     }
 }";
 
-            CreateCompilation(text).VerifyDiagnostics();
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9125: Cannot mix verbatim and raw strings
+                //         var v = @@@";
+                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@@""").WithLocation(6, 17),
+                // (6,22): error CS1002: ; expected
+                //         var v = @@@";
+                Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(6, 22));
         }
 
         [Fact]
@@ -787,7 +805,10 @@ class C
     }
 }";
 
-            CreateCompilation(text).VerifyDiagnostics();
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9125: Cannot mix verbatim and raw strings
+                //         var v = @@@" ";
+                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@@""").WithLocation(6, 17));
         }
 
         [Fact]
@@ -802,7 +823,10 @@ class C
     }
 }";
 
-            CreateCompilation(text).VerifyDiagnostics();
+            CreateCompilation(text).VerifyDiagnostics(
+                // (6,17): error CS9125: Cannot mix verbatim and raw strings
+                //         var v = @@@""" """;
+                Diagnostic(ErrorCode.ERR_CannotMixVerbatimAndRawStrings, @"@@@""""""").WithLocation(6, 17));
         }
 
         [Fact]

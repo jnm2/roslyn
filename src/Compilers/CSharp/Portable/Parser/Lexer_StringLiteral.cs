@@ -409,36 +409,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 if (totalAtCount > 0)
                 {
-                    if (startingDollarSignCount == 0 || startingQuoteCount == 0)
+                    if (startingDollarSignCount == 0 && startingQuoteCount == 0)
                     {
-                        // There were multiple @'s but we were missing $'s or "'s.  We can't do anything with this (as
-                        // we must have some amount of curlies or dollars to look for while processing the rest of this
-                        // string).
-
-                        if (startingDollarSignCount == 0 && startingQuoteCount == 0)
-                        {
-                            // just multiple @'s in a row.  Give a general message about how @ signs work.
-
-                            Debug.Assert(totalAtCount >= 2);
-                            TrySetError(_lexer.MakeError(
-                                start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
-                        }
-                        else
-                        {
-                            // @'s followed by curlies/quotes (but not both).  The user is clearly trying to do
-                            // something with verbatim + raw literals.  Give an error that the @ is illegal to mix. But
-                            // bail out since there's nothing we can do at this point.
-                            TrySetError(_lexer.MakeError(
-                                start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
-                        }
-
-                        // can't proceed here at all since we need at least one curly and one quote.
+                        // just multiple @'s in a row.  Give a general message about how @ signs work.
+                        TrySetError(_lexer.MakeError(
+                            start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
                         kind = InterpolatedStringKind.SingleLineRaw;
                         return false;
                     }
 
-                    // we had an @ sign, but we also had $'s and "'s.  Give an error that the @ is illegal.  But we can
-                    // still proceed using the normal logic for this string.
+                    // had at least a dollar sign or a quote.  pretend we have at least one dollar sign 
+                    // so we can at least try to consume the content.
+                    if (startingDollarSignCount == 0)
+                        startingDollarSignCount = 1;
+
                     TrySetError(_lexer.MakeError(
                         start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
                 }
