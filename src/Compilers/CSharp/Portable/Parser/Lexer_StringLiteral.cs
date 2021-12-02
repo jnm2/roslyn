@@ -599,6 +599,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             private void ScanInterpolatedStringLiteralContents(
                 InterpolatedStringKind kind, int startingDollarSignCount, int startingQuoteCount, ArrayBuilder<Interpolation>? interpolations)
             {
+                // Check for the trivial multi-line raw string literal of the form:
+                //
+                // $"""
+                //  """
+                //
+                // And give the special message that a content line is required in the literal.
+                if (IsAtEndOfMultiLineRawLiteral(kind, startingQuoteCount, isAtNewLine: false))
+                {
+                    TrySetError(_lexer.MakeError(
+                        position: _lexer.TextWindow.Position - startingQuoteCount,
+                        width: startingQuoteCount,
+                        ErrorCode.ERR_RawStringMustContainContent));
+                }
+
                 while (true)
                 {
                     if (IsAtEnd(kind))
@@ -608,7 +622,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         return;
                     }
 
-                    if (IsAtEndOfMultiLineRawLiteral(kind, startingQuoteCount))
+                    if (IsAtEndOfMultiLineRawLiteral(kind, startingQuoteCount, isAtNewLine: true))
                         return;
 
                     switch (_lexer.TextWindow.PeekChar())
@@ -653,14 +667,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
             }
 
-            private bool IsAtEndOfMultiLineRawLiteral(InterpolatedStringKind kind, int startingQuoteCount)
+            private bool IsAtEndOfMultiLineRawLiteral(InterpolatedStringKind kind, int startingQuoteCount, bool isAtNewLine)
             {
                 if (kind == InterpolatedStringKind.MultiLineRaw)
                 {
                     // A multiline string ends with a newline, whitespace and at least as many quotes as we started with.
 
                     var startPosition = _lexer.TextWindow.Position;
-                    if (SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()))
+                    if (isAtNewLine == SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()))
                     {
                         _lexer.TextWindow.AdvanceChar(_lexer.GetNewLineWidth(_lexer.TextWindow.PeekChar()));
                         _lexer.ConsumeWhitespace(builder: null);
