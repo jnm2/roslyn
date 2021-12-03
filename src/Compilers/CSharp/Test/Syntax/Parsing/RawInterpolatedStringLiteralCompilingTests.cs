@@ -914,5 +914,238 @@ System.Console.Write(
                 //     """""");
                 Diagnostic(ErrorCode.ERR_TooManyQuotesForRawString, @"""""""").WithLocation(5, 8));
         }
+
+        [Fact]
+        public void MultiLineCase33()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+  a
+    {42}
+    b
+    {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase34()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+  {42}
+    b
+    {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase35()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+  b
+    {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase36()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+    b
+  {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase37()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+    b
+    {43}
+  c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase38()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+  aa
+    {42}
+    b
+    {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase39()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+  {42}
+    b
+    {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase40()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+    b
+  bb
+    {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase41()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+    b
+    {43}
+  {43}
+    c
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase42()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+    {42}
+    b
+    {43}
+    c
+  cc
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase43()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a{43}
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase44()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a
+
+    a{43}
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase45()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a
+␠
+    a{43}
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase46()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a
+␠␠␠␠␠
+    a{43}
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase47()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a
+    b
+
+    b
+    a{43}
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase48()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a
+    b
+␠
+    b
+    a{43}
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase49()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {42}a
+    b
+␠␠␠␠␠
+    b
+    a{43}
+    """""""");");
+        }
     }
 }
