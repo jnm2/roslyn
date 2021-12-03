@@ -926,7 +926,7 @@ System.Console.Write(
     b
     {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -940,7 +940,7 @@ System.Console.Write(
     b
     {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -954,7 +954,7 @@ System.Console.Write(
   b
     {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -968,7 +968,7 @@ System.Console.Write(
     b
   {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -982,7 +982,7 @@ System.Console.Write(
     b
     {43}
   c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -997,7 +997,7 @@ System.Console.Write(
     b
     {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1012,7 +1012,7 @@ System.Console.Write(
     b
     {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1027,7 +1027,7 @@ System.Console.Write(
   bb
     {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1042,7 +1042,7 @@ System.Console.Write(
     {43}
   {43}
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1057,7 +1057,7 @@ System.Console.Write(
     {43}
     c
   cc
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1067,7 +1067,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
     {42}a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1079,7 +1079,7 @@ System.Console.Write(
     {42}a
 
     a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1091,7 +1091,7 @@ System.Console.Write(
     {42}a
 ␠
     a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1103,7 +1103,7 @@ System.Console.Write(
     {42}a
 ␠␠␠␠␠
     a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1117,7 +1117,7 @@ System.Console.Write(
 
     b
     a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1131,7 +1131,7 @@ System.Console.Write(
 ␠
     b
     a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1145,7 +1145,7 @@ System.Console.Write(
 ␠␠␠␠␠
     b
     a{43}
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1163,7 +1163,7 @@ System.Console.Write(
     a{43}
     a
     a
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1181,7 +1181,7 @@ System.Console.Write(
     a{43}
     c
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1199,7 +1199,7 @@ System.Console.Write(
     a{43}
     c
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1217,7 +1217,7 @@ System.Console.Write(
     a{43}
     c
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1235,7 +1235,7 @@ System.Console.Write(
     c
 ␠
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1253,7 +1253,7 @@ System.Console.Write(
     c
 ␠␠␠␠␠␠
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1271,7 +1271,7 @@ System.Console.Write(
     c
 ␠c
     c
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1281,7 +1281,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1291,7 +1291,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1301,7 +1301,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠␠␠
-    """""""");");
+    """""");");
         }
 
         [Fact]
@@ -1311,7 +1311,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠␠␠␠
-    """""""");");
+    """""");");
         }
     }
 }
