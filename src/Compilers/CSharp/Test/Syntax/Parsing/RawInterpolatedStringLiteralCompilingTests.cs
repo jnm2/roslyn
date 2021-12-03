@@ -12,7 +12,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
     {
         private static string Render(string markup)
         {
-            return markup.Replace('␠', ' ');
+            return markup.Replace('␠', ' ').Replace('␉', '\t');
         }
 
         private void RenderAndVerify(string markup, string expectedOutput)
