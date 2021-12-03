@@ -265,7 +265,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // Only bother reporting a single error on a text chunk.
                     if (error == null)
                     {
-                        if (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]))
+                        var isAtEndOfLastLine = last && currentIndex == text.Length;
+                        var isAtNewLine = currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]);
+                        if (isAtEndOfLastLine || isAtNewLine)
                         {
                             // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
                             // or vice versa.  It is an error otherwise.

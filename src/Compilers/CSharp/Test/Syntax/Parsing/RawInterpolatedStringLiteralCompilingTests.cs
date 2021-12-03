@@ -1405,7 +1405,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠␠␠␠
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: "␠");
         }
     }
 }
