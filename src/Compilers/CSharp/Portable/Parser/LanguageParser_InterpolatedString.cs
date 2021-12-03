@@ -197,7 +197,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     // No interpolations.  Just grab the whole chunk of text and split it as appropriate.
                     addContent(
-                        indentationWhitespace, currentLineWhitespace, content, builder, first: true,
+                        indentationWhitespace, currentLineWhitespace, content, builder, first: true, last: true,
                         originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)]);
                 }
                 else
@@ -208,7 +208,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                         // Add a token for text preceding the interpolation
                         addContent(
-                            indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0,
+                            indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0, last: false,
                             originalText[new Range(
                                 i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
                                 interpolation.OpenBraceRange.Start)]);
@@ -218,7 +218,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                     // Add a token for text following the last interpolation
                     addContent(
-                        indentationWhitespace, currentLineWhitespace, content, builder, first: false,
+                        indentationWhitespace, currentLineWhitespace, content, builder, first: false, last: true,
                         originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)]);
                 }
 
@@ -233,6 +233,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 StringBuilder content,
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxListBuilder<InterpolatedStringContentSyntax> result,
                 bool first,
+                bool last,
                 string text)
             {
                 if (text.Length == 0)

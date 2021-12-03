@@ -1273,5 +1273,45 @@ System.Console.Write(
     c
     """""""");");
         }
+
+        [Fact]
+        public void MultiLineCase57()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+␠
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase58()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+␠␠
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase59()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+␠␠␠␠
+    """""""");");
+        }
+
+        [Fact]
+        public void MultiLineCase60()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+␠␠␠␠␠
+    """""""");");
+        }
     }
 }
