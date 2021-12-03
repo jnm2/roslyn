@@ -17,7 +17,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 
         private void RenderAndVerify(string markup, string expectedOutput)
         {
-            CompileAndVerify(Render(markup), expectedOutput: expectedOutput, trimOutput: false);
+            CompileAndVerify(Render(markup), expectedOutput: Render(expectedOutput), trimOutput: false);
         }
 
         private static void RenderAndVerify(string markup, params DiagnosticDescription[] expected)
@@ -1097,7 +1097,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
     {42}a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: "42a43");
         }
 
         [Fact]
@@ -1109,7 +1109,9 @@ System.Console.Write(
     {42}a
 
     a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"42a
+
+a43");
         }
 
         [Fact]
@@ -1121,7 +1123,9 @@ System.Console.Write(
     {42}a
 ␠
     a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"42a
+
+a43");
         }
 
         [Fact]
@@ -1133,7 +1137,9 @@ System.Console.Write(
     {42}a
 ␠␠␠␠␠
     a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"42a
+␠
+a43");
         }
 
         [Fact]
@@ -1147,7 +1153,11 @@ System.Console.Write(
 
     b
     a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"42a
+b
+
+b
+a43");
         }
 
         [Fact]
@@ -1161,7 +1171,11 @@ System.Console.Write(
 ␠
     b
     a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"42a
+b
+
+b
+a43");
         }
 
         [Fact]
@@ -1175,7 +1189,11 @@ System.Console.Write(
 ␠␠␠␠␠
     b
     a{43}
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"42a
+b
+␠
+b
+a43");
         }
 
         [Fact]
@@ -1191,9 +1209,17 @@ System.Console.Write(
     b
     b
     a{43}
-    a
-    a
-    """""");", expectedOutput: "");
+    c
+    c
+    """""");", expectedOutput: @"a
+
+a
+42
+b
+b
+a43
+c
+c");
         }
 
         [Fact]
@@ -1211,7 +1237,15 @@ System.Console.Write(
     a{43}
     c
     c
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"a
+
+a
+42
+b
+b
+a43
+c
+c");
         }
 
         [Fact]
@@ -1221,7 +1255,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
     a
-␠␠␠␠␠␠
+␠␠␠␠␠
     a
     {42}
     b
@@ -1229,7 +1263,15 @@ System.Console.Write(
     a{43}
     c
     c
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"a
+␠
+a
+42
+b
+b
+a43
+c
+c");
         }
 
         [Fact]
@@ -1268,7 +1310,15 @@ System.Console.Write(
     c
 ␠
     c
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"a
+a
+42
+b
+b
+a43
+c
+
+c");
         }
 
         [Fact]
@@ -1284,9 +1334,17 @@ System.Console.Write(
     b
     a{43}
     c
-␠␠␠␠␠␠
+␠␠␠␠␠
     c
-    """""");", expectedOutput: "");
+    """""");", expectedOutput: @"a
+a
+42
+b
+b
+a43
+c
+␠
+c");
         }
 
         [Fact]
