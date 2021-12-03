@@ -926,7 +926,10 @@ System.Console.Write(
     b
     {43}
     c
-    """""");");
+    """""");",
+                    // (4,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   a
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(4, 1));
         }
 
         [Fact]
@@ -940,7 +943,10 @@ System.Console.Write(
     b
     {43}
     c
-    """""");");
+    """""");",
+                    // (5,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   {42}
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(5, 1));
         }
 
         [Fact]
@@ -954,7 +960,10 @@ System.Console.Write(
   b
     {43}
     c
-    """""");");
+    """""");",
+                    // (6,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   b
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(6, 1));
         }
 
         [Fact]
@@ -968,7 +977,10 @@ System.Console.Write(
     b
   {43}
     c
-    """""");");
+    """""");",
+                    // (7,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   {43}
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(7, 1));
         }
 
         [Fact]
@@ -982,7 +994,10 @@ System.Console.Write(
     b
     {43}
   c
-    """""");");
+    """""");",
+                    // (8,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   c
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(8, 1));
         }
 
         [Fact]
@@ -997,7 +1012,10 @@ System.Console.Write(
     b
     {43}
     c
-    """""");");
+    """""");",
+                    // (5,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   aa
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(5, 1));
         }
 
         [Fact]
@@ -1012,7 +1030,10 @@ System.Console.Write(
     b
     {43}
     c
-    """""");");
+    """""");",
+                    // (6,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   {42}
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(6, 1));
         }
 
         [Fact]
@@ -1027,7 +1048,10 @@ System.Console.Write(
   bb
     {43}
     c
-    """""");");
+    """""");",
+                    // (7,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   bb
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(7, 1));
         }
 
         [Fact]
@@ -1042,7 +1066,10 @@ System.Console.Write(
     {43}
   {43}
     c
-    """""");");
+    """""");",
+                    // (8,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   {43}
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(8, 1));
         }
 
         [Fact]
@@ -1057,7 +1084,10 @@ System.Console.Write(
     {43}
     c
   cc
-    """""");");
+    """""");",
+                    // (9,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //   cc
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, "  ").WithLocation(9, 1));
         }
 
         [Fact]
@@ -1067,7 +1097,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
     {42}a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1079,7 +1109,7 @@ System.Console.Write(
     {42}a
 
     a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1091,7 +1121,7 @@ System.Console.Write(
     {42}a
 ␠
     a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1103,7 +1133,7 @@ System.Console.Write(
     {42}a
 ␠␠␠␠␠
     a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1117,7 +1147,7 @@ System.Console.Write(
 
     b
     a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1131,7 +1161,7 @@ System.Console.Write(
 ␠
     b
     a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1145,7 +1175,7 @@ System.Console.Write(
 ␠␠␠␠␠
     b
     a{43}
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1163,7 +1193,7 @@ System.Console.Write(
     a{43}
     a
     a
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1181,7 +1211,7 @@ System.Console.Write(
     a{43}
     c
     c
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1199,7 +1229,7 @@ System.Console.Write(
     a{43}
     c
     c
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1217,7 +1247,10 @@ System.Console.Write(
     a{43}
     c
     c
-    """""");");
+    """""");",
+                    // (5,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //  a
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, " ").WithLocation(5, 1));
         }
 
         [Fact]
@@ -1235,7 +1268,7 @@ System.Console.Write(
     c
 ␠
     c
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1253,7 +1286,7 @@ System.Console.Write(
     c
 ␠␠␠␠␠␠
     c
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1271,7 +1304,10 @@ System.Console.Write(
     c
 ␠c
     c
-    """""");");
+    """""");",
+                    // (11,1): error CS9103: Line does not start with the same whitespace as the last line of the raw string literal
+                    //  c
+                    Diagnostic(ErrorCode.ERR_LineDoesNotStartWithSameWhitespace, " ").WithLocation(11, 1));
         }
 
         [Fact]
@@ -1281,7 +1317,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1291,7 +1327,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1301,7 +1337,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠␠␠
-    """""");");
+    """""");", expectedOutput: "");
         }
 
         [Fact]
@@ -1311,7 +1347,7 @@ System.Console.Write(
 System.Console.Write(
     $""""""
 ␠␠␠␠␠
-    """""");");
+    """""");", expectedOutput: "");
         }
     }
 }
