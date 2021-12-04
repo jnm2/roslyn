@@ -1233,13 +1233,13 @@
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyOpenBracesForRawString">
-        <source>Too many open braces for raw string literal</source>
-        <target state="new">Too many open braces for raw string literal</target>
+        <source>Too many opening braces for raw string literal</source>
+        <target state="new">Too many opening braces for raw string literal</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyQuotesForRawString">
-        <source>Too many closing quotes for raw string literal</source>
-        <target state="new">Too many closing quotes for raw string literal</target>
+        <source>Too many quotes for raw string literal</source>
+        <target state="new">Too many quotes for raw string literal</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TopLevelStatementAfterNamespaceOrType">

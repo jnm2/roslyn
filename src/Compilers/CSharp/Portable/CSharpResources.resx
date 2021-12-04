@@ -6879,10 +6879,10 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
     <value>Raw string literal delimiter must be on its own line</value>
   </data>
   <data name="ERR_TooManyQuotesForRawString" xml:space="preserve">
-    <value>Too many closing quotes for raw string literal</value>
+    <value>Too many quotes for raw string literal</value>
   </data>
   <data name="ERR_TooManyOpenBracesForRawString" xml:space="preserve">
-    <value>Too many open braces for raw string literal</value>
+    <value>Too many opening braces for raw string literal</value>
   </data>
   <data name="ERR_TooManyCloseBracesForRawString" xml:space="preserve">
     <value>Too many closing braces for raw string literal</value>
