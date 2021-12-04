@@ -283,18 +283,18 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             MultiLineRaw = 4,
         }
 
+        /// <summary>
+        /// Non-copyable ref-struct so that this will only live on the stack for the lifetime of the lexer/parser
+        /// recursing to process interpolated strings.
+        /// </summary>
         [NonCopyable]
         private ref struct InterpolatedStringScanner
         {
             private readonly Lexer _lexer;
 
             /// <summary>
-            /// There are two types of errors we can encounter when trying to scan out an interpolated string (and its
-            /// interpolations).  The first are true syntax errors where we do not know what it is going on and have no
-            /// good strategy to get back on track.  This happens when we see things in the interpolation we truly do
-            /// not know what to do with, or when we find we've gotten into an unbalanced state with the bracket pairs
-            /// we're consuming.  In this case, we will often choose to bail out rather than go on and potentially make
-            /// things worse.
+            /// Error encountered while scanning.  If we run into an error, then we'll attempt to stop parsing at the
+            /// next potential ending location to prevent compounding the issue.
             /// </summary>
             public SyntaxDiagnosticInfo? Error = null;
 
@@ -907,6 +907,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             private void ScanFormatSpecifier(InterpolatedStringKind kind)
             {
+                /*
+                ## Grammar from spec:
+                
+                interpolation_format
+                    : ':' interpolation_format_character+
+                ; 
+                interpolation_format_character
+                    : '<Any character except \" (U+0022), : (U+003A), { (U+007B) and } (U+007D)>'
+                ;
+                 */
+
                 Debug.Assert(_lexer.TextWindow.PeekChar() == ':');
                 _lexer.TextWindow.AdvanceChar();
                 while (true)
@@ -917,7 +928,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         // normal string & char constants can have escapes
                         var pos = _lexer.TextWindow.Position;
                         ch = _lexer.ScanEscapeSequence(surrogateCharacter: out _);
-                        if (ch == '{' || ch == '}')
+                        if (ch is '{' or '}')
                         {
                             TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_EscapedCurly, ch));
                         }
@@ -935,38 +946,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else if (ch == '{')
                     {
-                        var pos = _lexer.TextWindow.Position;
-                        if (kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
-                        {
-                            _lexer.TextWindow.AdvanceChar();
-                            // ensure any { characters are doubled up
-                            if (_lexer.TextWindow.PeekChar() == '{')
-                            {
-                                _lexer.TextWindow.AdvanceChar(); // {
-                            }
-                            else
-                            {
-                                TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_UnescapedCurly, "{"));
-                            }
-                        }
-                        else
-                        {
-                            TrySetError(_lexer.MakeError(pos, 1, ErrorCode.ERR_OpenBraceInRawStringFormatClause));
-                        }
+                        TrySetError(_lexer.MakeError(
+                            _lexer.TextWindow.Position, 1, ErrorCode.ERR_UnexpectedCharacter, ch));
+                        _lexer.TextWindow.AdvanceChar();
                     }
                     else if (ch == '}')
                     {
-                        if (kind is InterpolatedStringKind.Normal or InterpolatedStringKind.Verbatim)
-                        {
-                            if (_lexer.TextWindow.PeekChar(1) == '}')
-                            {
-                                _lexer.TextWindow.AdvanceChar(2); // }}
-                                continue;
-                            }
-                        }
-
-                        // end of interpolation
-                        return;
+                        return; // end of interpolation
                     }
                     else if (IsAtEnd(allowNewline: true))
                     {
@@ -1035,15 +1021,22 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                             TrySetError(_lexer.MakeError(_lexer.TextWindow.Position, 1, ErrorCode.ERR_SyntaxError, endingChar.ToString()));
                             goto default;
-                        case '"' when RecoveringFromRunawayLexing():
-                            // When recovering from mismatched delimiters, we consume the next
-                            // quote character as the close quote for the interpolated string. In
-                            // practice this gets us out of trouble in scenarios we've encountered.
-                            // See, for example, https://github.com/dotnet/roslyn/issues/44789
-                            return;
                         case '"':
+                            if (RecoveringFromRunawayLexing())
+                            {
+                                // When recovering from mismatched delimiters, we consume the next
+                                // quote character as the close quote for the interpolated string. In
+                                // practice this gets us out of trouble in scenarios we've encountered.
+                                // See, for example, https://github.com/dotnet/roslyn/issues/44789
+                                return;
+                            }
+
+                            // handle string literal inside an expression hole.
+                            ScanInterpolatedStringLiteralNestedString();
+                            continue;
+
                         case '\'':
-                            // handle string or character literal inside an expression hole.
+                            // handle character literal inside an expression hole.
                             ScanInterpolatedStringLiteralNestedString();
                             continue;
                         case '@':
