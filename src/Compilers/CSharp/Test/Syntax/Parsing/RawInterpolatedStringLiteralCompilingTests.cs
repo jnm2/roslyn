@@ -35,7 +35,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 
         private void RenderAndVerify(string markup, string expectedOutput, string? normalize)
         {
-            CompileAndVerify(Render(markup, normalize), expectedOutput: Render(expectedOutput, normalize), trimOutput: false);
+            var text = Render(markup, normalize);
+            ParseAllPrefixes(text);
+            CompileAndVerify(text, expectedOutput: Render(expectedOutput, normalize), trimOutput: false);
         }
 
         private static void RenderAndVerify(string markup, params DiagnosticDescription[] expected)
@@ -48,9 +50,17 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 
         private static void RenderAndVerify(string markup, DiagnosticDescription[] expected, string? normalize)
         {
-            CreateCompilation(Render(markup, normalize)).VerifyDiagnostics(expected);
+            var text = Render(markup, normalize);
+            ParseAllPrefixes(text);
+            CreateCompilation(text).VerifyDiagnostics(expected);
         }
 
+        private static void ParseAllPrefixes(string text)
+        {
+            // ensure the parser doesn't crash on any test cases.
+            for (var i = 0; i < text.Length; i++)
+                SyntaxFactory.ParseCompilationUnit(text.Substring(0, text.Length - i));
+        }
 
         [Fact]
         public void TestDownlevel()
