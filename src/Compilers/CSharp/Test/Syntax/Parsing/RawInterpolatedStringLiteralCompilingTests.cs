@@ -10,20 +10,47 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 {
     public class RawInterpolatedStringLiteralCompilingTests : CompilingTestBase
     {
-        private static string Render(string markup)
+        private static string Render(string markup, string normalize)
         {
-            return markup.Replace('␠', ' ').Replace('␉', '\t');
+            markup = markup.Replace('␠', ' ').Replace('␉', '\t');
+
+            // If we're normalizing newlines, convert everything to \n, then convert that to the newline form asked for.
+            if (normalize != null)
+            {
+                markup = markup.Replace("\r\n", "\n");
+                markup = markup.Replace("\r", "\n");
+                markup = markup.Replace("\n", normalize);
+            }
+
+            return markup;
         }
 
         private void RenderAndVerify(string markup, string expectedOutput)
         {
-            CompileAndVerify(Render(markup), expectedOutput: Render(expectedOutput), trimOutput: false);
+            RenderAndVerify(markup, expectedOutput, normalize: null);
+            RenderAndVerify(markup, expectedOutput, normalize: "\r\n");
+            RenderAndVerify(markup, expectedOutput, normalize: "\n");
+            RenderAndVerify(markup, expectedOutput, normalize: "\r");
+        }
+
+        private void RenderAndVerify(string markup, string expectedOutput, string? normalize)
+        {
+            CompileAndVerify(Render(markup, normalize), expectedOutput: Render(expectedOutput, normalize), trimOutput: false);
         }
 
         private static void RenderAndVerify(string markup, params DiagnosticDescription[] expected)
         {
-            CreateCompilation(Render(markup)).VerifyDiagnostics(expected);
+            RenderAndVerify(markup, expected, normalize: null);
+            RenderAndVerify(markup, expected, normalize: "\r\n");
+            RenderAndVerify(markup, expected, normalize: "\n");
+            RenderAndVerify(markup, expected, normalize: "\r");
         }
+
+        private static void RenderAndVerify(string markup, DiagnosticDescription[] expected, string? normalize)
+        {
+            CreateCompilation(Render(markup, normalize)).VerifyDiagnostics(expected);
+        }
+
 
         [Fact]
         public void TestDownlevel()
