@@ -10,7 +10,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
 {
     public class RawInterpolatedStringLiteralCompilingTests : CompilingTestBase
     {
-        private static string Render(string markup, string normalize)
+        private static string Render(string markup, string? normalize)
         {
             markup = markup.Replace('␠', ' ').Replace('␉', '\t');
 
