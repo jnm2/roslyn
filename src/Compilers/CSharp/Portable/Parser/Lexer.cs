@@ -968,7 +968,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 TextWindow.PeekChar(3) == '"')
             {
                 // $""" - definitely starts a raw interpolated string.
-                ScanRawInterpolatedStringLiteral(ref info);
+                this.ScanRawInterpolatedStringLiteral(ref info);
                 return true;
             }
             else if (TextWindow.PeekChar(1) == '$')
@@ -995,6 +995,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
 
             return false;
+        }
+
+        private void ScanRawInterpolatedStringLiteral(ref TokenInfo info)
+        {
+            _builder.Length = 0;
+            ScanInterpolatedStringLiteralTop(
+                ref info,
+                out var error,
+                kind: out _,
+                openQuoteRange: out _,
+                interpolations: null,
+                closeQuoteRange: out _);
+            this.AddError(error);
         }
 
 #nullable enable
