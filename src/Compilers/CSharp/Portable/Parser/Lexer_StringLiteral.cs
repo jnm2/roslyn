@@ -334,14 +334,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 var succeeded = ScanOpenQuote(out kind, out var startingDollarSignCount, out var startingQuoteCount);
                 Debug.Assert(_lexer.TextWindow.Position != start);
 
-                openQuoteRange = new Range(start, _lexer.TextWindow.Position);
+                openQuoteRange = start.._lexer.TextWindow.Position;
                 Debug.Assert(kind != default);
 
                 if (!succeeded)
                 {
                     // Processing the start of this literal didn't give us enough information to proceed.  Stop now,
                     // terminating the string to the furthest point we reached.
-                    closeQuoteRange = new Range(_lexer.TextWindow.Position, _lexer.TextWindow.Position);
+                    closeQuoteRange = _lexer.TextWindow.Position.._lexer.TextWindow.Position;
                     return;
                 }
 
@@ -483,7 +483,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ScanRawInterpolatedStringLiteralEnd(kind, startingQuoteCount);
                 }
 
-                closeQuoteRange = new Range(closeQuotePosition, _lexer.TextWindow.Position);
+                closeQuoteRange = closeQuotePosition.._lexer.TextWindow.Position;
             }
 
             private void ScanNormalOrVerbatimInterpolatedStringLiteralEnd(InterpolatedStringKind kind)
@@ -897,9 +897,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
 
                 interpolations?.Add(new Interpolation(
-                    new Range(afterOpenBracePosition - startingDollarSignCount, afterOpenBracePosition),
+                    (afterOpenBracePosition - startingDollarSignCount)..afterOpenBracePosition,
                     colonRange,
-                    new Range(beforeCloseBracePosition, _lexer.TextWindow.Position)));
+                    beforeCloseBracePosition.._lexer.TextWindow.Position));
             }
 
             private void ScanFormatSpecifier(InterpolatedStringKind kind)

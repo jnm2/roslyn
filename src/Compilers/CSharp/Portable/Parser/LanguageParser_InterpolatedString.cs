@@ -113,7 +113,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     var interpolation = interpolations[i];
 
                     // Add a token for text preceding the interpolation
-                    var text = originalText[new Range(currentContentStart, interpolation.OpenBraceRange.Start)];
+                    var text = originalText[currentContentStart..interpolation.OpenBraceRange.Start];
                     if (text.Length > 0)
                         builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
 
@@ -123,7 +123,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
 
                 // Add a token for text following the last interpolation
-                var lastText = originalText[new Range(currentContentStart, closeQuoteRange.Start)];
+                var lastText = originalText[currentContentStart..closeQuoteRange.Start];
                 if (lastText.Length > 0)
                     builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(lastText, kind)));
 
@@ -192,7 +192,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // Add a token for text preceding the interpolation
                     addContent(
                         indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0, last: false,
-                        originalText[new Range(currentContentStart, interpolation.OpenBraceRange.Start)]);
+                        originalText[currentContentStart..interpolation.OpenBraceRange.Start]);
 
                     builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
 
@@ -202,7 +202,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // Add a token for text following the last interpolation
                 addContent(
                     indentationWhitespace, currentLineWhitespace, content, builder, first: interpolations.Count == 0, last: true,
-                    originalText[new Range(currentContentStart, closeQuoteRange.Start)]);
+                    originalText[currentContentStart..closeQuoteRange.Start]);
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
                 _pool.Free(builder);
@@ -354,9 +354,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // will be used to parse out the expression of the interpolation.
             //
             // The parsing of the open brace, close brace and colon is specially handled in ParseInterpolation below.
-            var expressionText = text[new Range(
-                interpolation.OpenBraceRange.End,
-                interpolation.HasColon ? interpolation.ColonRange.Start : interpolation.CloseBraceRange.Start)];
+            var followingRange = interpolation.HasColon ? interpolation.ColonRange : interpolation.CloseBraceRange;
+            var expressionText = text[interpolation.OpenBraceRange.End..followingRange.Start];
 
             using var tempLexer = new Lexer(SourceText.From(expressionText), options, allowPreprocessorDirectives: false, interpolationFollowedByColon: interpolation.HasColon);
 
@@ -375,7 +374,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 text, interpolation, kind,
                 SyntaxFactory.Token(leading: null, openTokenKind, openTokenText, openTokenText, openTokenTrailingTrivia));
 
-            Debug.Assert(text[new Range(interpolation.OpenBraceRange.Start, interpolation.CloseBraceRange.End)] == result.ToFullString()); // yield from text equals yield from node
+            Debug.Assert(text[interpolation.OpenBraceRange.Start..interpolation.CloseBraceRange.End] == result.ToFullString()); // yield from text equals yield from node
             return result;
         }
 
@@ -390,7 +389,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             var result = SyntaxFactory.Interpolation(openBraceToken, expression, alignment, format, closeBraceToken);
 #if DEBUG
-            Debug.Assert(text[new Range(interpolation.OpenBraceRange.Start, interpolation.CloseBraceRange.End)] == result.ToFullString()); // yield from text equals yield from node
+            Debug.Assert(text[interpolation.OpenBraceRange.Start..interpolation.CloseBraceRange.End] == result.ToFullString()); // yield from text equals yield from node
 #endif
             return result;
 
@@ -418,7 +417,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     var format = SyntaxFactory.InterpolationFormatClause(
                         SyntaxFactory.Token(leading, SyntaxKind.ColonToken, colonText, colonText, trailing: null),
                         MakeInterpolatedStringTextToken(
-                            text[new Range(interpolation.ColonRange.End, interpolation.CloseBraceRange.Start)], kind));
+                            text[interpolation.ColonRange.End..interpolation.CloseBraceRange.Start], kind));
                     return (format, getInterpolationCloseToken(leading: null));
                 }
                 else
