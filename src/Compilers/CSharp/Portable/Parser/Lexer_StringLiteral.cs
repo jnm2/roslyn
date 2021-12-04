@@ -695,13 +695,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         _lexer.ConsumeWhitespace(builder: null);
                         var closeQuoteCount = _lexer.ConsumeQuoteSequence();
 
+                        _lexer.TextWindow.Reset(startPosition);
+
                         if (closeQuoteCount >= startingQuoteCount)
-                        {
-                            // Found the end of the string.  reset our position so that ScanInterpolatedStringLiteralEnd
-                            // can consume it.
-                            _lexer.TextWindow.Reset(startPosition);
                             return true;
-                        }
                     }
                 }
 

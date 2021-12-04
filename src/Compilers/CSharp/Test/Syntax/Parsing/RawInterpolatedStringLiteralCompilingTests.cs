@@ -1374,7 +1374,7 @@ System.Console.Write(
             RenderAndVerify(@"
 System.Console.Write(
     $""""""
-␠
+
     """""");", expectedOutput: "");
         }
 
@@ -1384,7 +1384,7 @@ System.Console.Write(
             RenderAndVerify(@"
 System.Console.Write(
     $""""""
-␠␠
+␠
     """""");", expectedOutput: "");
         }
 
@@ -1394,7 +1394,7 @@ System.Console.Write(
             RenderAndVerify(@"
 System.Console.Write(
     $""""""
-␠␠␠␠
+␠␠
     """""");", expectedOutput: "");
         }
 
@@ -1404,8 +1404,78 @@ System.Console.Write(
             RenderAndVerify(@"
 System.Console.Write(
     $""""""
+␠␠␠␠
+    """""");", expectedOutput: "");
+        }
+
+        [Fact]
+        public void MultiLineCase61()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
 ␠␠␠␠␠
     """""");", expectedOutput: "␠");
+        }
+
+        [Fact]
+        public void MultiLineCase62()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+
+    """""");", expectedOutput: @"a
+");
+        }
+
+        [Fact]
+        public void MultiLineCase63()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+␠
+    """""");", expectedOutput: @"a
+");
+        }
+
+        [Fact]
+        public void MultiLineCase64()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+␠␠
+    """""");", expectedOutput: @"a
+");
+        }
+
+        [Fact]
+        public void MultiLineCase65()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+␠␠␠␠
+    """""");", expectedOutput: @"a
+");
+        }
+
+        [Fact]
+        public void MultiLineCase66()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    a
+␠␠␠␠␠
+    """""");", expectedOutput: @"a
+␠");
         }
     }
 }

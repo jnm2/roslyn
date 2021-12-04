@@ -359,7 +359,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         private static int GetNewLineLength(string text, int index)
         {
             Debug.Assert(SyntaxFacts.IsNewLine(text[index]));
-            return text[index] == '\r' && text[index + 1] == '\n' ? 2 : 1;
+            return text[index] == '\r' && index + 1 < text.Length && text[index + 1] == '\n' ? 2 : 1;
         }
 
         private static InterpolationSyntax ParseInterpolation(
