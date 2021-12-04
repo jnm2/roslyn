@@ -502,7 +502,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 }
                 else
                 {
-                    // found the closing quote.  Move past it.
+                    // found the closing quote
                     _lexer.TextWindow.AdvanceChar(); // "
                 }
             }
