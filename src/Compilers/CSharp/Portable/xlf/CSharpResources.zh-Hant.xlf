@@ -967,11 +967,6 @@
         <target state="translated">不允許在目前的內容中省略型別引數</target>
         <note />
       </trans-unit>
-      <trans-unit id="ERR_OpenBraceInRawStringFormatClause">
-        <source>Open brace not allowed in raw string literal format clause</source>
-        <target state="new">Open brace not allowed in raw string literal format clause</target>
-        <note />
-      </trans-unit>
       <trans-unit id="ERR_OutVariableCannotBeByRef">
         <source>An out variable cannot be declared as a ref local</source>
         <target state="translated">out 變數不可宣告為 ref local</target>

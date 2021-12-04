@@ -967,11 +967,6 @@
         <target state="translated">현재 컨텍스트에서는 형식 인수를 생략할 수 없습니다.</target>
         <note />
       </trans-unit>
-      <trans-unit id="ERR_OpenBraceInRawStringFormatClause">
-        <source>Open brace not allowed in raw string literal format clause</source>
-        <target state="new">Open brace not allowed in raw string literal format clause</target>
-        <note />
-      </trans-unit>
       <trans-unit id="ERR_OutVariableCannotBeByRef">
         <source>An out variable cannot be declared as a ref local</source>
         <target state="translated">출력 변수는 참조 로컬로 선언할 수 없습니다.</target>

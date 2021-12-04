@@ -2034,8 +2034,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         ERR_NotEnoughCloseBracesForRawString = 9121,
         ERR_TooManyOpenBracesForRawString = 9122,
         ERR_TooManyCloseBracesForRawString = 9123,
-        ERR_OpenBraceInRawStringFormatClause = 9124,
-        ERR_CannotMixVerbatimAndRawStrings = 9125
+        ERR_CannotMixVerbatimAndRawStrings = 9124
 
         #endregion
 
