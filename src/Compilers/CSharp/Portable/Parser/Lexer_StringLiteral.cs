@@ -1083,7 +1083,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             /// for when we are attempting to recover from that situation.  Note that just running into new lines will
             /// not make us think we're in runaway lexing.
             /// </summary>
-            private bool RecoveringFromRunawayLexing() => this.Error != null;
+            private bool RecoveringFromRunawayLexing() => Error != null;
 
             private void ScanInterpolatedStringLiteralNestedString()
             {
