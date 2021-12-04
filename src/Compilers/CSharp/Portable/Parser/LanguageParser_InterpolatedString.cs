@@ -106,36 +106,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
-                if (interpolations.Count == 0)
+                var currentContentStart = openQuoteRange.End;
+
+                for (int i = 0; i < interpolations.Count; i++)
                 {
-                    // In the special case when there are no interpolations, we just construct a format string
-                    // with no inserts. We must still use String.Format to get its handling of escapes such as {{,
-                    // so we still treat it as a composite format string.
-                    var text = originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)];
+                    var interpolation = interpolations[i];
+
+                    // Add a token for text preceding the interpolation
+                    var text = originalText[new Range(currentContentStart, interpolation.OpenBraceRange.Start)];
                     if (text.Length > 0)
                         builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
+
+                    builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
+
+                    currentContentStart = interpolation.CloseBraceRange.End;
                 }
-                else
-                {
-                    for (int i = 0; i < interpolations.Count; i++)
-                    {
-                        var interpolation = interpolations[i];
 
-                        // Add a token for text preceding the interpolation
-                        var text = originalText[new Range(
-                            i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
-                            interpolation.OpenBraceRange.Start)];
-                        if (text.Length > 0)
-                            builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
-
-                        builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
-                    }
-
-                    // Add a token for text following the last interpolation
-                    var lastText = originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)];
-                    if (lastText.Length > 0)
-                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(lastText, kind)));
-                }
+                // Add a token for text following the last interpolation
+                var lastText = originalText[new Range(currentContentStart, closeQuoteRange.Start)];
+                if (lastText.Length > 0)
+                    builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(lastText, kind)));
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
                 _pool.Free(builder);
@@ -193,34 +183,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
-                if (interpolations.Count == 0)
+                var currentContentStart = openQuoteRange.End;
+
+                for (int i = 0; i < interpolations.Count; i++)
                 {
-                    // No interpolations.  Just grab the whole chunk of text and split it as appropriate.
+                    var interpolation = interpolations[i];
+
+                    // Add a token for text preceding the interpolation
                     addContent(
-                        indentationWhitespace, currentLineWhitespace, content, builder, first: true, last: true,
-                        originalText[new Range(openQuoteRange.End, closeQuoteRange.Start)]);
+                        indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0, last: false,
+                        originalText[new Range(currentContentStart, interpolation.OpenBraceRange.Start)]);
+
+                    builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
+
+                    currentContentStart = interpolation.CloseBraceRange.End;
                 }
-                else
-                {
-                    for (int i = 0; i < interpolations.Count; i++)
-                    {
-                        var interpolation = interpolations[i];
 
-                        // Add a token for text preceding the interpolation
-                        addContent(
-                            indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0, last: false,
-                            originalText[new Range(
-                                i == 0 ? openQuoteRange.End : interpolations[i - 1].CloseBraceRange.End,
-                                interpolation.OpenBraceRange.Start)]);
-
-                        builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
-                    }
-
-                    // Add a token for text following the last interpolation
-                    addContent(
-                        indentationWhitespace, currentLineWhitespace, content, builder, first: false, last: true,
-                        originalText[new Range(interpolations[^1].CloseBraceRange.End, closeQuoteRange.Start)]);
-                }
+                // Add a token for text following the last interpolation
+                addContent(
+                    indentationWhitespace, currentLineWhitespace, content, builder, first: interpolations.Count == 0, last: true,
+                    originalText[new Range(currentContentStart, closeQuoteRange.Start)]);
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
                 _pool.Free(builder);
