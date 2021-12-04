@@ -944,13 +944,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
             else if (TextWindow.PeekChar(1) == '$' && TextWindow.PeekChar(2) == '$')
             {
-                // @$$ - Error case.  Detect if user is trying to user verbatim and raw interpolations together.
+                // @$$ - Error case.  Detect if user is trying to use verbatim and raw interpolations together.
                 this.ScanRawInterpolatedStringLiteral(ref info);
                 return true;
             }
             else if (TextWindow.PeekChar(1) == '@')
             {
-                // @@ - Error case.  Detect if user is trying to user verbatim and raw interpolations together.
+                // @@ - Error case.  Detect if user is trying to use verbatim and raw interpolations together.
                 this.ScanRawInterpolatedStringLiteral(ref info);
                 return true;
             }

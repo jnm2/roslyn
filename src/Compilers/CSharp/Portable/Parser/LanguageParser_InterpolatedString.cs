@@ -231,7 +231,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 // We're either the first item, or we consumed up through a newline from the previous line. We're
                 // definitely at the start of a newline (or at the end).  Regardless, we want to consume each successive
-                // line, making sure it's indentation is correct.
+                // line, making sure its indentation is correct.
 
                 SyntaxDiagnosticInfo error = null;
                 while (currentIndex < text.Length)

@@ -434,7 +434,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     return false;
                 }
 
-                // Ad this point, we have some sort of reasonable string to work with that we can process the inside of
+                // At this point, we have some sort of reasonable string to work with that we can process the inside of
                 // and search for the end of.
                 Debug.Assert(startingDollarSignCount > 0 && startingQuoteCount > 0);
 
