@@ -1228,18 +1228,18 @@
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyCloseBracesForRawString">
-        <source>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content.</source>
-        <target state="new">The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content.</target>
+        <source>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content</source>
+        <target state="new">The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyOpenBracesForRawString">
-        <source>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content.</source>
-        <target state="new">The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content.</target>
+        <source>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content</source>
+        <target state="new">The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyQuotesForRawString">
-        <source>Too many quotes for raw string literal</source>
-        <target state="new">Too many quotes for raw string literal</target>
+        <source>The raw string literal does not start with enough quote characters to allow this many consecutive quote characters as content</source>
+        <target state="new">The raw string literal does not start with enough quote characters to allow this many consecutive quote characters as content</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TopLevelStatementAfterNamespaceOrType">
