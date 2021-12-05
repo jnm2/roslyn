@@ -155,17 +155,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and the quotes.
                     Debug.Assert(SyntaxFacts.IsNewLine(closeQuoteText[0]));
 
-                    var currentIndex = GetNewLineLength(closeQuoteText, index: 0);
-
+                    var beforeWhitespace = GetNewLineLength(closeQuoteText, index: 0);
+                    var currentIndex = beforeWhitespace;
                     while (currentIndex < closeQuoteText.Length &&
                         SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
                     {
-                        indentationWhitespace.Builder.Append(closeQuoteText[currentIndex]);
                         currentIndex++;
                     }
 
                     Debug.Assert(closeQuoteText[currentIndex] == '"');
-
+                    indentationWhitespace.Builder.Append(closeQuoteText, beforeWhitespace, currentIndex - beforeWhitespace);
                     return getMultiLineRawContentWorker(indentationWhitespace, currentLineWhitespace, content);
                 }
                 finally
