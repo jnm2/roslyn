@@ -6891,7 +6891,7 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
     <value>Not enough quotes for raw string literal</value>
   </data>
   <data name="ERR_NotEnoughCloseBracesForRawString" xml:space="preserve">
-    <value>Not enough closing braces for raw string literal</value>
+    <value>The interpolation must end with the same number of closing braces as the number of '$' characters that the raw string literal started with.</value>
   </data>
   <data name="ERR_UnterminatedRawString" xml:space="preserve">
     <value>Unterminated raw string literal</value>

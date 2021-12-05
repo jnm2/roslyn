@@ -918,8 +918,8 @@
         <note />
       </trans-unit>
       <trans-unit id="ERR_NotEnoughCloseBracesForRawString">
-        <source>Not enough closing braces for raw string literal</source>
-        <target state="new">Not enough closing braces for raw string literal</target>
+        <source>The interpolation must end with the same number of closing braces as the number of '$' characters that the raw string literal started with.</source>
+        <target state="new">The interpolation must end with the same number of closing braces as the number of '$' characters that the raw string literal started with.</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_NotEnoughQuotesForRawString">
