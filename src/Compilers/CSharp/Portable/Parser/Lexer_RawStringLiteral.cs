@@ -364,7 +364,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>
         /// Returns true if <paramref name="sb"/> starts with <paramref name="value"/>.
         /// </summary>
-        internal static bool StartsWith(StringBuilder sb, StringBuilder value)
+        private static bool StartsWith(StringBuilder sb, StringBuilder value)
         {
             if (sb.Length < value.Length)
                 return false;
