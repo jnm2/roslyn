@@ -139,12 +139,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 if (error != null)
                     return getNormalContent();
 
-                // The indentation-whitespace computed from the very last line of the raw string literal
-                var indentationWhitespace = PooledStringBuilder.GetInstance();
-
-                // The leading whitespace of whatever line we are currently on.
-                var currentLineWhitespace = PooledStringBuilder.GetInstance();
-
                 // The content we want to create text token out of.  Effectively, what is in the text sections
                 // minus leading whitespace.
                 var content = PooledStringBuilder.GetInstance();
@@ -164,20 +158,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
 
                     Debug.Assert(closeQuoteText[currentIndex] == '"');
-                    indentationWhitespace.Builder.Append(closeQuoteText, beforeWhitespace, currentIndex - beforeWhitespace);
-                    return getMultiLineRawContentWorker(indentationWhitespace, currentLineWhitespace, content);
+                    return getMultiLineRawContentWorker(
+                        closeQuoteText.AsSpan().Slice(beforeWhitespace, currentIndex - beforeWhitespace), content);
                 }
                 finally
                 {
-                    indentationWhitespace.Free();
-                    currentLineWhitespace.Free();
                     content.Free();
                 }
             }
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContentWorker(
-                StringBuilder indentationWhitespace,
-                StringBuilder currentLineWhitespace,
+                ReadOnlySpan<char> indentationWhitespace,
                 StringBuilder content)
             {
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
@@ -190,7 +181,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                     // Add a token for text preceding the interpolation
                     addContent(
-                        indentationWhitespace, currentLineWhitespace, content, builder, first: i == 0, last: false,
+                        indentationWhitespace, content, builder, first: i == 0, last: false,
                         originalText[currentContentStart..interpolation.OpenBraceRange.Start]);
 
                     builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
@@ -200,7 +191,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 // Add a token for text following the last interpolation
                 addContent(
-                    indentationWhitespace, currentLineWhitespace, content, builder, first: interpolations.Count == 0, last: true,
+                    indentationWhitespace, content, builder, first: interpolations.Count == 0, last: true,
                     originalText[currentContentStart..closeQuoteRange.Start]);
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
@@ -209,8 +200,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
 
             void addContent(
-                StringBuilder indentationWhitespace,
-                StringBuilder currentLineWhitespace,
+                ReadOnlySpan<char> indentationWhitespace,
                 StringBuilder content,
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxListBuilder<InterpolatedStringContentSyntax> result,
                 bool first,
@@ -235,13 +225,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 SyntaxDiagnosticInfo error = null;
                 while (currentIndex < text.Length)
                 {
-                    currentLineWhitespace.Clear();
                     var lineStartPosition = currentIndex;
                     while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
-                    {
-                        currentLineWhitespace.Append(text[currentIndex]);
                         currentIndex++;
-                    }
+
+                    var currentLineWhitespace = text.AsSpan().Slice(lineStartPosition, currentIndex - lineStartPosition);
 
                     // Only bother reporting a single error on a text chunk.
                     if (error == null)
@@ -252,8 +240,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         {
                             // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
                             // or vice versa.  It is an error otherwise.
-                            if (!Lexer.StartsWith(indentationWhitespace, currentLineWhitespace) &&
-                                !Lexer.StartsWith(currentLineWhitespace, indentationWhitespace))
+                            if (!indentationWhitespace.StartsWith(currentLineWhitespace) &&
+                                !currentLineWhitespace.StartsWith(indentationWhitespace))
                             {
                                 error = MakeError(
                                     lineStartPosition,
@@ -265,7 +253,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         {
                             // a content line with non-whitespace.  The indentation whitespace must be a prefix of the current line
                             // whitespace.  It is an error otherwise.
-                            if (!Lexer.StartsWith(currentLineWhitespace, indentationWhitespace))
+                            if (!currentLineWhitespace.StartsWith(indentationWhitespace))
                             {
                                 error ??= MakeError(
                                     lineStartPosition,
