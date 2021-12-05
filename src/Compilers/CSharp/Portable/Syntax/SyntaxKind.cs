@@ -484,7 +484,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         XmlTextLiteralNewLineToken = 8514,
 
         /// <summary>
-        /// Token for a whole interpolated string $" ... { expr } ...". This only exists in transient form during parsing.
+        /// Token for a whole interpolated string <c>$""" ... { expr } ..."""</c>. This only exists in transient form during parsing.
         /// </summary>
         InterpolatedStringToken = 8515,
         InterpolatedStringTextToken = 8517,             // literal text that is part of an interpolated string
