@@ -482,7 +482,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             if (offset == 0)
                 return infos;
 
-            var builder = ArrayBuilder<DiagnosticInfo>.GetInstance();
+            var builder = ArrayBuilder<DiagnosticInfo>.GetInstance(infos.Length);
             foreach (var info in infos)
             {
                 var sd = info as SyntaxDiagnosticInfo;
