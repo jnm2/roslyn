@@ -6893,6 +6893,9 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
   <data name="ERR_NotEnoughCloseBracesForRawString" xml:space="preserve">
     <value>The interpolation must end with the same number of closing braces as the number of '$' characters that the raw string literal started with.</value>
   </data>
+  <data name="ERR_CannotMixVerbatimAndRawStrings" xml:space="preserve">
+    <value>Raw string literals cannot be verbatim ('@'). If needed, increase the number of quote characters starting and ending the literal</value>
+  </data>
   <data name="ERR_UnterminatedRawString" xml:space="preserve">
     <value>Unterminated raw string literal</value>
   </data>
@@ -6907,9 +6910,6 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
   </data>
   <data name="ERR_NewlinesAreNotAllowedInsideANonVerbatimInterpolatedString" xml:space="preserve">
     <value>Newlines inside a non-verbatim interpolated string are not supported in C# {0}. Please use language version {1} or greater.</value>
-  </data>
-  <data name="ERR_CannotMixVerbatimAndRawStrings" xml:space="preserve">
-    <value>Cannot mix verbatim and raw strings</value>
   </data>
   <data name="IDS_FeatureGenericAttributes" xml:space="preserve">
     <value>generic attributes</value>

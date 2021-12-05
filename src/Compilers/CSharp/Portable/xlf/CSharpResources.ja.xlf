@@ -243,8 +243,8 @@
         <note />
       </trans-unit>
       <trans-unit id="ERR_CannotMixVerbatimAndRawStrings">
-        <source>Cannot mix verbatim and raw strings</source>
-        <target state="new">Cannot mix verbatim and raw strings</target>
+        <source>Raw string literals cannot be verbatim ('@'). If needed, increase the number of quote characters starting and ending the literal</source>
+        <target state="new">Raw string literals cannot be verbatim ('@'). If needed, increase the number of quote characters starting and ending the literal</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_CannotSpecifyManagedWithUnmanagedSpecifiers">
