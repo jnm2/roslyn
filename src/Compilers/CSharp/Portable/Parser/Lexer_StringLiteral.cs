@@ -640,7 +640,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             {
                                 var escapeStart = _lexer.TextWindow.Position;
                                 char ch = _lexer.ScanEscapeSequence(surrogateCharacter: out _);
-                                if (ch == '{' || ch == '}')
+                                if (ch is '{' or '}')
                                 {
                                     TrySetError(_lexer.MakeError(escapeStart, _lexer.TextWindow.Position - escapeStart, ErrorCode.ERR_EscapedCurly, ch));
                                 }
