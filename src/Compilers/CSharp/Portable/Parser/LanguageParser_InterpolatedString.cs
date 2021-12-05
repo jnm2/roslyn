@@ -159,7 +159,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                     Debug.Assert(closeQuoteText[currentIndex] == '"');
                     return getMultiLineRawContentWorker(
-                        closeQuoteText.AsSpan().Slice(beforeWhitespace, currentIndex - beforeWhitespace), content);
+                        closeQuoteText.AsSpan()[beforeWhitespace..currentIndex], content);
                 }
                 finally
                 {
@@ -229,7 +229,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
                         currentIndex++;
 
-                    var currentLineWhitespace = text.AsSpan().Slice(lineStartPosition, currentIndex - lineStartPosition);
+                    var currentLineWhitespace = text.AsSpan()[lineStartPosition..currentIndex];
 
                     // Only bother reporting a single error on a text chunk.
                     if (error == null)
@@ -301,28 +301,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         private static void ConsumeRemainingContentOnLine(StringBuilder content, string text, ref int currentIndex)
         {
-            while (currentIndex < text.Length && !SyntaxFacts.IsNewLine(text[currentIndex]))
+            while (currentIndex < text.Length)
             {
-                content.Append(text[currentIndex]);
-                currentIndex++;
+                var ch = text[currentIndex++];
+                content.Append(ch);
+
+                if (SyntaxFacts.IsNewLine(ch))
+                {
+                    // For \r\n, also append the \n as well.
+                    if (ch == '\r' && currentIndex < text.Length && text[currentIndex] == '\n')
+                        content.Append(text[currentIndex++]);
+
+                    return;
+                }
             }
-
-            if (currentIndex < text.Length)
-            {
-                // we must have hit a newline.  Consume it and then move to the core loop.
-                ConsumeNewLine(text, ref currentIndex, content);
-            }
-        }
-
-        private static void ConsumeNewLine(string text, ref int currentIndex, StringBuilder content)
-        {
-            var newLineLength = GetNewLineLength(text, currentIndex);
-            content.Append(text[currentIndex]);
-
-            if (newLineLength == 2)
-                content.Append(text[currentIndex + 1]);
-
-            currentIndex += newLineLength;
         }
 
         private static int GetNewLineLength(string text, int index)
