@@ -6882,10 +6882,10 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
     <value>Too many quotes for raw string literal</value>
   </data>
   <data name="ERR_TooManyOpenBracesForRawString" xml:space="preserve">
-    <value>Too many opening braces for raw string literal</value>
+    <value>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content.</value>
   </data>
   <data name="ERR_TooManyCloseBracesForRawString" xml:space="preserve">
-    <value>Too many closing braces for raw string literal</value>
+    <value>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content.</value>
   </data>
   <data name="ERR_NotEnoughQuotesForRawString" xml:space="preserve">
     <value>Not enough quotes for raw string literal</value>

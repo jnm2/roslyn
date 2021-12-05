@@ -1228,13 +1228,13 @@
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyCloseBracesForRawString">
-        <source>Too many closing braces for raw string literal</source>
-        <target state="new">Too many closing braces for raw string literal</target>
+        <source>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content.</source>
+        <target state="new">The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content.</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyOpenBracesForRawString">
-        <source>Too many opening braces for raw string literal</source>
-        <target state="new">Too many opening braces for raw string literal</target>
+        <source>The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content.</source>
+        <target state="new">The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content.</target>
         <note />
       </trans-unit>
       <trans-unit id="ERR_TooManyQuotesForRawString">
