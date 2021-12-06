@@ -112,7 +112,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // See if we reached the end of the line or file before hitting the end.
                 if (SyntaxFacts.IsNewLine(currentChar))
                 {
-                    this.AddError(TextWindow.Position, width: GetNewLineWidth(), ErrorCode.ERR_UnterminatedRawString);
+                    this.AddError(TextWindow.Position, width: TextWindow.GetNewLineWidth(), ErrorCode.ERR_UnterminatedRawString);
                     return;
                 }
                 else if (IsAtEndOfText(currentChar))
@@ -156,18 +156,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     intern: true);
                 return;
             }
-        }
-
-        private int GetNewLineWidth()
-        {
-            Debug.Assert(SyntaxFacts.IsNewLine(this.TextWindow.PeekChar()));
-            return GetNewLineWidth(this.TextWindow.PeekChar(), this.TextWindow.PeekChar(1));
-        }
-
-        private static int GetNewLineWidth(char currentChar, char nextChar)
-        {
-            Debug.Assert(SyntaxFacts.IsNewLine(currentChar));
-            return currentChar == '\r' && nextChar == '\n' ? 2 : 1;
         }
 
         private void ScanMultiLineRawStringLiteral(ref TokenInfo info, int startingQuoteCount)
@@ -306,7 +294,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
             Debug.Assert(SyntaxFacts.IsNewLine(TextWindow.PeekChar()));
 
-            var newLineWidth = GetNewLineWidth();
+            var newLineWidth = TextWindow.GetNewLineWidth();
             for (var i = 0; i < newLineWidth; i++)
             {
                 // the initial newline in `"""   \r\n` is not added to the contents.
