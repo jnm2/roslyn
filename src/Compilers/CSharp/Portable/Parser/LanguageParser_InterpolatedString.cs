@@ -223,7 +223,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                             // If we're not on a blank line then this is bad.  That's a content line that doesn't start
                             // with the indentation whitespace.  If we are on a blank line then it's ok if the whitespace
                             // we do have is a prefix of the indentation whitespace.
-                            var isBlankLine = (last && currentIndex == text.Length) || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
+                            var isBlankLine = (currentIndex == text.Length && last) || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
                             var isLegalBlankLine = isBlankLine && indentationWhitespace.StartsWith(currentLineWhitespace);
                             if (!isLegalBlankLine)
                             {
