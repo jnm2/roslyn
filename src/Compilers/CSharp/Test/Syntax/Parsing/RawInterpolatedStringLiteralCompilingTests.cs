@@ -459,6 +459,245 @@ class C
         }
 
         [Fact]
+        public void TestAttemptingMarkdownInspiredLanguageHint()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""xml
+    <hi/>
+    """""");",
+                    // (3,11): error CS9101: Unterminated raw string literal
+                    //     $"""xml
+                    Diagnostic(ErrorCode.ERR_UnterminatedRawString, "l").WithLocation(3, 11),
+                    // (4,6): error CS0103: The name 'hi' does not exist in the current context
+                    //     <hi/>
+                    Diagnostic(ErrorCode.ERR_NameNotInContext, "hi").WithArguments("hi").WithLocation(4, 6),
+                    // (4,9): error CS1525: Invalid expression term '>'
+                    //     <hi/>
+                    Diagnostic(ErrorCode.ERR_InvalidExprTerm, ">").WithArguments(">").WithLocation(4, 9),
+                    // (5,10): error CS9101: Unterminated raw string literal
+                    //     """);
+                    Diagnostic(ErrorCode.ERR_UnterminatedRawString, "").WithLocation(5, 10),
+                    // (5,10): error CS1026: ) expected
+                    //     """);
+                    Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(5, 10),
+                    // (5,10): error CS1002: ; expected
+                    //     """);
+                    Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(5, 10));
+        }
+
+        [Fact]
+        public void TestAttemptingCommentOnStartingQuoteLine()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $"""""" // lang=xml
+    <hi/>
+    """""");",
+                    // (3,20): error CS9101: Unterminated raw string literal
+                    //     $""" // lang=xml
+                    Diagnostic(ErrorCode.ERR_UnterminatedRawString, "l").WithLocation(3, 20),
+                    // (4,6): error CS0103: The name 'hi' does not exist in the current context
+                    //     <hi/>
+                    Diagnostic(ErrorCode.ERR_NameNotInContext, "hi").WithArguments("hi").WithLocation(4, 6),
+                    // (4,9): error CS1525: Invalid expression term '>'
+                    //     <hi/>
+                    Diagnostic(ErrorCode.ERR_InvalidExprTerm, ">").WithArguments(">").WithLocation(4, 9),
+                    // (5,10): error CS9101: Unterminated raw string literal
+                    //     """);
+                    Diagnostic(ErrorCode.ERR_UnterminatedRawString, "").WithLocation(5, 10),
+                    // (5,10): error CS1026: ) expected
+                    //     """);
+                    Diagnostic(ErrorCode.ERR_CloseParenExpected, "").WithLocation(5, 10),
+                    // (5,10): error CS1002: ; expected
+                    //     """);
+                    Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(5, 10));
+        }
+
+        [Fact]
+        public void TestInterpolatingAnonymousObject()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+    $""""""
+    {new { }}
+    """""");", expectedOutput: "{ }");
+        }
+
+        [Fact]
+        public void TestSingleLineDiagnosticLocationWithTrivia1()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+#nullable disable
+/**/$""""""{{""""""/**/
+#nullable enable
+);",
+                // (4,9): error CS9122: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content
+                // /**/$"""{{"""/**/
+                Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(4, 9),
+                // (4,11): error CS1733: Expected expression
+                // /**/$"""{{"""/**/
+                Diagnostic(ErrorCode.ERR_ExpressionExpected, "").WithLocation(4, 11));
+        }
+
+        [Fact]
+        public void TestSingleLineDiagnosticLocationWithTrivia2()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+#nullable disable
+/**/$""""""}""""""/**/
+#nullable enable
+);",
+                // (4,9): error CS9123: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content
+                // /**/$"""}"""/**/
+                Diagnostic(ErrorCode.ERR_TooManyCloseBracesForRawString, "}").WithLocation(4, 9));
+        }
+
+        [Fact]
+        public void TestSingleLineDiagnosticLocationWithTrivia3()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+#nullable disable
+/**/$""""""""""""/**/
+#nullable enable
+);",
+                // (4,15): error CS9101: Unterminated raw string literal
+                // /**/$""""""/**/
+                Diagnostic(ErrorCode.ERR_UnterminatedRawString, "/").WithLocation(4, 15));
+        }
+
+        [Fact]
+        public void TestMultiLineDiagnosticLocationWithTrivia1()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+#nullable disable
+/**/$""""""
+    {{
+    """"""/**/
+#nullable enable
+);",
+                    // (5,5): error CS9122: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content
+                    //     {{
+                    Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(5, 5),
+                    // (6,5): error CS1733: Expected expression
+                    //     """/**/
+                    Diagnostic(ErrorCode.ERR_ExpressionExpected, "").WithLocation(6, 5));
+        }
+
+        [Fact]
+        public void TestMultiLineDiagnosticLocationWithTrivia2()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+#nullable disable
+/**/$""""""
+    }
+    """"""/**/
+#nullable enable
+);",
+                    // (5,5): error CS9122: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content
+                    //     {{
+                    Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(5, 5),
+                    // (6,5): error CS1733: Expected expression
+                    //     """/**/
+                    Diagnostic(ErrorCode.ERR_ExpressionExpected, "").WithLocation(6, 5));
+        }
+
+        [Fact]
+        public void TestMultiLineDiagnosticLocationWithTrivia3()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+#nullable disable
+/**/$""""""
+    """"""/**/
+#nullable enable
+);",
+                    // (5,5): error CS9122: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content
+                    //     {{
+                    Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(5, 5),
+                    // (6,5): error CS1733: Expected expression
+                    //     """/**/
+                    Diagnostic(ErrorCode.ERR_ExpressionExpected, "").WithLocation(6, 5));
+        }
+
+        [Fact]
+        public void TestPreprocessorConditionInMultilineContent()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+$""""""
+#if DEBUG
+a
+#endif
+"""""");", expectedOutput: @"#if DEBUG
+a
+#endif");
+        }
+
+        [Fact]
+        public void TestPreprocessorConditionInInterpolation()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+$""""""
+{
+#if DEBUG
+42
+#endif
+}
+"""""");",
+                    // (4,2): error CS1073: Unexpected token '#'
+                    // {
+                    Diagnostic(ErrorCode.ERR_UnexpectedToken, "").WithArguments("#").WithLocation(4, 2),
+                    // (5,1): error CS1003: Syntax error, '}' expected
+                    // #if DEBUG
+                    Diagnostic(ErrorCode.ERR_SyntaxError, "#").WithArguments("}").WithLocation(5, 1),
+                    // (5,1): error CS1525: Invalid expression term ''
+                    // #if DEBUG
+                    Diagnostic(ErrorCode.ERR_InvalidExprTerm, "#").WithArguments("").WithLocation(5, 1),
+                    // (5,1): error CS1056: Unexpected character '#'
+                    // #if DEBUG
+                    Diagnostic(ErrorCode.ERR_UnexpectedCharacter, "").WithArguments("#").WithLocation(5, 1),
+                    // (7,1): error CS1056: Unexpected character '#'
+                    // #endif
+                    Diagnostic(ErrorCode.ERR_UnexpectedCharacter, "").WithArguments("#").WithLocation(7, 1));
+        }
+
+        [Fact]
+        public void TestTrivia()
+        {
+            RenderAndVerify(@"
+System.Console.Write(
+$""""""
+{
+#if DEBUG
+42
+#endif
+}
+"""""");",
+                    // (4,2): error CS1073: Unexpected token '#'
+                    // {
+                    Diagnostic(ErrorCode.ERR_UnexpectedToken, "").WithArguments("#").WithLocation(4, 2),
+                    // (5,1): error CS1003: Syntax error, '}' expected
+                    // #if DEBUG
+                    Diagnostic(ErrorCode.ERR_SyntaxError, "#").WithArguments("}").WithLocation(5, 1),
+                    // (5,1): error CS1525: Invalid expression term ''
+                    // #if DEBUG
+                    Diagnostic(ErrorCode.ERR_InvalidExprTerm, "#").WithArguments("").WithLocation(5, 1),
+                    // (5,1): error CS1056: Unexpected character '#'
+                    // #if DEBUG
+                    Diagnostic(ErrorCode.ERR_UnexpectedCharacter, "").WithArguments("#").WithLocation(5, 1),
+                    // (7,1): error CS1056: Unexpected character '#'
+                    // #endif
+                    Diagnostic(ErrorCode.ERR_UnexpectedCharacter, "").WithArguments("#").WithLocation(7, 1));
+        }
+
+        [Fact]
         public void TestSingleLineOutput1()
         {
             CompileAndVerify(
