@@ -1945,7 +1945,7 @@
       <Kind Name="SingleLineRawInterpolatedStringStartToken"/>
       <Kind Name="MultiLineRawInterpolatedStringStartToken"/>
       <PropertyComment>
-        <summary>first part of an interpolated string, <c>$"</c> or <c>$@"</c> or <c>$"""</c></summary>
+        <summary>The first part of an interpolated string, <c>$"</c> or <c>$@"</c> or <c>$"""</c></summary>
       </PropertyComment>
     </Field>
     <Field Name="Contents" Type="SyntaxList&lt;InterpolatedStringContentSyntax&gt;" >
