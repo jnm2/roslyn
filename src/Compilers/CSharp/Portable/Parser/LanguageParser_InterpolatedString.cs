@@ -6,6 +6,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 using System.Text;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Text;
@@ -137,36 +138,24 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 // The content we want to create text token out of.  Effectively, what is in the text sections
                 // minus leading whitespace.
-                var content = PooledStringBuilder.GetInstance();
-                try
-                {
-                    var closeQuoteText = originalText[closeQuoteRange];
+                var closeQuoteText = originalText[closeQuoteRange];
 
-                    // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and the quotes.
-                    Debug.Assert(SyntaxFacts.IsNewLine(closeQuoteText[0]));
+                // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and the quotes.
+                Debug.Assert(SyntaxFacts.IsNewLine(closeQuoteText[0]));
 
-                    var beforeWhitespace = GetNewLineLength(closeQuoteText, index: 0);
-                    var currentIndex = beforeWhitespace;
-                    while (currentIndex < closeQuoteText.Length &&
-                        SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
-                    {
-                        currentIndex++;
-                    }
+                var beforeWhitespace = GetNewLineLength(closeQuoteText, index: 0);
+                var currentIndex = beforeWhitespace;
+                while (currentIndex < closeQuoteText.Length && SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
+                    currentIndex++;
 
-                    Debug.Assert(closeQuoteText[currentIndex] == '"');
-                    return getMultiLineRawContentWorker(
-                        closeQuoteText.AsSpan()[beforeWhitespace..currentIndex], content);
-                }
-                finally
-                {
-                    content.Free();
-                }
+                Debug.Assert(closeQuoteText[currentIndex] == '"');
+                var result = getMultiLineRawContentWorker(closeQuoteText.AsSpan()[beforeWhitespace..currentIndex]);
+                return result;
             }
 
-            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContentWorker(
-                ReadOnlySpan<char> indentationWhitespace,
-                StringBuilder content)
+            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContentWorker(ReadOnlySpan<char> indentationWhitespace)
             {
+                var content = PooledStringBuilder.GetInstance();
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
                 var currentContentStart = openQuoteRange.End;
@@ -192,6 +181,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
                 _pool.Free(builder);
+                content.Free();
                 return result;
             }
 
