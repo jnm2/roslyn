@@ -107,7 +107,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 var currentContentStart = openQuoteRange.End;
 
-                for (int i = 0; i < interpolations.Count; i++)
+                for (var i = 0; i < interpolations.Count; i++)
                 {
                     var interpolation = interpolations[i];
 
@@ -117,7 +117,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
 
                     builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
-
                     currentContentStart = interpolation.CloseBraceRange.End;
                 }
 
@@ -160,7 +159,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 var currentContentStart = openQuoteRange.End;
 
-                for (int i = 0; i < interpolations.Count; i++)
+                for (var i = 0; i < interpolations.Count; i++)
                 {
                     var interpolation = interpolations[i];
 
@@ -170,7 +169,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         originalText[currentContentStart..interpolation.OpenBraceRange.Start]);
 
                     builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
-
                     currentContentStart = interpolation.CloseBraceRange.End;
                 }
 
