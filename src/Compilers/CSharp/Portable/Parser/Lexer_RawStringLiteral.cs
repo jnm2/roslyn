@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
 using System.Text;
 using Microsoft.CodeAnalysis.PooledObjects;
@@ -330,8 +331,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             // Skip the leading whitespace that matches the terminator line and add any whitespace past that to the
             // string value.
+#if NETSTANDARD2_0
             for (var i = indentationWhitespace.Length; i < currentLineWhitespace.Length; i++)
                 _builder.Append(currentLineWhitespace[i]);
+#else
+            _builder.Append(currentLineWhitespace, indentationWhitespace.Length, Math.Max(0, currentLineWhitespace.Length - indentationWhitespace.Length));
+#endif
 
             // Consume up to the next new line.
             while (true)
