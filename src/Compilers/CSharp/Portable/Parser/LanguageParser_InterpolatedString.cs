@@ -73,7 +73,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             SyntaxToken getOpenQuote()
             {
-                var openQuoteText = originalText[openQuoteRange];
                 return SyntaxFactory.Token(
                     originalToken.GetLeadingTrivia(),
                     kind switch
@@ -84,8 +83,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         Lexer.InterpolatedStringKind.MultiLineRaw => SyntaxKind.MultiLineRawInterpolatedStringStartToken,
                         _ => throw ExceptionUtilities.UnexpectedValue(kind),
                     },
-                    openQuoteText,
-                    openQuoteText,
+                    originalText[openQuoteRange],
                     trailing: null);
             }
 
@@ -269,7 +267,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             SyntaxToken getCloseQuote()
             {
                 // Make a token for the close quote " (even if it was missing)
-                var closeQuoteText = originalText[closeQuoteRange];
                 var syntaxKind = kind switch
                 {
                     Lexer.InterpolatedStringKind.Normal => SyntaxKind.InterpolatedStringEndToken,
@@ -278,9 +275,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     Lexer.InterpolatedStringKind.MultiLineRaw => SyntaxKind.MultiLineRawInterpolatedStringEndToken,
                     _ => throw ExceptionUtilities.UnexpectedValue(kind),
                 };
+
+                var closeQuoteText = originalText[closeQuoteRange];
                 return closeQuoteText == ""
                     ? SyntaxFactory.MissingToken(leading: null, syntaxKind, originalToken.GetTrailingTrivia())
-                    : SyntaxFactory.Token(leading: null, syntaxKind, closeQuoteText, closeQuoteText, originalToken.GetTrailingTrivia());
+                    : SyntaxFactory.Token(leading: null, syntaxKind, closeQuoteText, originalToken.GetTrailingTrivia());
             }
         }
 
@@ -319,7 +318,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             // First grab any trivia right after the {, it will be trailing trivia for the { token.
             var openTokenTrailingTrivia = tempLexer.LexSyntaxTrailingTrivia().Node;
-            var openTokenText = text[interpolation.OpenBraceRange];
 
             var openTokenKind = kind is Lexer.InterpolatedStringKind.Normal or Lexer.InterpolatedStringKind.Verbatim
                 ? SyntaxKind.OpenBraceToken
@@ -330,7 +328,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             var result = tempParser.ParseInterpolation(
                 text, interpolation, kind,
-                SyntaxFactory.Token(leading: null, openTokenKind, openTokenText, openTokenText, openTokenTrailingTrivia));
+                SyntaxFactory.Token(leading: null, openTokenKind, text[interpolation.OpenBraceRange], openTokenTrailingTrivia));
 
             Debug.Assert(text[interpolation.OpenBraceRange.Start..interpolation.CloseBraceRange.End] == result.ToFullString()); // yield from text equals yield from node
             return result;
@@ -371,9 +369,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 var leading = this.CurrentToken.GetLeadingTrivia();
                 if (interpolation.HasColon)
                 {
-                    var colonText = text[interpolation.ColonRange];
                     var format = SyntaxFactory.InterpolationFormatClause(
-                        SyntaxFactory.Token(leading, SyntaxKind.ColonToken, colonText, colonText, trailing: null),
+                        SyntaxFactory.Token(leading, SyntaxKind.ColonToken, text[interpolation.ColonRange], trailing: null),
                         MakeInterpolatedStringTextToken(
                             text[interpolation.ColonRange.End..interpolation.CloseBraceRange.Start], kind));
                     return (format, getInterpolationCloseToken(leading: null));
@@ -391,10 +388,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     : SyntaxKind.RawInterpolationCloseToken;
 
                 var tokenText = text[interpolation.CloseBraceRange];
-                if (tokenText == "")
-                    return SyntaxFactory.MissingToken(leading, closeTokenKind, trailing: null);
-
-                return SyntaxFactory.Token(leading, closeTokenKind, tokenText, tokenText, trailing: null);
+                return tokenText == ""
+                    ? SyntaxFactory.MissingToken(leading, closeTokenKind, trailing: null)
+                    : SyntaxFactory.Token(leading, closeTokenKind, tokenText, trailing: null);
             }
         }
 
