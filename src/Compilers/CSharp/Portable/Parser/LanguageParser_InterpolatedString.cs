@@ -112,7 +112,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // Add a token for text preceding the interpolation
                     var text = originalText[currentContentStart..interpolation.OpenBraceRange.Start];
                     if (text.Length > 0)
-                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(text, kind)));
+                        builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(kind, text)));
 
                     builder.Add(ParseInterpolation(this.Options, originalText, interpolation, kind));
                     currentContentStart = interpolation.CloseBraceRange.End;
@@ -121,7 +121,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // Add a token for text following the last interpolation
                 var lastText = originalText[currentContentStart..closeQuoteRange.Start];
                 if (lastText.Length > 0)
-                    builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(lastText, kind)));
+                    builder.Add(SyntaxFactory.InterpolatedStringText(MakeInterpolatedStringTextToken(kind, lastText)));
 
                 CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> result = builder;
                 _pool.Free(builder);
@@ -366,8 +366,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     var format = SyntaxFactory.InterpolationFormatClause(
                         SyntaxFactory.Token(leading, SyntaxKind.ColonToken, text[interpolation.ColonRange], trailing: null),
-                        MakeInterpolatedStringTextToken(
-                            text[interpolation.ColonRange.End..interpolation.CloseBraceRange.Start], kind));
+                        MakeInterpolatedStringTextToken(kind, text[interpolation.ColonRange.End..interpolation.CloseBraceRange.Start]));
                     return (format, getInterpolationCloseToken(leading: null));
                 }
                 else
@@ -394,7 +393,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// </summary>
         /// <param name="text">The text for the full string literal, including the quotes and contents</param>
         /// <param name="kind">The kind of the interpolated string we were processing</param>
-        private SyntaxToken MakeInterpolatedStringTextToken(string text, Lexer.InterpolatedStringKind kind)
+        private SyntaxToken MakeInterpolatedStringTextToken(Lexer.InterpolatedStringKind kind, string text)
         {
             // with a raw string, we don't do any interpretation of the content.  Note: removal of indentation is
             // handled already in splitContent
