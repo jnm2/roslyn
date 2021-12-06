@@ -90,16 +90,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getContent()
             {
-                if (kind is Lexer.InterpolatedStringKind.MultiLineRaw)
-                {
-                    // For a multi-line raw interpolated string, we have to remove indentation whitespace as
-                    // appropriate.  So this gets a highly specialized processing path.
-                    return getMultiLineRawContent();
-                }
-                else
-                {
-                    return getNormalContent();
-                }
+                // For a multi-line raw interpolated string, we have to remove indentation whitespace as appropriate.
+                // So this gets a highly specialized processing path.
+                //
+                // Also, if we have any errors in the multi-line literal, then don't bother to try to do fancy
+                // dedentation. There's no need as it's quite possible we don't even know what the dedent would be.
+                return kind is Lexer.InterpolatedStringKind.MultiLineRaw && error == null
+                    ? getMultiLineRawContent()
+                    : getNormalContent();
             }
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getNormalContent()
@@ -134,10 +132,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContent()
             {
-                // If we have any errors in the multi-line literal, then don't bother to try to do fancy dedentation.
-                // There's no need as it's quite possible we don't even know what the dedent would be.
-                if (error != null)
-                    return getNormalContent();
+                // Knowing there was no lexing error means we can make assumptions about the shape of the code.
+                Debug.Assert(error == null);
 
                 // The content we want to create text token out of.  Effectively, what is in the text sections
                 // minus leading whitespace.
