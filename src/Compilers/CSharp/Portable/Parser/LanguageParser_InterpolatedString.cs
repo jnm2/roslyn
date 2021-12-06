@@ -135,26 +135,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // Knowing there was no lexing error means we can make assumptions about the shape of the code.
                 Debug.Assert(error == null);
 
-                // The content we want to create text token out of.  Effectively, what is in the text sections
-                // minus leading whitespace.
-                var closeQuoteText = originalText[closeQuoteRange];
-
-                // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and
-                // the quotes. So it's safe to just pull off the first two characters here to find where the
-                // newline-ends.
-                var beforeWhitespace = SlidingTextWindow.GetNewLineWidth(closeQuoteText[0], closeQuoteText[1]);
-                var currentIndex = beforeWhitespace;
-                while (currentIndex < closeQuoteText.Length && SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
-                    currentIndex++;
-
-                Debug.Assert(closeQuoteText[currentIndex] == '"');
-                var indentationWhitespace = closeQuoteText.AsSpan()[beforeWhitespace..currentIndex];
-
                 var content = PooledStringBuilder.GetInstance();
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
-                var currentContentStart = openQuoteRange.End;
+                var indentationWhitespace = getIndentationWhitespace();
 
+                var currentContentStart = openQuoteRange.End;
                 for (var i = 0; i < interpolations.Count; i++)
                 {
                     var interpolation = interpolations[i];
@@ -177,6 +163,25 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 _pool.Free(builder);
                 content.Free();
                 return result;
+            }
+
+            // Gets the indentation whitespace from the last line of a multi-line raw literal.
+            ReadOnlySpan<char> getIndentationWhitespace()
+            {
+                // The content we want to create text token out of.  Effectively, what is in the text sections
+                // minus leading whitespace.
+                var closeQuoteText = originalText[closeQuoteRange];
+
+                // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and
+                // the quotes. So it's safe to just pull off the first two characters here to find where the
+                // newline-ends.
+                var beforeWhitespace = SlidingTextWindow.GetNewLineWidth(closeQuoteText[0], closeQuoteText[1]);
+                var currentIndex = beforeWhitespace;
+                while (currentIndex < closeQuoteText.Length && SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
+                    currentIndex++;
+
+                Debug.Assert(closeQuoteText[currentIndex] == '"');
+                return closeQuoteText.AsSpan()[beforeWhitespace..currentIndex];
             }
 
             void addContent(
