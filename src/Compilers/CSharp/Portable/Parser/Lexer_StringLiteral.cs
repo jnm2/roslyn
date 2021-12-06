@@ -707,8 +707,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                 }
 
-                // Otherwise, fall through.  note: it's ok if we moved past newlines/whitespace/quotes above.  Those all
-                // will just be consumed as content of the literal.
                 return false;
             }
 
