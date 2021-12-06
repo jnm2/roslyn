@@ -405,11 +405,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // We should only have gotten here if we had at least two characters that made us think we had an interpolated string.
                 Debug.Assert(totalAtCount + startingDollarSignCount + startingQuoteCount >= 2);
 
+                // Multiple @-signs, and @-signs with raw literals are always illegal.  Detect these and give a
+                // reasonable error message.  Continue on if we can.
                 if (totalAtCount > 0)
                 {
                     if (startingDollarSignCount == 0 && startingQuoteCount == 0)
                     {
-                        // just multiple @'s in a row.  Give a general message about how @ signs work.
+                        // just multiple @'s in a row.  Give a general message about how @ signs work. We cannot
+                        // continue on as we have no quotes, and thus can't even find where the string starts or ends.
                         TrySetError(_lexer.MakeError(
                             start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
                         kind = InterpolatedStringKind.SingleLineRaw;
@@ -427,7 +430,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                 if (startingQuoteCount == 0)
                 {
-                    // We have no quotes at all.  We can't proceed at all.
+                    // We have no quotes at all.  We cannot continue on as we have no quotes, and thus can't even find
+                    // where the string starts or ends.
                     TrySetError(_lexer.MakeError(
                         start, width: window.Position - start, ErrorCode.ERR_NotEnoughQuotesForRawString));
                     kind = InterpolatedStringKind.SingleLineRaw;
