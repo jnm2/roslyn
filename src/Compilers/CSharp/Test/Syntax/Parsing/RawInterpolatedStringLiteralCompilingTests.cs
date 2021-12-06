@@ -599,12 +599,9 @@ System.Console.Write(
     """"""/**/
 #nullable enable
 );",
-                    // (5,5): error CS9122: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content
-                    //     {{
-                    Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(5, 5),
-                    // (6,5): error CS1733: Expected expression
-                    //     """/**/
-                    Diagnostic(ErrorCode.ERR_ExpressionExpected, "").WithLocation(6, 5));
+                    // (5,5): error CS9123: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive closing braces as content.
+                    //     }
+                    Diagnostic(ErrorCode.ERR_TooManyCloseBracesForRawString, "}").WithLocation(5, 5));
         }
 
         [Fact]
@@ -617,12 +614,9 @@ System.Console.Write(
     """"""/**/
 #nullable enable
 );",
-                    // (5,5): error CS9122: The interpolated raw string literal does not start with enough '$' characters to allow this many consecutive opening braces as content
-                    //     {{
-                    Diagnostic(ErrorCode.ERR_TooManyOpenBracesForRawString, "{").WithLocation(5, 5),
-                    // (6,5): error CS1733: Expected expression
+                    // (5,5): error CS9106: Multi-line raw string literals must contain at least one line of content.
                     //     """/**/
-                    Diagnostic(ErrorCode.ERR_ExpressionExpected, "").WithLocation(6, 5));
+                    Diagnostic(ErrorCode.ERR_RawStringMustContainContent, @"""""""").WithLocation(5, 5));
         }
 
         [Fact]
