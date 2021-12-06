@@ -174,12 +174,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // the quotes. So it's safe to just pull off the first two characters here to find where the
                 // newline-ends.
                 var afterNewLine = SlidingTextWindow.GetNewLineWidth(closeQuoteText[0], closeQuoteText[1]);
-                var currentIndex = afterNewLine;
-                while (currentIndex < closeQuoteText.Length && SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
-                    currentIndex++;
+                var afterWhitespace = SkipWhitespace(closeQuoteText, afterNewLine);
 
-                Debug.Assert(closeQuoteText[currentIndex] == '"');
-                return closeQuoteText.AsSpan()[afterNewLine..currentIndex];
+                Debug.Assert(closeQuoteText[afterWhitespace] == '"');
+                return closeQuoteText.AsSpan()[afterNewLine..afterWhitespace];
             }
 
             void addContent(
@@ -214,9 +212,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // Only bother reporting a single indentation error on a text chunk.
                     if (error == null)
                     {
-                        while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
-                            currentIndex++;
-
+                        currentIndex = SkipWhitespace(text, currentIndex);
                         var currentLineWhitespace = text.AsSpan()[lineStartPosition..currentIndex];
 
                         if (!currentLineWhitespace.StartsWith(indentationWhitespace))
@@ -273,21 +269,27 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
+        private static int SkipWhitespace(string text, int currentIndex)
+        {
+            while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
+                currentIndex++;
+            return currentIndex;
+        }
+
         private static void ConsumeRemainingContentOnLine(StringBuilder content, string text, ref int currentIndex)
         {
             var start = currentIndex;
             while (currentIndex < text.Length)
             {
                 var ch = text[currentIndex];
-                if (SyntaxFacts.IsNewLine(ch))
-                {
-                    currentIndex += SlidingTextWindow.GetNewLineWidth(ch, currentIndex + 1 < text.Length ? text[currentIndex + 1] : '\0');
-                    break;
-                }
-                else
+                if (!SyntaxFacts.IsNewLine(ch))
                 {
                     currentIndex++;
+                    continue;
                 }
+
+                currentIndex += SlidingTextWindow.GetNewLineWidth(ch, currentIndex + 1 < text.Length ? text[currentIndex + 1] : '\0');
+                break;
             }
 
             content.Append(text, start, currentIndex - start);
