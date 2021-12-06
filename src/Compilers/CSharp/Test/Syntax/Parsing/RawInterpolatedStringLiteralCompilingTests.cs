@@ -59,7 +59,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Parsing
         {
             // ensure the parser doesn't crash on any test cases.
             for (var i = 0; i < text.Length; i++)
-                SyntaxFactory.ParseCompilationUnit(text.Substring(0, text.Length - i));
+                SyntaxFactory.ParseCompilationUnit(text[0..^i]);
         }
 
         [Fact]
