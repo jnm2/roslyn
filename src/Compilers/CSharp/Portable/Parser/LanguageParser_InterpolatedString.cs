@@ -212,14 +212,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 while (currentIndex < text.Length)
                 {
                     var lineStartPosition = currentIndex;
-                    while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
-                        currentIndex++;
 
-                    var currentLineWhitespace = text.AsSpan()[lineStartPosition..currentIndex];
-
-                    // Only bother reporting a single error on a text chunk.
+                    // Only bother reporting a single indentation error on a text chunk.
                     if (error == null)
                     {
+                        while (currentIndex < text.Length && SyntaxFacts.IsWhitespace(text[currentIndex]))
+                            currentIndex++;
+
+                        var currentLineWhitespace = text.AsSpan()[lineStartPosition..currentIndex];
+
                         // The end of the last line of content is always "at a new line" because a, non-error,
                         // multi-line raw string literal must always end with a newline, then spaces, then the quotes.
                         var isAtNewLine = (last && currentIndex == text.Length) || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
@@ -250,11 +251,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         }
                     }
 
-                    // Skip the leading whitespace that matches the terminator line and add any whitespace past that to the
-                    // string value.
-                    for (var i = indentationWhitespace.Length; i < currentLineWhitespace.Length; i++)
-                        content.Append(currentLineWhitespace[i]);
-
+                    // Skip the leading whitespace that matches the terminator line and add any text after that to our content.
+                    currentIndex = Math.Min(currentIndex, lineStartPosition + indentationWhitespace.Length);
                     ConsumeRemainingContentOnLine(content, text, ref currentIndex);
                 }
 
