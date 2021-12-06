@@ -399,8 +399,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// </summary>
         /// <param name="text">The text for the full string literal, including the quotes and contents</param>
         /// <param name="kind">The kind of the interpolated string we were processing</param>
-        private SyntaxToken MakeInterpolatedStringTextToken(
-            string text, Lexer.InterpolatedStringKind kind)
+        private SyntaxToken MakeInterpolatedStringTextToken(string text, Lexer.InterpolatedStringKind kind)
         {
             // with a raw string, we don't do any interpretation of the content.  Note: removal of indentation is
             // handled already in splitContent
@@ -420,9 +419,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             Debug.Assert(token.Kind == SyntaxKind.StringLiteralToken);
             var result = SyntaxFactory.Literal(null, text, SyntaxKind.InterpolatedStringTextToken, token.ValueText, null);
             if (token.ContainsDiagnostics)
-            {
                 result = result.WithDiagnosticsGreen(MoveDiagnostics(token.GetDiagnostics(), -prefix.Length));
-            }
 
             return result;
         }
