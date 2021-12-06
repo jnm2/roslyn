@@ -213,7 +213,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 content.Clear();
                 var currentIndex = 0;
 
-                // If we're not processing the  first content chunk, then we must be processign a chunk that came after
+                // If we're not processing the first content chunk, then we must be processing a chunk that came after
                 // an interpolation.  In that case, we need to consume up through the next newline of that chunk as
                 // content that is not subject to dedentation.
                 if (!first)
