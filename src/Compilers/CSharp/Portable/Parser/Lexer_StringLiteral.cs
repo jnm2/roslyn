@@ -487,6 +487,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     ScanRawInterpolatedStringLiteralEnd(kind, startingQuoteCount);
                 }
 
+                // Note: this range may be empty.  For example, if we hit the end of a line for a single-line construct,
+                // or we hit the end of a file for a multi-line construct.
                 closeQuoteRange = closeQuotePosition.._lexer.TextWindow.Position;
             }
 
