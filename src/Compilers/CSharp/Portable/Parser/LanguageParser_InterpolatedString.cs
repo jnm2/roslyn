@@ -198,7 +198,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // an interpolation.  In that case, we need to consume up through the next newline of that chunk as
                 // content that is not subject to dedentation.
                 if (!first)
-                    ConsumeRemainingContentOnLine(content, text, ref currentIndex);
+                    currentIndex = ConsumeRemainingContentOnLine(content, text, currentIndex);
 
                 // We're either the first item, or we consumed up through a newline from the previous line. We're
                 // definitely at the start of a newline (or at the end).  Regardless, we want to consume each successive
@@ -237,7 +237,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                     // Skip the leading whitespace that matches the terminator line and add any text after that to our content.
                     currentIndex = Math.Min(currentIndex, lineStartPosition + indentationWhitespace.Length);
-                    ConsumeRemainingContentOnLine(content, text, ref currentIndex);
+                    currentIndex = ConsumeRemainingContentOnLine(content, text, currentIndex);
                 }
 
                 // if we ran into any errors, don't give this item any special value.  It just has the value of our actual text.
@@ -276,7 +276,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return currentIndex;
         }
 
-        private static void ConsumeRemainingContentOnLine(StringBuilder content, string text, ref int currentIndex)
+        private static int ConsumeRemainingContentOnLine(StringBuilder content, string text, int currentIndex)
         {
             var start = currentIndex;
             while (currentIndex < text.Length)
@@ -293,6 +293,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
 
             content.Append(text, start, currentIndex - start);
+            return currentIndex;
         }
 
         private static InterpolationSyntax ParseInterpolation(
