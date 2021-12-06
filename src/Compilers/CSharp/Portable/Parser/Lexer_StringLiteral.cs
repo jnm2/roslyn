@@ -453,7 +453,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 {
                     // We had whitespace followed by a newline.  That section is considered the open-quote section of
                     // the literal.
-                    window.AdvanceChar(_lexer.GetNewLineWidth(window.PeekChar()));
+                    window.AdvancePastNewLine();
                     kind = InterpolatedStringKind.MultiLineRaw;
                 }
                 else
@@ -572,8 +572,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     }
                     else
                     {
-                        Debug.Assert(SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()));
-                        _lexer.TextWindow.AdvanceChar(_lexer.GetNewLineWidth(_lexer.TextWindow.PeekChar()));
+                        _lexer.TextWindow.AdvancePastNewLine();
                         _lexer.ConsumeWhitespace(builder: null);
 
                         var closeQuoteCount = _lexer.ConsumeQuoteSequence();
@@ -691,7 +690,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     var startPosition = _lexer.TextWindow.Position;
                     if (SyntaxFacts.IsNewLine(_lexer.TextWindow.PeekChar()))
                     {
-                        _lexer.TextWindow.AdvanceChar(_lexer.GetNewLineWidth(_lexer.TextWindow.PeekChar()));
+                        _lexer.TextWindow.AdvancePastNewLine();
                         _lexer.ConsumeWhitespace(builder: null);
                         var closeQuoteCount = _lexer.ConsumeQuoteSequence();
 

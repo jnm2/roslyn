@@ -112,7 +112,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // See if we reached the end of the line or file before hitting the end.
                 if (SyntaxFacts.IsNewLine(currentChar))
                 {
-                    this.AddError(TextWindow.Position, width: GetNewLineWidth(currentChar), ErrorCode.ERR_UnterminatedRawString);
+                    this.AddError(TextWindow.Position, width: GetNewLineWidth(), ErrorCode.ERR_UnterminatedRawString);
                     return;
                 }
                 else if (IsAtEndOfText(currentChar))
@@ -158,10 +158,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        private int GetNewLineWidth(char currentChar)
+        private int GetNewLineWidth()
+        {
+            Debug.Assert(SyntaxFacts.IsNewLine(this.TextWindow.PeekChar()));
+            return GetNewLineWidth(this.TextWindow.PeekChar(), this.TextWindow.PeekChar(1));
+        }
+
+        private static int GetNewLineWidth(char currentChar, char nextChar)
         {
             Debug.Assert(SyntaxFacts.IsNewLine(currentChar));
-            return currentChar == '\r' && TextWindow.PeekChar(1) == '\n' ? 2 : 1;
+            return currentChar == '\r' && nextChar == '\n' ? 2 : 1;
         }
 
         private void ScanMultiLineRawStringLiteral(ref TokenInfo info, int startingQuoteCount)
@@ -235,8 +241,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         private bool ScanMultiLineRawStringLiteralLine(
             int startingQuoteCount, StringBuilder indentationWhitespace)
         {
-            Debug.Assert(SyntaxFacts.IsNewLine(TextWindow.PeekChar()));
-            TextWindow.AdvanceChar(GetNewLineWidth(TextWindow.PeekChar()));
+            TextWindow.AdvancePastNewLine();
 
             indentationWhitespace.Clear();
             ConsumeWhitespace(indentationWhitespace);
@@ -301,7 +306,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
             Debug.Assert(SyntaxFacts.IsNewLine(TextWindow.PeekChar()));
 
-            var newLineWidth = GetNewLineWidth(TextWindow.PeekChar());
+            var newLineWidth = GetNewLineWidth();
             for (var i = 0; i < newLineWidth; i++)
             {
                 // the initial newline in `"""   \r\n` is not added to the contents.

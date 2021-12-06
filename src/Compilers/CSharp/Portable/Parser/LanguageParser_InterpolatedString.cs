@@ -139,10 +139,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // minus leading whitespace.
                 var closeQuoteText = originalText[closeQuoteRange];
 
-                // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and the quotes.
-                Debug.Assert(SyntaxFacts.IsNewLine(closeQuoteText[0]));
-
-                var beforeWhitespace = GetNewLineLength(closeQuoteText, index: 0);
+                // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and
+                // the quotes. So it's safe to just pull off the first two characters here to find where the
+                // newline-ends.
+                var beforeWhitespace = SlidingTextWindow.GetNewLineWidth(closeQuoteText[0], closeQuoteText[1]);
                 var currentIndex = beforeWhitespace;
                 while (currentIndex < closeQuoteText.Length && SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
                     currentIndex++;
@@ -221,9 +221,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     {
                         // The end of the last line of content is always "at a new line" because a, non-error,
                         // multi-line raw string literal must always end with a newline, then spaces, then the quotes.
-                        var isAtEndOfLastLine = last && currentIndex == text.Length;
-                        var isAtNewLine = isAtEndOfLastLine || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
-                        if (isAtEndOfLastLine)
+                        var isAtNewLine = (last && currentIndex == text.Length) || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
+                        if (isAtNewLine)
                         {
                             // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
                             // or vice versa.  It is an error otherwise.
@@ -302,12 +301,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     return;
                 }
             }
-        }
-
-        private static int GetNewLineLength(string text, int index)
-        {
-            Debug.Assert(SyntaxFacts.IsNewLine(text[index]));
-            return text[index] == '\r' && index + 1 < text.Length && text[index + 1] == '\n' ? 2 : 1;
         }
 
         private static InterpolationSyntax ParseInterpolation(
