@@ -308,25 +308,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             currentLineWhitespace.Clear();
             ConsumeWhitespace(currentLineWhitespace);
 
-            if (SyntaxFacts.IsNewLine(TextWindow.PeekChar()))
+            if (!StartsWith(currentLineWhitespace, indentationWhitespace))
             {
-                // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
-                // or vice versa.  It is an error otherwise.
-                if (!StartsWith(indentationWhitespace, currentLineWhitespace) &&
-                    !StartsWith(currentLineWhitespace, indentationWhitespace))
-                {
-                    this.AddError(
-                        lineStartPosition,
-                        width: TextWindow.Position - lineStartPosition,
-                        ErrorCode.ERR_LineDoesNotStartWithSameWhitespace);
-                    return;
-                }
-            }
-            else
-            {
-                // a content line with non-whitespace.  The indentation whitespace must be a prefix of the current line
-                // whitespace.  It is an error otherwise.
-                if (!StartsWith(currentLineWhitespace, indentationWhitespace))
+                // We have a line where the indentation of that line isn't a prefix of indentation
+                // whitespace.
+                //
+                // If we're not on a blank line then this is bad.  That's a content line that doesn't start
+                // with the indentation whitespace.  If we are on a blank line then it's ok if the whitespace
+                // we do have is a prefix of the indentation whitespace.
+                var isBlankLine = SyntaxFacts.IsNewLine(TextWindow.PeekChar());
+                var isLegalBlankLine = isBlankLine && StartsWith(indentationWhitespace, currentLineWhitespace);
+                if (!isLegalBlankLine)
                 {
                     this.AddError(
                         lineStartPosition,
