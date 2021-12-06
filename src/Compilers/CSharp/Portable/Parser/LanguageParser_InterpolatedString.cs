@@ -219,27 +219,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
                         var currentLineWhitespace = text.AsSpan()[lineStartPosition..currentIndex];
 
-                        // The end of the last line of content is always "at a new line" because a, non-error,
-                        // multi-line raw string literal must always end with a newline, then spaces, then the quotes.
-                        var isAtNewLine = (last && currentIndex == text.Length) || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
-                        if (isAtNewLine)
+                        if (!currentLineWhitespace.StartsWith(indentationWhitespace))
                         {
-                            // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
-                            // or vice versa.  It is an error otherwise.
-                            if (!indentationWhitespace.StartsWith(currentLineWhitespace) &&
-                                !currentLineWhitespace.StartsWith(indentationWhitespace))
-                            {
-                                error = MakeError(
-                                    lineStartPosition,
-                                    width: currentIndex - lineStartPosition,
-                                    ErrorCode.ERR_LineDoesNotStartWithSameWhitespace);
-                            }
-                        }
-                        else
-                        {
-                            // a content line with non-whitespace.  The indentation whitespace must be a prefix of the current line
-                            // whitespace.  It is an error otherwise.
-                            if (!currentLineWhitespace.StartsWith(indentationWhitespace))
+                            // We have a line where the indentation of that line isn't a prefix of indentation
+                            // whitespace.
+                            //
+                            // If we're not on a blank line then this is bad.  That's a content line that doesn't start
+                            // with the indentation whitespace.  If we are on a blank line then it's ok if the whitespace
+                            // we do have is a prefix of the indentation whitespace.
+                            var isBlankLine = (last && currentIndex == text.Length) || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
+                            var isLegalBlankLine = isBlankLine && indentationWhitespace.StartsWith(currentLineWhitespace);
+                            if (!isLegalBlankLine)
                             {
                                 error ??= MakeError(
                                     lineStartPosition,
