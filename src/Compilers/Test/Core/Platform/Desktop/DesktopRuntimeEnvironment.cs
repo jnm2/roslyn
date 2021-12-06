@@ -245,21 +245,10 @@ namespace Roslyn.Test.Utilities.Desktop
 
                 if (expectedOutput != null)
                 {
-                    if (trimOutput)
+                    if (trimOutput ? (expectedOutput.Trim() != output.Trim()) : (expectedOutput != output))
                     {
-                        if (expectedOutput.Trim() != output.Trim())
-                        {
-                            GetEmitData().Manager.DumpAssemblyData(out var dumpDir);
-                            throw new ExecutionException(expectedOutput, output, moduleName);
-                        }
-                    }
-                    else
-                    {
-                        if (expectedOutput != output)
-                        {
-                            GetEmitData().Manager.DumpAssemblyData(out var dumpDir);
-                            throw new ExecutionException(expectedOutput, output, moduleName);
-                        }
+                        GetEmitData().Manager.DumpAssemblyData(out var dumpDir);
+                        throw new ExecutionException(expectedOutput, output, moduleName);
                     }
                 }
 
