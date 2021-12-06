@@ -413,8 +413,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     {
                         // just multiple @'s in a row.  Give a general message about how @ signs work. We cannot
                         // continue on as we have no quotes, and thus can't even find where the string starts or ends.
-                        TrySetError(_lexer.MakeError(
-                            start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
+                        TrySetError(_lexer.MakeError(start, width: 1, ErrorCode.ERR_ExpectedVerbatimLiteral));
                         kind = InterpolatedStringKind.SingleLineRaw;
                         return false;
                     }
@@ -424,16 +423,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     if (startingDollarSignCount == 0)
                         startingDollarSignCount = 1;
 
-                    TrySetError(_lexer.MakeError(
-                        start, width: window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
+                    TrySetError(_lexer.MakeError(start, window.Position - start, ErrorCode.ERR_CannotMixVerbatimAndRawStrings));
                 }
 
                 if (startingQuoteCount == 0)
                 {
                     // We have no quotes at all.  We cannot continue on as we have no quotes, and thus can't even find
                     // where the string starts or ends.
-                    TrySetError(_lexer.MakeError(
-                        start, width: window.Position - start, ErrorCode.ERR_NotEnoughQuotesForRawString));
+                    TrySetError(_lexer.MakeError(start, window.Position - start, ErrorCode.ERR_NotEnoughQuotesForRawString));
                     kind = InterpolatedStringKind.SingleLineRaw;
                     return false;
                 }
@@ -445,8 +442,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 if (startingQuoteCount < 3)
                 {
                     // 1-2 quotes present.  Not legal.  But we can give a good error message and still proceed.
-                    TrySetError(_lexer.MakeError(
-                        window.Position - startingQuoteCount, width: startingQuoteCount, ErrorCode.ERR_NotEnoughQuotesForRawString));
+                    TrySetError(_lexer.MakeError(window.Position - startingQuoteCount, startingQuoteCount, ErrorCode.ERR_NotEnoughQuotesForRawString));
                 }
 
                 // Now see if this was a single-line or multi-line raw literal.
