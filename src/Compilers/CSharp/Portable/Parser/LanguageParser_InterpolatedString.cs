@@ -175,13 +175,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 // A multi-line raw interpolation without errors always ends with a new-line, some number of spaces, and
                 // the quotes. So it's safe to just pull off the first two characters here to find where the
                 // newline-ends.
-                var beforeWhitespace = SlidingTextWindow.GetNewLineWidth(closeQuoteText[0], closeQuoteText[1]);
-                var currentIndex = beforeWhitespace;
+                var afterNewLine = SlidingTextWindow.GetNewLineWidth(closeQuoteText[0], closeQuoteText[1]);
+                var currentIndex = afterNewLine;
                 while (currentIndex < closeQuoteText.Length && SyntaxFacts.IsWhitespace(closeQuoteText[currentIndex]))
                     currentIndex++;
 
                 Debug.Assert(closeQuoteText[currentIndex] == '"');
-                return closeQuoteText.AsSpan()[beforeWhitespace..currentIndex];
+                return closeQuoteText.AsSpan()[afterNewLine..currentIndex];
             }
 
             void addContent(
