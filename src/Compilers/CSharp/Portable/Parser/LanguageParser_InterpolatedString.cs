@@ -419,7 +419,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             var mode = LexerMode.Syntax;
             var token = tempLexer.Lex(ref mode);
             Debug.Assert(token.Kind == SyntaxKind.StringLiteralToken);
-            var result = SyntaxFactory.Literal(null, text, SyntaxKind.InterpolatedStringTextToken, token.ValueText, null);
+            var result = SyntaxFactory.Literal(leading: null, text, SyntaxKind.InterpolatedStringTextToken, token.ValueText, trailing: null);
             if (token.ContainsDiagnostics)
                 result = result.WithDiagnosticsGreen(MoveDiagnostics(token.GetDiagnostics(), -prefix.Length));
 
