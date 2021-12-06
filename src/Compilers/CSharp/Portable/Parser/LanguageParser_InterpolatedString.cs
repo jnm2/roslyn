@@ -285,20 +285,22 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         private static void ConsumeRemainingContentOnLine(StringBuilder content, string text, ref int currentIndex)
         {
+            var start = currentIndex;
             while (currentIndex < text.Length)
             {
-                var ch = text[currentIndex++];
-                content.Append(ch);
-
+                var ch = text[currentIndex];
                 if (SyntaxFacts.IsNewLine(ch))
                 {
-                    // For \r\n, also append the \n as well.
-                    if (ch == '\r' && currentIndex < text.Length && text[currentIndex] == '\n')
-                        content.Append(text[currentIndex++]);
-
-                    return;
+                    currentIndex += SlidingTextWindow.GetNewLineWidth(ch, currentIndex + 1 < text.Length ? text[currentIndex + 1] : '\0');
+                    break;
+                }
+                else
+                {
+                    currentIndex++;
                 }
             }
+
+            content.Append(text, start, currentIndex - start);
         }
 
         private static InterpolationSyntax ParseInterpolation(
