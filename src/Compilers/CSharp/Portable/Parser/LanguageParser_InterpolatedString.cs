@@ -148,12 +148,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     currentIndex++;
 
                 Debug.Assert(closeQuoteText[currentIndex] == '"');
-                var result = getMultiLineRawContentWorker(closeQuoteText.AsSpan()[beforeWhitespace..currentIndex]);
-                return result;
-            }
+                var indentationWhitespace = closeQuoteText.AsSpan()[beforeWhitespace..currentIndex];
 
-            CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> getMultiLineRawContentWorker(ReadOnlySpan<char> indentationWhitespace)
-            {
                 var content = PooledStringBuilder.GetInstance();
                 var builder = _pool.Allocate<InterpolatedStringContentSyntax>();
 
