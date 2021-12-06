@@ -219,9 +219,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     // Only bother reporting a single error on a text chunk.
                     if (error == null)
                     {
+                        // The end of the last line of content is always "at a new line" because a, non-error,
+                        // multi-line raw string literal must always end with a newline, then spaces, then the quotes.
                         var isAtEndOfLastLine = last && currentIndex == text.Length;
-                        var isAtNewLine = currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]);
-                        if (isAtEndOfLastLine || isAtNewLine)
+                        var isAtNewLine = isAtEndOfLastLine || (currentIndex < text.Length && SyntaxFacts.IsNewLine(text[currentIndex]));
+                        if (isAtEndOfLastLine)
                         {
                             // a whitespace-only content line.  The indentation whitespace must be a prefix of the current line whitespace,
                             // or vice versa.  It is an error otherwise.
