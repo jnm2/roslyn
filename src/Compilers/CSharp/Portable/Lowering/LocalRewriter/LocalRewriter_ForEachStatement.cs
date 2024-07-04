@@ -41,6 +41,41 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundExpression collectionExpression = GetUnconvertedCollectionExpression(node, out _);
             TypeSymbol? nodeExpressionType = collectionExpression.Type;
             Debug.Assert(nodeExpressionType is { });
+
+            if (collectionExpression is BoundNullCoalescingOperator { RightOperand: BoundConversion { Operand: BoundCollectionExpression { Elements: [] } } } coalescingOperator)
+            {
+                BoundAssignmentOperator tempAssignment;
+                BoundLocal boundTemp = _factory.StoreToTemp(coalescingOperator.LeftOperand, out tempAssignment);
+
+                // temp != null
+                BoundExpression nullCheck = _factory.MakeNullCheck(coalescingOperator.Syntax, boundTemp, BinaryOperatorKind.NotEqual);
+
+                BoundForEachStatement foreachWithoutCoalesce = node.Update(
+                    node.EnumeratorInfoOpt,
+                    node.ElementPlaceholder,
+                    node.ElementConversion,
+                    node.IterationVariableType,
+                    node.IterationVariables,
+                    node.IterationErrorExpressionOpt,
+                    ((BoundConversion)node.Expression).UpdateOperand(
+                        MakeOptimizedGetValueOrDefault(coalescingOperator.LeftOperand.Syntax, boundTemp)),
+                    node.DeconstructionOpt,
+                    node.AwaitOpt,
+                    node.Body,
+                    node.BreakLabel,
+                    node.ContinueLabel);
+
+                return new BoundBlock(
+                    foreachWithoutCoalesce.Syntax,
+                    [boundTemp.LocalSymbol],
+                    [RewriteIfStatement(
+                        nullCheck.Syntax,
+                        nullCheck,
+                        (BoundStatement)VisitForEachStatement(foreachWithoutCoalesce),
+                        rewrittenAlternativeOpt: null,
+                        hasErrors: false)]);
+            }
+
             if (nodeExpressionType.Kind == SymbolKind.ArrayType)
             {
                 ArrayTypeSymbol arrayType = (ArrayTypeSymbol)nodeExpressionType;

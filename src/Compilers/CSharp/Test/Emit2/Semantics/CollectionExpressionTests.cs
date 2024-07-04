@@ -39168,5 +39168,155 @@ class Program
                 Diagnostic(ErrorCode.ERR_CollectionBuilderAttributeMethodNotFound, "[1]").WithArguments("Create", "long", "MyCollection").WithLocation(5, 14)
                 );
         }
+
+        [Fact]
+        [WorkItem("https://github.com/dotnet/roslyn/issues/68785")]
+        public void Optimization_for_null_coalesce_to_empty_on_foreach_for_array()
+        {
+            string source = """
+                class Program
+                {
+                    static void Main()
+                    {
+                        foreach (var item in GetItems() ?? [])
+                        {
+                            System.Console.WriteLine(item);
+                        }
+                    }
+                    private static int[] GetItems() => null;
+                }
+                """;
+            var verifier = CompileAndVerify([source], targetFramework: TargetFramework.Net80);
+            // TODO: Too many locals. The optimization should likely be done separately per foreach rewrite strategy.
+            verifier.VerifyIL("Program.Main", """
+                {
+                  // Code size       28 (0x1c)
+                  .maxstack  2
+                  .locals init (int[] V_0,
+                                int[] V_1,
+                                int V_2)
+                  IL_0000:  ldloc.0
+                  IL_0001:  brfalse.s  IL_001b
+                  IL_0003:  ldloc.0
+                  IL_0004:  stloc.1
+                  IL_0005:  ldc.i4.0
+                  IL_0006:  stloc.2
+                  IL_0007:  br.s       IL_0015
+                  IL_0009:  ldloc.1
+                  IL_000a:  ldloc.2
+                  IL_000b:  ldelem.i4
+                  IL_000c:  call       "void System.Console.WriteLine(int)"
+                  IL_0011:  ldloc.2
+                  IL_0012:  ldc.i4.1
+                  IL_0013:  add
+                  IL_0014:  stloc.2
+                  IL_0015:  ldloc.2
+                  IL_0016:  ldloc.1
+                  IL_0017:  ldlen
+                  IL_0018:  conv.i4
+                  IL_0019:  blt.s      IL_0009
+                  IL_001b:  ret
+                }
+                """);
+        }
+
+        [Fact]
+        [WorkItem("https://github.com/dotnet/roslyn/issues/68785")]
+        public void Optimization_for_null_coalesce_to_empty_on_foreach_for_ICollection_T()
+        {
+            string source = """
+                class Program
+                {
+                    static void Main()
+                    {
+                        foreach (var item in GetItems() ?? [])
+                        {
+                            System.Console.WriteLine(item);
+                        }
+                    }
+                    private static System.Collections.Generic.IList<int> GetItems() => null;
+                }
+                """;
+            var verifier = CompileAndVerify([source], targetFramework: TargetFramework.Net80);
+            verifier.VerifyIL("Program.Main", """
+                {
+                  // Code size       44 (0x2c)
+                  .maxstack  1
+                  .locals init (System.Collections.Generic.IList<int> V_0,
+                                System.Collections.Generic.IEnumerator<int> V_1)
+                  IL_0000:  ldloc.0
+                  IL_0001:  brfalse.s  IL_002b
+                  IL_0003:  ldloc.0
+                  IL_0004:  callvirt   "System.Collections.Generic.IEnumerator<int> System.Collections.Generic.IEnumerable<int>.GetEnumerator()"
+                  IL_0009:  stloc.1
+                  .try
+                  {
+                    IL_000a:  br.s       IL_0017
+                    IL_000c:  ldloc.1
+                    IL_000d:  callvirt   "int System.Collections.Generic.IEnumerator<int>.Current.get"
+                    IL_0012:  call       "void System.Console.WriteLine(int)"
+                    IL_0017:  ldloc.1
+                    IL_0018:  callvirt   "bool System.Collections.IEnumerator.MoveNext()"
+                    IL_001d:  brtrue.s   IL_000c
+                    IL_001f:  leave.s    IL_002b
+                  }
+                  finally
+                  {
+                    IL_0021:  ldloc.1
+                    IL_0022:  brfalse.s  IL_002a
+                    IL_0024:  ldloc.1
+                    IL_0025:  callvirt   "void System.IDisposable.Dispose()"
+                    IL_002a:  endfinally
+                  }
+                  IL_002b:  ret
+                }
+                """);
+        }
+
+        [Fact]
+        [WorkItem("https://github.com/dotnet/roslyn/issues/68785")]
+        public void Optimization_for_null_coalesce_to_empty_on_foreach_with_nullable_struct_collection()
+        {
+            string source = """
+                class Program
+                {
+                    static void Main()
+                    {
+                        foreach (var item in GetItems() ?? [])
+                        {
+                            System.Console.WriteLine(item);
+                        }
+                    }
+                    private static System.Collections.Immutable.ImmutableArray<int>? GetItems() => null;
+                }
+                """;
+            var verifier = CompileAndVerify([source], targetFramework: TargetFramework.Net80);
+            verifier.VerifyIL("Program.Main", """
+                {
+                  // Code size       49 (0x31)
+                  .maxstack  1
+                  .locals init (System.Collections.Immutable.ImmutableArray<int>? V_0,
+                                System.Collections.Immutable.ImmutableArray<int>.Enumerator V_1,
+                                System.Collections.Immutable.ImmutableArray<int> V_2)
+                  IL_0000:  ldloca.s   V_0
+                  IL_0002:  call       "readonly bool System.Collections.Immutable.ImmutableArray<int>?.HasValue.get"
+                  IL_0007:  brfalse.s  IL_0030
+                  IL_0009:  ldloca.s   V_0
+                  IL_000b:  call       "readonly System.Collections.Immutable.ImmutableArray<int> System.Collections.Immutable.ImmutableArray<int>?.GetValueOrDefault()"
+                  IL_0010:  stloc.2
+                  IL_0011:  ldloca.s   V_2
+                  IL_0013:  call       "System.Collections.Immutable.ImmutableArray<int>.Enumerator System.Collections.Immutable.ImmutableArray<int>.GetEnumerator()"
+                  IL_0018:  stloc.1
+                  IL_0019:  br.s       IL_0027
+                  IL_001b:  ldloca.s   V_1
+                  IL_001d:  call       "int System.Collections.Immutable.ImmutableArray<int>.Enumerator.Current.get"
+                  IL_0022:  call       "void System.Console.WriteLine(int)"
+                  IL_0027:  ldloca.s   V_1
+                  IL_0029:  call       "bool System.Collections.Immutable.ImmutableArray<int>.Enumerator.MoveNext()"
+                  IL_002e:  brtrue.s   IL_001b
+                  IL_0030:  ret
+                }
+                """);
+        }
     }
 }
