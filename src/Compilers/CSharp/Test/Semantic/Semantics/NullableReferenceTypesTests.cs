@@ -159055,5 +159055,45 @@ async (string s) => { try {} catch (System.Exception e) {} };
                 //                 c1.
                 Diagnostic(ErrorCode.ERR_SemicolonExpected, "").WithLocation(15, 20));
         }
+
+        [Fact]
+        public void LambdaAccessingTupleElement()
+        {
+            var source = """
+                #nullable enable
+                using System;
+                using System.Collections.Generic;
+                class C
+                {
+                    void M((string Name, object? Value)[] parameters)
+                    {
+                        _ = ToDictionary(
+                            Append(parameters, ("A", "A")),
+                            tuple => tuple.Name,
+                            tuple => tuple.Value);
+                    }
+
+                    // Signatures from System.Linq.Enumerable, to make debugging easier (fewer overloads to try to resolve):
+                    static IEnumerable<TSource> Append<TSource>(IEnumerable<TSource> source, TSource element)
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    static Dictionary<TKey, TElement> ToDictionary<TSource, TKey, TElement>(IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector) where TKey : notnull
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                """;
+
+            var comp = CreateCompilation(source, parseOptions: TestOptions.RegularPreview);
+            comp.VerifyDiagnostics(
+                // (10,13): warning CS8621: Nullability of reference types in return type of 'lambda expression' doesn't match the target delegate 'Func<(string, object?), ?>' (possibly because of nullability attributes).
+                //             tuple => tuple.Name,
+                Diagnostic(ErrorCode.WRN_NullabilityMismatchInReturnTypeOfTargetDelegate, "tuple =>").WithArguments("lambda expression", "System.Func<(string, object?), ?>").WithLocation(10, 13),
+                // (11,13): warning CS8621: Nullability of reference types in return type of 'lambda expression' doesn't match the target delegate 'Func<(string, object?), ?>' (possibly because of nullability attributes).
+                //             tuple => tuple.Value);
+                Diagnostic(ErrorCode.WRN_NullabilityMismatchInReturnTypeOfTargetDelegate, "tuple =>").WithArguments("lambda expression", "System.Func<(string, object?), ?>").WithLocation(11, 13));
+        }
     }
 }
