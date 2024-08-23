@@ -159087,13 +159087,7 @@ async (string s) => { try {} catch (System.Exception e) {} };
                 """;
 
             var comp = CreateCompilation(source, parseOptions: TestOptions.RegularPreview);
-            comp.VerifyDiagnostics(
-                // (10,13): warning CS8621: Nullability of reference types in return type of 'lambda expression' doesn't match the target delegate 'Func<(string, object?), ?>' (possibly because of nullability attributes).
-                //             tuple => tuple.Name,
-                Diagnostic(ErrorCode.WRN_NullabilityMismatchInReturnTypeOfTargetDelegate, "tuple =>").WithArguments("lambda expression", "System.Func<(string, object?), ?>").WithLocation(10, 13),
-                // (11,13): warning CS8621: Nullability of reference types in return type of 'lambda expression' doesn't match the target delegate 'Func<(string, object?), ?>' (possibly because of nullability attributes).
-                //             tuple => tuple.Value);
-                Diagnostic(ErrorCode.WRN_NullabilityMismatchInReturnTypeOfTargetDelegate, "tuple =>").WithArguments("lambda expression", "System.Func<(string, object?), ?>").WithLocation(11, 13));
+            comp.VerifyDiagnostics();
         }
     }
 }

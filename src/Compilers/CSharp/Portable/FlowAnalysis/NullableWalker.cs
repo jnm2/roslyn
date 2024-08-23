@@ -7731,7 +7731,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     case BoundKind.MethodGroup:
                     case BoundKind.UnboundLambda:
                     case BoundKind.UnconvertedObjectCreationExpression:
-                    case BoundKind.ConvertedTupleLiteral:
+                    case BoundKind.TupleLiteral:
                     case BoundKind.UnconvertedCollectionExpression:
                         return NullableAnnotation.NotAnnotated;
                     default:
@@ -7779,6 +7779,11 @@ namespace Microsoft.CodeAnalysis.CSharp
                     // from flow analysis rather than the declared nullability. To allow that, we need
                     // to re-bind lambdas in MethodTypeInferrer.
                     return getUnboundLambda((BoundLambda)argument, GetVariableState(_variables, lambdaState.Value));
+                }
+
+                if (argument is BoundConvertedTupleLiteral { SourceTuple: not null } tuple)
+                {
+                    return tuple.SourceTuple;
                 }
 
                 if (argument.Kind == BoundKind.CollectionExpression)
