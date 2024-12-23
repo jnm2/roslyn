@@ -177,7 +177,7 @@ internal abstract class AbstractTriviaFormatter
     /// <summary>
     /// return line column rule for the given two trivia
     /// </summary>
-    protected abstract LineColumnRule GetLineColumnRuleBetween(SyntaxTrivia trivia1, LineColumnDelta existingWhitespaceBetween, bool implicitLineBreak, SyntaxTrivia trivia2, CancellationToken cancellationToken);
+    protected abstract LineColumnRule GetLineColumnRuleBetween(SyntaxTrivia trivia1, LineColumnDelta existingWhitespaceBetween, bool implicitLineBreak, bool whitespaceIsElastic, SyntaxTrivia trivia2, CancellationToken cancellationToken);
 
     /// <summary>
     /// format the given trivia at the line column position and put result to the changes list
@@ -289,6 +289,7 @@ internal abstract class AbstractTriviaFormatter
         var previousWhitespaceTrivia = default(SyntaxTrivia);
         var previousTrivia = default(SyntaxTrivia);
         var implicitLineBreak = false;
+        var whitespaceIsElastic = false;
 
         var list = new TriviaList(this.Token1.TrailingTrivia, this.Token2.LeadingTrivia);
 
@@ -305,6 +306,9 @@ internal abstract class AbstractTriviaFormatter
 
             if (IsWhitespaceOrEndOfLine(trivia))
             {
+                if (!whitespaceIsElastic)
+                    whitespaceIsElastic = trivia.IsElastic();
+
                 existingWhitespaceDelta = existingWhitespaceDelta.With(
                    GetLineColumnOfWhitespace(
                        lineColumn,
@@ -341,7 +345,7 @@ internal abstract class AbstractTriviaFormatter
                 lineColumn,
                 previousTrivia, existingWhitespaceDelta, trivia,
                 formatter, whitespaceAdder,
-                changes, implicitLineBreak, cancellationToken);
+                changes, implicitLineBreak, whitespaceIsElastic, cancellationToken);
 
             if (previousLineColumn.Column != 0
                 && previousLineColumn.Column < lineColumn.Column
@@ -354,6 +358,7 @@ internal abstract class AbstractTriviaFormatter
             }
 
             implicitLineBreak = implicitLineBreak || ContainsImplicitLineBreak(trivia);
+            whitespaceIsElastic = false;
             existingWhitespaceDelta = LineColumnDelta.Default;
 
             previousTrivia = trivia;
@@ -363,7 +368,7 @@ internal abstract class AbstractTriviaFormatter
             lineColumn,
             previousTrivia, existingWhitespaceDelta, default,
             formatter, whitespaceAdder,
-            changes, implicitLineBreak, cancellationToken);
+            changes, implicitLineBreak, whitespaceIsElastic, cancellationToken);
 
         return lineColumn;
     }
@@ -377,12 +382,13 @@ internal abstract class AbstractTriviaFormatter
         WhitespaceAppender<T> addWhitespaceTrivia,
         ArrayBuilder<T> changes,
         bool implicitLineBreak,
+        bool whitespaceIsElastic,
         CancellationToken cancellationToken)
     {
         var lineColumnAfterTrivia1 = trivia1.RawKind == 0 ?
                 lineColumnBeforeTrivia1 : lineColumnBeforeTrivia1.With(format(lineColumnBeforeTrivia1, trivia1, changes, cancellationToken));
 
-        var rule = GetOverallLineColumnRuleBetween(trivia1, existingWhitespaceBetween, implicitLineBreak, trivia2, cancellationToken);
+        var rule = GetOverallLineColumnRuleBetween(trivia1, existingWhitespaceBetween, implicitLineBreak, whitespaceIsElastic, trivia2, cancellationToken);
         var whitespaceDelta = Apply(lineColumnBeforeTrivia1, trivia1, lineColumnAfterTrivia1, existingWhitespaceBetween, trivia2, rule);
 
         var span = GetTextSpan(trivia1, trivia2);
@@ -394,9 +400,9 @@ internal abstract class AbstractTriviaFormatter
     /// <summary>
     /// get line column rule between two trivia
     /// </summary>
-    private LineColumnRule GetOverallLineColumnRuleBetween(SyntaxTrivia trivia1, LineColumnDelta existingWhitespaceBetween, bool implicitLineBreak, SyntaxTrivia trivia2, CancellationToken cancellationToken)
+    private LineColumnRule GetOverallLineColumnRuleBetween(SyntaxTrivia trivia1, LineColumnDelta existingWhitespaceBetween, bool implicitLineBreak, bool whitespaceIsElastic, SyntaxTrivia trivia2, CancellationToken cancellationToken)
     {
-        var defaultRule = GetLineColumnRuleBetween(trivia1, existingWhitespaceBetween, implicitLineBreak, trivia2, cancellationToken);
+        var defaultRule = GetLineColumnRuleBetween(trivia1, existingWhitespaceBetween, implicitLineBreak, whitespaceIsElastic, trivia2, cancellationToken);
         GetTokensAtEdgeOfStructureTrivia(trivia1, trivia2, out var token1, out var token2);
 
         // if there are tokens, try formatting rules to see whether there is a user supplied one

@@ -59,7 +59,7 @@ internal partial class CSharpTriviaFormatter : AbstractTriviaFormatter
         return _newLine;
     }
 
-    protected override LineColumnRule GetLineColumnRuleBetween(SyntaxTrivia trivia1, LineColumnDelta existingWhitespaceBetween, bool implicitLineBreak, SyntaxTrivia trivia2, CancellationToken cancellationToken)
+    protected override LineColumnRule GetLineColumnRuleBetween(SyntaxTrivia trivia1, LineColumnDelta existingWhitespaceBetween, bool implicitLineBreak, bool whitespaceIsElastic, SyntaxTrivia trivia2, CancellationToken cancellationToken)
     {
         if (IsStartOrEndOfFile(trivia1, trivia2))
         {
@@ -72,7 +72,15 @@ internal partial class CSharpTriviaFormatter : AbstractTriviaFormatter
             if (IsMultilineComment(trivia1))
             {
                 var insertNewLine = this.FormattingRules.GetAdjustNewLinesOperation(this.Token1, this.Token2) != null;
-                return LineColumnRule.PreserveLinesWithGivenIndentation(lines: insertNewLine ? 1 : 0);
+                var lines = insertNewLine ? 1 : 0;
+                return whitespaceIsElastic
+                    ? LineColumnRule.PreserveLinesWithDefaultIndentation(lines)
+                    : LineColumnRule.PreserveLinesWithGivenIndentation(lines);
+            }
+
+            if (whitespaceIsElastic)
+            {
+                return LineColumnRule.PreserveLinesWithDefaultIndentation(existingWhitespaceBetween.Lines);
             }
 
             if (existingWhitespaceBetween.Spaces != this.Spaces)
