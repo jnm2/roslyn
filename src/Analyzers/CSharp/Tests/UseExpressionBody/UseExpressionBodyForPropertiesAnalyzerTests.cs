@@ -580,4 +580,26 @@ public class UseExpressionBodyForPropertiesAnalyzerTests
             """;
         await TestWithUseExpressionBody(code, fixedCode);
     }
+
+    [Fact, WorkItem("https://github.com/dotnet/roslyn/issues/50181")]
+    public async Task TestUseExpressionBodyPreserveComments2()
+    {
+        var code = """
+            public class C
+            {
+                {|IDE0025:public long Length // cool prop
+                {
+                    get { return 1 + 2; }
+                }|}
+            }
+            """;
+        var fixedCode = """
+            public class C
+            {
+                public long Length // cool prop
+                    => 1 + 2;
+            }
+            """;
+        await TestWithUseExpressionBody(code, fixedCode);
+    }
 }
