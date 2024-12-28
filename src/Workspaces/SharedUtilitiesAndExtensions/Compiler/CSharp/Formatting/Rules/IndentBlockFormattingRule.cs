@@ -59,6 +59,8 @@ internal sealed class IndentBlockFormattingRule : BaseFormattingRule
 
         AddEmbeddedStatementsIndentationOperation(list, node);
 
+        AddWrappingIndentationOperation(list, node);
+
         AddTypeParameterConstraintClauseOperation(list, node);
     }
 
@@ -367,6 +369,30 @@ internal sealed class IndentBlockFormattingRule : BaseFormattingRule
         {
             // embedded statement is done
             AddIndentBlockOperation(list, firstToken, lastToken, TextSpan.FromBounds(firstToken.FullSpan.Start, lastToken.FullSpan.End));
+        }
+    }
+
+    private static void AddWrappingIndentationOperation(List<IndentBlockOperation> list, SyntaxNode node)
+    {
+        // If the node has a block body, the indentation applies up to the opening brace. Otherwise, it applies up to the semicolon.
+        // TODO: generalize the above, avoiding recursion.
+        // Avoid recursive indentation, maybe by dealing with MemberDeclarationSyntax and StatementSyntax.
+
+        // TODO: Update CSharpIndentationService to remove its heuristic of adding an extra level of indentation by
+        // default unless at an ending semicolon or brace, etc. That heuristic is now duplicative.
+
+        var firstToken = node.GetFirstToken(includeZeroWidth: true);
+        var lastToken = node.GetLastToken(includeZeroWidth: true);
+
+        if (node is MemberDeclarationSyntax)
+        {
+            if (!lastToken.IsMissing && lastToken.IsKind(SyntaxKind.SemicolonToken))
+            {
+                // SpanStart + 1: imagine breaking a keyword by pressing Enter. The indentation should potentially apply
+                // if the caret is even one character in, but should not apply before the token.
+                AddIndentBlockOperation(list, firstToken, lastToken, TextSpan.FromBounds(firstToken.SpanStart + 1, lastToken.SpanStart));
+                return;
+            }
         }
     }
 }
