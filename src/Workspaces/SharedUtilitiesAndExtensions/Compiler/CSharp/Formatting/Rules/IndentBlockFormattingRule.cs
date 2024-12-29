@@ -4,10 +4,12 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Formatting.Rules;
+using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
@@ -57,7 +59,7 @@ internal sealed class IndentBlockFormattingRule : BaseFormattingRule
 
         AddSwitchIndentationOperation(list, node);
 
-        AddEmbeddedStatementsIndentationOperation(list, node);
+        // AddEmbeddedStatementsIndentationOperation(list, node);
 
         AddWrappingIndentationOperation(list, node);
 
@@ -374,25 +376,60 @@ internal sealed class IndentBlockFormattingRule : BaseFormattingRule
 
     private static void AddWrappingIndentationOperation(List<IndentBlockOperation> list, SyntaxNode node)
     {
-        // If the node has a block body, the indentation applies up to the opening brace. Otherwise, it applies up to the semicolon.
-        // TODO: generalize the above, avoiding recursion.
-        // Avoid recursive indentation, maybe by dealing with MemberDeclarationSyntax and StatementSyntax.
+        // Indentation applies everywhere within the node, exclusive of its start and end character, and exclusive of
+        // interior brackets and their contents. (Hopefully, these can be made to coexist without special handling
+        // here.) For a method signature, the wrapping indentation would disappear before the '(' but would reappear
+        // immediately after the ')'.
 
+        // TODO: Subsume AddEmbeddedStatementsIndentationOperation with this?
         // TODO: Update CSharpIndentationService to remove its heuristic of adding an extra level of indentation by
         // default unless at an ending semicolon or brace, etc. That heuristic is now duplicative.
 
-        var firstToken = node.GetFirstToken(includeZeroWidth: true);
-        var lastToken = node.GetLastToken(includeZeroWidth: true);
-
-        if (node is MemberDeclarationSyntax)
+        if (node is ExpressionSyntax)
         {
-            if (!lastToken.IsMissing && lastToken.IsKind(SyntaxKind.SemicolonToken))
+            return;
+        }
+
+        var firstToken = node.GetFirstToken(includeZeroWidth: true);
+
+        var embeddedStatement = node.GetEmbeddedStatement();
+
+        var braces = (embeddedStatement ?? node).GetBraces();
+        if (!braces.openBrace.IsKind(SyntaxKind.None))
+        {
+            var lastTokenBeforeBrace = braces.openBrace.GetPreviousToken();
+            if (lastTokenBeforeBrace.Parent == node)
             {
-                // SpanStart + 1: imagine breaking a keyword by pressing Enter. The indentation should potentially apply
-                // if the caret is even one character in, but should not apply before the token.
-                AddIndentBlockOperation(list, firstToken, lastToken, TextSpan.FromBounds(firstToken.SpanStart + 1, lastToken.SpanStart));
+                // If we break before the brace, we should not indent on wrap. If we break one character in from the end
+                // of the previous token before the brace, we should indent on wrap.
+                AddIndentBlockOperation(list, firstToken, lastTokenBeforeBrace, TextSpan.FromBounds(firstToken.SpanStart + 1, lastTokenBeforeBrace.Span.End - 1));
                 return;
             }
         }
+
+        // TODO: less expensive check for "previous token is on same line"?
+        var wrapOnIndentStart = firstToken.IsFirstTokenOnLine(node.SyntaxTree.GetText())
+            // If the first token on the line, then breaking one character in from the start of token should indent on
+            // wrap, breaking at or before the start of the token should not indent on wrap.
+            ? firstToken.SpanStart + 1
+            // If not the first token on the line, then we will be meshing with the wrap-on-indent span of the node for the previous token on the line.
+            : firstToken.FullSpan.Start;
+
+        if (embeddedStatement is not null)
+        {
+            var tokenBeforeNextNode = embeddedStatement.GetFirstToken(includeZeroWidth: true).GetPreviousToken();
+
+            // The embedded statement will be adding wrapping indentation of its own. To avoid overlapping and doubling
+            // up the wrapping indentation, make sure we end before the embedded statement does.
+            AddIndentBlockOperation(list, firstToken, tokenBeforeNextNode, TextSpan.FromBounds(wrapOnIndentStart, tokenBeforeNextNode.FullSpan.End));
+            return;
+        }
+
+        var lastToken = node.GetLastToken(includeZeroWidth: true);
+
+        AddIndentBlockOperation(list, firstToken, lastToken, TextSpan.FromBounds(
+            wrapOnIndentStart,
+            lastToken.IsMissing ? lastToken.FullSpan.End : lastToken.Span.End - 1));
+        return;
     }
 }
